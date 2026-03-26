@@ -1,5 +1,5 @@
-import { AuthModulePage } from '@/features/auth';
+import { StitchLoginPage } from '@/features/auth/StitchLoginPage';
 
 export default function LoginPage() {
-  return <AuthModulePage mode="login" />;
+  return <StitchLoginPage />;
 }
