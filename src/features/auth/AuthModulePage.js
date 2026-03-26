@@ -17,7 +17,9 @@ function LeftShowcase() {
   return (
     <section className="relative hidden overflow-hidden p-16 md:flex md:w-1/2 md:flex-col md:justify-between liquidity-gradient">
       <div className="relative z-10">
-        <div className="mb-12 text-3xl font-black tracking-tight text-white">RYEX</div>
+        <Link href="/" className="mb-12 text-3xl font-black tracking-tight text-white">
+          RYEX
+        </Link>
         <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight text-white">
           Kỷ Nguyên Mới Của <br /> Tài Chính Số.
         </h1>
@@ -185,7 +187,12 @@ export function AuthModulePage({ mode = 'login' }) {
         <section className="flex flex-1 items-center justify-center bg-surface p-6 md:p-12 lg:p-24">
           <div className="w-full max-w-[440px]">
             <div className="mb-10">
-              <div className="mb-8 text-2xl font-black tracking-tight text-primary md:hidden">RYEX</div>
+              <Link
+                href="/"
+                className="mb-8 text-2xl font-black tracking-tight text-primary md:hidden"
+              >
+                RYEX
+              </Link>
               <h2 className="mb-2 text-3xl font-bold tracking-tight text-on-surface">
                 {isSignup ? 'Tạo tài khoản mới' : 'Chào mừng quay lại'}
               </h2>

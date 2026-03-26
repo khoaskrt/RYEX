@@ -16,3 +16,7 @@
 - `/app/auth/login` -> auth login module
 - `/app/auth/signup` -> auth signup module
 - `/app/market` -> market module
+
+## Import Convention
+
+- Use `@/*` alias for imports from `src/*` (configured in `jsconfig.json`)
