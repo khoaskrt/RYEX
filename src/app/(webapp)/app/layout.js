@@ -4,7 +4,7 @@ const navItems = [
   { href: '/app', label: 'Overview' },
   { href: '/app/auth/login', label: 'Login' },
   { href: '/app/auth/signup', label: 'Signup' },
-  { href: '/app/market', label: 'Market' },
+  { href: '/app/market', label: 'Thị trường' },
 ];
 
 export default function WebAppLayout({ children }) {
