@@ -1,0 +1,1 @@
+export { MarketModulePage } from './MarketModulePage';
