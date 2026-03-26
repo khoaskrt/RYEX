@@ -56,7 +56,7 @@ function LeftShowcase() {
   );
 }
 
-function SignupForm() {
+function SignupForm({ prefillEmail }) {
   return (
     <>
       <div className="mb-6 flex gap-1 rounded-xl bg-surface-container-low p-1">
@@ -67,7 +67,10 @@ function SignupForm() {
           Email
         </button>
         <button
-          className="flex-1 rounded-lg py-2.5 text-sm font-medium text-on-surface-variant transition-all duration-200 hover:text-on-surface"
+          aria-disabled="true"
+          className="flex-1 cursor-not-allowed rounded-lg py-2.5 text-sm font-medium text-on-surface-variant/70 transition-all duration-200"
+          disabled
+          title="Coming soon"
           type="button"
         >
           Số điện thoại
@@ -79,6 +82,7 @@ function SignupForm() {
           <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Địa chỉ Email</label>
           <input
             className="w-full rounded-xl border-none border-b-2 border-transparent bg-surface-container-lowest px-4 py-3.5 transition-all duration-300 placeholder:text-outline-variant focus:border-b-2 focus:border-primary-container focus:ring-0"
+            defaultValue={prefillEmail}
             placeholder="name@company.com"
             type="email"
           />
@@ -176,7 +180,7 @@ function LoginForm() {
   );
 }
 
-export function AuthModulePage({ mode = 'login' }) {
+export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
   const isSignup = mode === 'signup';
 
   return (
@@ -201,7 +205,7 @@ export function AuthModulePage({ mode = 'login' }) {
               </p>
             </div>
 
-            <div className="mb-8">{isSignup ? <SignupForm /> : <LoginForm />}</div>
+            <div className="mb-8">{isSignup ? <SignupForm prefillEmail={prefillEmail} /> : <LoginForm />}</div>
 
             <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">

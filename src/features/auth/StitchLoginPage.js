@@ -10,41 +10,10 @@ export function StitchLoginPage() {
   return (
     <div className="bg-surface text-on-surface font-body antialiased">
       <header className="fixed top-0 z-50 w-full bg-[#f7f9fb]/80 shadow-[0_12px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
-        <nav className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 py-4 md:px-8">
-          <div className="flex items-center gap-6 md:gap-12">
-            <Link className="text-2xl font-bold tracking-tighter text-[#006c4f]" href="/">
-              RYEX
-            </Link>
-            <div className="hidden items-center gap-8 md:flex">
-              <a className="text-[#3c4a43] transition-colors hover:text-[#006c4f]" href="#">
-                Markets
-              </a>
-              <a className="text-[#3c4a43] transition-colors hover:text-[#006c4f]" href="#">
-                Trade
-              </a>
-              <a className="text-[#3c4a43] transition-colors hover:text-[#006c4f]" href="#">
-                Derivatives
-              </a>
-              <a className="text-[#3c4a43] transition-colors hover:text-[#006c4f]" href="#">
-                Earn
-              </a>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 md:gap-4">
-            <Link
-              className="rounded-md px-4 py-2 font-medium text-[#3c4a43] transition-all hover:bg-[#f2f4f6] md:px-5"
-              href="/app/auth/login"
-            >
-              Log In
-            </Link>
-            <Link
-              className="liquidity-gradient rounded-md px-4 py-2 font-semibold text-white shadow-sm md:px-5"
-              href="/app/auth/signup"
-            >
-              Sign Up
-            </Link>
-          </div>
+        <nav className="mx-auto flex w-full max-w-[1440px] items-center px-5 py-4 md:px-8">
+          <Link className="text-2xl font-bold tracking-tighter text-[#006c4f]" href="/">
+            RYEX
+          </Link>
         </nav>
       </header>
 
@@ -112,9 +81,11 @@ export function StitchLoginPage() {
                 className={`flex-1 pb-4 text-sm transition-colors ${
                   authMethod === 'phone'
                     ? 'border-b-2 border-primary font-semibold text-primary'
-                    : 'font-medium text-on-surface-variant hover:text-on-surface'
+                    : 'font-medium text-on-surface-variant'
                 }`}
-                onClick={() => setAuthMethod('phone')}
+                aria-disabled="true"
+                disabled
+                title="Coming soon"
                 type="button"
               >
                 Số điện thoại

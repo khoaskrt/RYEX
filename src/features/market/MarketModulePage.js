@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export function MarketModulePage() {
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-surface text-on-surface antialiased">
@@ -53,10 +55,15 @@ export function MarketModulePage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]">
+            <Link
+              className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
+              href="/app/auth/login"
+            >
               Đăng nhập
-            </button>
-            <button className="liquidity-gradient rounded-lg px-5 py-2 text-sm font-bold text-white shadow-sm">Đăng ký</button>
+            </Link>
+            <Link className="liquidity-gradient rounded-lg px-5 py-2 text-sm font-bold text-white shadow-sm" href="/app/auth/signup">
+              Đăng ký
+            </Link>
           </div>
         </div>
       </nav>
