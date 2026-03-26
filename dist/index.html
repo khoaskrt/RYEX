@@ -1,0 +1,471 @@
+<!DOCTYPE html><html class="light" lang="vi"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>RYEX - Sàn giao dịch Crypto uy tín hàng đầu Việt Nam</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "inverse-primary": "#48dead",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#000767",
+                        "surface-variant": "#e0e3e5",
+                        "background": "#f7f9fb",
+                        "secondary-fixed-dim": "#bdc2ff",
+                        "on-surface-variant": "#3c4a43",
+                        "on-background": "#191c1e",
+                        "surface-container": "#eceef0",
+                        "on-tertiary-fixed": "#410002",
+                        "on-primary-container": "#004431",
+                        "surface-tint": "#006c4f",
+                        "tertiary": "#a33c34",
+                        "inverse-surface": "#2d3133",
+                        "secondary": "#4c56af",
+                        "surface-container-highest": "#e0e3e5",
+                        "primary-fixed": "#6afbc8",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#006c4f",
+                        "on-primary-fixed": "#002116",
+                        "on-surface": "#191c1e",
+                        "secondary-container": "#959efd",
+                        "tertiary-container": "#fe8074",
+                        "surface": "#f7f9fb",
+                        "on-tertiary-container": "#731815",
+                        "surface-dim": "#d8dadc",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f7f9fb",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#27308a",
+                        "primary-container": "#01bc8d",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#343d96",
+                        "outline": "#6c7a73",
+                        "on-tertiary-fixed-variant": "#83241f",
+                        "tertiary-fixed-dim": "#ffb4ab",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#48dead",
+                        "secondary-fixed": "#e0e0ff",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#00513b",
+                        "tertiary-fixed": "#ffdad6",
+                        "outline-variant": "#bbcac1",
+                        "surface-container-high": "#e6e8ea"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["Manrope", "sans-serif"],
+                        "label": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .liquidity-gradient {
+            background: linear-gradient(135deg, #006c4f 0%, #01bc8d 100%);
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+    </style>
+</head>
+<body class="font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-[#bbcac1]/15 shadow-[0_12px_32px_-12px_rgba(0,0,0,0.04)]">
+<div class="flex justify-between items-center px-8 h-20 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-12">
+<span class="text-2xl font-black tracking-tighter text-[#006c4f] dark:text-[#01BC8D] font-headline" style="">RYEX</span>
+<div class="hidden md:flex items-center gap-8 font-['Manrope'] font-medium text-sm tracking-tight">
+<a class="text-[#006c4f] font-bold border-b-2 border-[#01BC8D] pb-1" href="#" style="">Giao dịch</a>
+<a class="text-[#3c4a43] hover:text-[#006c4f] transition-colors" href="#" style="">Thị trường</a>
+<a class="text-[#3c4a43] hover:text-[#006c4f] transition-colors" href="#" style="">Pháp lý &amp; Cấp phép</a>
+<a class="text-[#3c4a43] hover:text-[#006c4f] transition-colors" href="#" style="">Hỗ trợ</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-5 py-2 text-sm font-semibold text-on-surface hover:bg-[#f2f4f6] rounded-md transition-all duration-300" style="">Đăng nhập</button>
+<button class="px-6 py-2.5 text-sm font-bold text-white liquidity-gradient rounded-xl shadow-lg active:scale-95 transition-transform duration-200" style="">Bắt đầu ngay</button>
+</div>
+</div>
+</nav>
+<main class="pt-20">
+<!-- Hero Section -->
+<section class="relative overflow-hidden pt-24 pb-32 px-8">
+<div class="max-w-screen-2xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+<div class="relative z-10">
+<span class="inline-flex items-center px-4 py-1.5 rounded-full bg-primary-container/10 text-primary font-bold text-xs uppercase tracking-widest mb-6" style="">tiêu chuẩn nhà nước</span>
+<h1 class="text-6xl md:text-7xl font-extrabold text-on-surface leading-[1.1] tracking-tight mb-8 font-headline" style="">
+                        Sàn giao dịch Crypto uy tín, <span class="text-primary" style="">được cấp phép</span> tại Việt Nam
+                    </h1>
+<p class="text-xl text-on-surface-variant leading-relaxed mb-10 max-w-xl" style="">
+                        Trải nghiệm nền tảng giao dịch tài sản số an toàn, minh bạch và tuân thủ tuyệt đối quy định pháp luật. Được thiết kế dành riêng cho nhà đầu tư Việt Nam.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-4">
+<div class="flex items-center bg-surface-container-lowest p-1 rounded-2xl shadow-sm border border-outline-variant/15 w-full max-w-md">
+<input class="flex-1 bg-transparent border-none focus:ring-0 px-6 text-on-surface font-medium" placeholder="Nhập địa chỉ Email" type="email">
+<button class="px-8 py-3 text-white font-bold liquidity-gradient rounded-xl whitespace-nowrap" style="">Đăng ký ngay</button>
+</div>
+</div>
+<div class="mt-12 flex items-center gap-8 grayscale opacity-60">
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary" style="">verified_user</span> <span class="text-sm font-bold" style="">Bảo mật đa lớp</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary" style="">gavel</span> <span class="text-sm font-bold" style="">Tuân thủ VASP</span></div>
+<div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary" style="">support_agent</span> <span class="text-sm font-bold" style="">Hỗ trợ 24/7</span></div>
+</div>
+</div>
+<div class="relative">
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-primary-container/20 blur-[120px] rounded-full"></div>
+<div class="relative bg-surface-container-lowest rounded-[2.5rem] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] border border-outline-variant/10">
+<img alt="RYEX Trading Interface" class="rounded-3xl w-full object-cover aspect-[4/3]" data-alt="Modern clean crypto trading interface on a smartphone screen with green candlesticks and sleek white dashboard design" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvfGSIjXIwrmYtlqL9ec6LP-r2UPHSmP6zyo_gH14v2H69muuBm0uyA6Pvl-tJruLrSouoXQSo1kwBrOUlNva1Z4jZME_nuzJ2V9bnTm2ihCbN1B6Xkz-pYJwjGkJi066yQgWBMGPcR1lQJN6Aqz1AYEd6-fmriZsJGDP1fpUFEblQeL_eOLz1S9X3Ai7q5zE1dL7hBs62wST6noN5zYktbzVB0-xapa0lk0fRNvZfOK7vhF9TI1cpKNc9OiHeVA0RHLd9URhFb3hz" style="">
+<div class="absolute -bottom-8 -left-8 bg-white p-6 rounded-3xl shadow-xl border border-outline-variant/10 max-w-[240px]">
+<div class="flex items-center gap-4 mb-4">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined font-bold" style="">trending_up</span>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant font-bold" style="">Khối lượng 24h</p>
+<p class="text-lg font-black text-on-surface" style="">$1.2B+</p>
+</div>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-3/4"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Market Pulse Bento Grid -->
+<section class="py-24 px-8 bg-white">
+<div class="max-w-screen-2xl mx-auto">
+<div class="text-center mb-16">
+<h2 class="text-4xl md:text-5xl font-extrabold text-[#191c1e] tracking-tight mb-4 font-headline" style="">Tiền điện tử thịnh hành</h2>
+<p class="text-on-surface-variant font-medium text-lg" style="">Giao dịch 1.000+ loại tiền điện tử theo thời gian thực.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+<!-- Nóng Card -->
+<div class="bg-white rounded-[2.5rem] p-10 border border-outline-variant/20 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+<h3 class="text-2xl font-bold text-center mb-10 text-[#191c1e]" style="">Nóng</h3>
+<div class="space-y-8">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#F7931A] text-4xl" style="font-variation-settings: &quot;FILL&quot; 1;">currency_bitcoin</span>
+</div>
+<div>
+<p class="font-bold text-lg" style="">BTC</p>
+<p class="text-sm text-on-surface-variant" style="">Bitcoin</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg" style="">$70.863,65</p>
+<p class="text-[#01BC8D] font-bold" style="">0,59%</p>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#AF954F] text-4xl" style="">pentagon</span>
+</div>
+<div>
+<p class="font-bold text-lg" style="">XAUT</p>
+<p class="text-sm text-on-surface-variant" style="">Tether Gold</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg" style="">$4.500,99</p>
+<p class="text-error font-bold" style="">-1,28%</p>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#24CF99] text-4xl" style="font-variation-settings: &quot;FILL&quot; 1;">hexagon</span>
+</div>
+<div>
+<p class="font-bold text-lg" style="">KCS</p>
+<p class="text-sm text-on-surface-variant" style="">KuCoin Token</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg" style="">$8,18</p>
+<p class="text-error font-bold" style="">-0,77%</p>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-2xl" style="">person</span>
+</div>
+<div>
+<p class="font-bold text-lg" style="">SIREN</p>
+<p class="text-sm text-on-surface-variant" style="">SIREN</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg" style="">$1,93</p>
+<p class="text-[#01BC8D] font-bold" style="">8,55%</p>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 flex items-center justify-center">
+<span class="material-symbols-outlined text-black text-4xl" style="">toll</span>
+</div>
+<div>
+<p class="font-bold text-lg" style="">TAO</p>
+<p class="text-sm text-on-surface-variant" style="">Bittensor</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg" style="">$342,89</p>
+<p class="text-[#01BC8D] font-bold" style="">2,8%</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Coin mới Card -->
+<div class="bg-white rounded-[2.5rem] p-10 border border-outline-variant/20 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+<h3 class="text-2xl font-bold text-center mb-10 text-[#191c1e]" style="">Coin mới</h3>
+<div class="space-y-8">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#FF6B6B] text-4xl" style="">explosion</span>
+</div>
+<div>
+<p class="font-bold text-lg" style="">PRL</p>
+<p class="text-sm text-on-surface-variant" style="">Perle</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg" style="">$0,20241847</p>
+<p class="text-[#01BC8D] font-bold" style="">305,08%</p>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-[#191c1e] text-white">
+<span class="material-symbols-outlined" style="">security</span>
+</div>
+<div>
+<p class="font-bold text-lg" style="">ION</p>
+<p class="text-sm text-on-surface-variant" style="">Ice Open Network</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg" style="">$0,00162702</p>
+<p class="text-error font-bold" style="">-11,8%</p>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-blue-600 text-white">
+<span class="material-symbols-outlined" style="">shield_moon</span>
+</div>
+<div>
+<p class="font-bold text-lg" style="">KAT</p>
+<p class="text-sm text-on-surface-variant" style="">Katana</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg" style="">$0,01194283</p>
+<p class="text-[#01BC8D] font-bold" style="">9,33%</p>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-[#F3BA2F] text-white">
+<span class="material-symbols-outlined" style="">hexagon</span>
+</div>
+<div>
+<p class="font-bold text-lg" style="">XAUM</p>
+<p class="text-sm text-on-surface-variant" style="">Matrixdock Gold</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg" style="">$4.533,07</p>
+<p class="text-error font-bold" style="">-1,34%</p>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-indigo-100">
+<span class="material-symbols-outlined text-indigo-600" style="">wb_sunny</span>
+</div>
+<div>
+<p class="font-bold text-lg" style="">SN3</p>
+<p class="text-sm text-on-surface-variant" style="">Supernova Nebula3</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-lg" style="">$0,00146911</p>
+<p class="text-error font-bold" style="">-5,76%</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="flex justify-between items-center">
+<div class="flex gap-4">
+<button class="w-14 h-14 rounded-full border border-outline-variant/30 flex items-center justify-center hover:bg-surface-container-low transition-colors" style="">
+<span class="material-symbols-outlined" style="">arrow_back</span>
+</button>
+<button class="w-14 h-14 rounded-full border border-outline-variant/30 flex items-center justify-center hover:bg-surface-container-low transition-colors" style="">
+<span class="material-symbols-outlined" style="">arrow_forward</span>
+</button>
+</div>
+<a class="text-on-surface-variant font-bold flex items-center gap-2 hover:text-primary transition-colors" href="#" style="">
+Xem thêm <span class="material-symbols-outlined" style="">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Trust & Value Proposition -->
+<section class="py-32 px-8 overflow-hidden">
+<div class="max-w-screen-2xl mx-auto">
+<div class="text-center mb-20 max-w-3xl mx-auto">
+<h2 class="text-5xl font-extrabold text-on-surface tracking-tight mb-6 font-headline" style="">Khuôn khổ bảo mật và&nbsp;&nbsp;<span class="text-primary" style="">Tuân thủ</span></h2>
+<p class="text-lg text-on-surface-variant leading-relaxed" style="">Kết hợp giữa bảo mật cấp ngân hàng và trải nghiệm người dùng hiện đại, RYEX thiết lập tiêu chuẩn mới cho thị trường Tài sản mã hoá tại Việt Nam.</p>
+</div>
+<div class="grid md:grid-cols-3 gap-12">
+<div class="flex flex-col items-center text-center p-8 rounded-[2rem] bg-surface-container-low/50 hover:bg-white transition-colors duration-500 group">
+<div class="w-20 h-20 bg-white rounded-3xl shadow-md flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: &quot;FILL&quot; 1;">gavel</span>
+</div>
+<h3 class="text-2xl font-bold mb-4" style="">Tuân thủ pháp lý</h3>
+<p class="text-on-surface-variant leading-relaxed" style="">Vận hành đầy đủ giấy phép, tuân thủ nghiêm ngặt các quy định về phòng chống rửa tiền (AML) và định danh khách hàng (KYC) tại Việt Nam.</p>
+</div>
+<div class="flex flex-col items-center text-center p-8 rounded-[2rem] bg-surface-container-low/50 hover:bg-white transition-colors duration-500 group">
+<div class="w-20 h-20 bg-white rounded-3xl shadow-md flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: &quot;FILL&quot; 1;">security</span>
+</div>
+<h3 class="text-2xl font-bold mb-4" style="">Bảo mật đa lớp</h3>
+<p class="text-on-surface-variant leading-relaxed" style="">Hệ thống bảo vệ tài sản người dùng với công nghệ ví lạnh (Cold Storage) và xác thực đa yếu tố (MFA) tiên tiến nhất thế giới.</p>
+</div>
+<div class="flex flex-col items-center text-center p-8 rounded-[2rem] bg-surface-container-low/50 hover:bg-white transition-colors duration-500 group">
+<div class="w-20 h-20 bg-white rounded-3xl shadow-md flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: &quot;FILL&quot; 1;">headset_mic</span>
+</div>
+<h3 class="text-2xl font-bold mb-4" style="">Hỗ trợ 24/7 tại VN</h3>
+<p class="text-on-surface-variant leading-relaxed" style="">Đội ngũ chuyên viên người Việt sẵn sàng hỗ trợ bạn mọi lúc qua Hotline, Live Chat và Email với thời gian phản hồi dưới 3 phút.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Institutional Trust Banner -->
+<section class="mx-8 mb-24">
+<div class="max-w-screen-2xl mx-auto liquidity-gradient rounded-[3rem] p-12 md:p-24 text-white relative overflow-hidden shadow-2xl">
+<div class="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
+<svg class="h-full w-full fill-current" viewBox="0 0 100 100">
+<circle cx="50" cy="50" fill="none" r="40" stroke="white" stroke-width="0.5"></circle>
+<circle cx="50" cy="50" fill="none" r="30" stroke="white" stroke-width="0.5"></circle>
+</svg>
+</div>
+<div class="relative z-10 grid lg:grid-cols-2 gap-16 items-center">
+<div>
+<h2 class="text-4xl md:text-5xl font-extrabold mb-8 font-headline leading-tight" style="">Sẵn sàng bước vào kỷ nguyên tài sản số?</h2>
+<p class="text-xl opacity-90 mb-10 leading-relaxed" style="">Gia nhập cộng đồng hơn 500,000 nhà đầu tư tin dùng RYEX để tối ưu hóa danh mục đầu tư crypto của mình.</p>
+<div class="flex flex-wrap gap-4">
+<button class="px-8 py-4 bg-white text-primary font-bold rounded-2xl shadow-xl hover:bg-surface-container-lowest transition-all" style="">Bắt đầu giao dịch ngay</button>
+<button class="px-8 py-4 bg-transparent border-2 border-white/30 text-white font-bold rounded-2xl hover:bg-white/10 transition-all" style="">Tìm hiểu thêm</button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<div class="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20">
+<p class="text-3xl font-black mb-1" style="">99.9%</p>
+<p class="text-sm font-bold opacity-70" style="">Thời gian Up-time</p>
+</div>
+<div class="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20">
+<p class="text-3xl font-black mb-1" style="">0%</p>
+<p class="text-sm font-bold opacity-70" style="">Phí nạp rút VND</p>
+</div>
+<div class="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20">
+<p class="text-3xl font-black mb-1" style="">$50M+</p>
+<p class="text-sm font-bold opacity-70" style="">Quỹ bảo hiểm SAFU</p>
+</div>
+<div class="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20">
+<p class="text-3xl font-black mb-1" style="">#1</p>
+<p class="text-sm font-bold opacity-70" style="">CSAT tại Việt Nam</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#f7f9fb] dark:bg-slate-950 w-full py-16 border-t border-[#bbcac1]/15">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 px-8 max-w-screen-2xl mx-auto font-['Manrope'] text-sm leading-relaxed">
+<div class="col-span-1 md:col-span-1">
+<span class="text-xl font-bold text-[#006c4f] block mb-6 font-headline" style="">RYEX</span>
+<p class="text-[#3c4a43] opacity-80 mb-8" style="">RYEX - Sàn giao dịch Crypto được cấp phép tại Việt Nam, mang đến giải pháp đầu tư an toàn và hiệu quả.</p>
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary cursor-pointer hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-sm" style="">public</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary cursor-pointer hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-sm" style="">share</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary cursor-pointer hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-sm" style="">alternate_email</span>
+</div>
+</div>
+</div>
+<div>
+<h4 class="font-bold text-on-surface mb-6 uppercase tracking-widest text-xs" style="">Sản phẩm</h4>
+<ul class="space-y-4 text-[#3c4a43] opacity-80">
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Giao dịch Spot</li>
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Giao dịch P2P</li>
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Staking &amp; Earn</li>
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Ví RYEX</li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold text-on-surface mb-6 uppercase tracking-widest text-xs" style="">Tài nguyên</h4>
+<ul class="space-y-4 text-[#3c4a43] opacity-80">
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Học viện RYEX</li>
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Blog thị trường</li>
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">API Documentation</li>
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Trợ giúp</li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold text-on-surface mb-6 uppercase tracking-widest text-xs" style="">Pháp lý &amp; Tuân thủ</h4>
+<ul class="space-y-4 text-[#3c4a43] opacity-80">
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Điều khoản dịch vụ</li>
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Chính sách bảo mật</li>
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Giấy phép hoạt động</li>
+<li class="hover:text-[#01BC8D] transition-colors duration-200 cursor-pointer" style="">Phòng chống rửa tiền</li>
+</ul>
+</div>
+</div>
+<div class="max-w-screen-2xl mx-auto px-8 mt-16 pt-8 border-t border-[#bbcac1]/10 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-[#3c4a43] opacity-60 text-xs" style="">© 2024 RYEX. All rights reserved.</p>
+<p class="text-[#3c4a43] opacity-60 text-xs text-center md:text-right" style="">RYEX - Sàn giao dịch Crypto được cấp phép tại Việt Nam</p>
+</div>
+</footer>
+</body></html>
