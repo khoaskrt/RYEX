@@ -1,4 +1,16 @@
+'use client';
+
 import Link from 'next/link';
+import { useMemo, useState } from 'react';
+
+const AUTH_ERROR_MESSAGES = {
+  AUTH_EMAIL_ALREADY_EXISTS: 'Email đã được sử dụng, hãy sử dụng email khác',
+  AUTH_INVALID_INPUT: 'Vui lòng kiểm tra lại thông tin đã nhập.',
+  AUTH_PASSWORD_POLICY_FAILED: 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, số và ký tự đặc biệt.',
+  AUTH_RATE_LIMITED: 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.',
+  AUTH_PROVIDER_TEMPORARY_FAILURE: 'Hệ thống xác thực đang tạm thời gián đoạn, vui lòng thử lại.',
+  AUTH_INTERNAL_ERROR: 'Đã có lỗi hệ thống. Vui lòng thử lại sau.',
+};
 
 const leftPanelFeatures = [
   {
@@ -56,7 +68,101 @@ function LeftShowcase() {
   );
 }
 
+function validatePasswordPolicy(password) {
+  if (password.length < 8) return 'Mật khẩu phải có ít nhất 8 ký tự.';
+  if (!/[A-Z]/.test(password)) return 'Mật khẩu cần có ít nhất 1 ký tự in hoa.';
+  if (!/\d/.test(password)) return 'Mật khẩu cần có ít nhất 1 chữ số.';
+  if (!/[^\w\s]/.test(password)) return 'Mật khẩu cần có ít nhất 1 ký tự đặc biệt.';
+  return '';
+}
+
 function SignupForm({ prefillEmail }) {
+  const [email, setEmail] = useState(prefillEmail);
+  const [password, setPassword] = useState('');
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [showVerifyNotice, setShowVerifyNotice] = useState(false);
+
+  const isSubmitDisabled = useMemo(
+    () => isSubmitting || !email.trim() || !password || !agreeTerms,
+    [agreeTerms, email, isSubmitting, password]
+  );
+
+  function validateForm() {
+    const nextErrors = {};
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      nextErrors.email = 'Email không được để trống.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      nextErrors.email = 'Email không đúng định dạng.';
+    }
+
+    const passwordError = validatePasswordPolicy(password);
+    if (passwordError) {
+      nextErrors.password = passwordError;
+    }
+
+    if (!agreeTerms) {
+      nextErrors.agreeTerms = 'Vui lòng đồng ý Điều khoản dịch vụ và Chính sách bảo mật.';
+    }
+
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
+  function getErrorMessage(errorCode, fallbackMessage) {
+    if (errorCode && AUTH_ERROR_MESSAGES[errorCode]) {
+      return AUTH_ERROR_MESSAGES[errorCode];
+    }
+    return fallbackMessage || AUTH_ERROR_MESSAGES.AUTH_INTERNAL_ERROR;
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setSubmitError('');
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/v1/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setSubmitError(getErrorMessage(payload?.error?.code, payload?.error?.message));
+        return;
+      }
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('ryex_pending_verify_email', email.trim());
+      }
+      setShowVerifyNotice(true);
+      setPassword('');
+      setFieldErrors({});
+    } catch {
+      setSubmitError(AUTH_ERROR_MESSAGES.AUTH_INTERNAL_ERROR);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <>
       <div className="mb-6 flex gap-1 rounded-xl bg-surface-container-low p-1">
@@ -77,29 +183,46 @@ function SignupForm({ prefillEmail }) {
         </button>
       </div>
 
-      <form className="space-y-5">
+      <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Địa chỉ Email</label>
+          <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant" htmlFor="signup-email">
+            Địa chỉ Email
+          </label>
           <input
             className="w-full rounded-xl border-none border-b-2 border-transparent bg-surface-container-lowest px-4 py-3.5 transition-all duration-300 placeholder:text-outline-variant focus:border-b-2 focus:border-primary-container focus:ring-0"
-            defaultValue={prefillEmail}
+            id="signup-email"
+            name="email"
             placeholder="name@company.com"
             type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
           />
+          {fieldErrors.email ? <p className="text-sm text-error">{fieldErrors.email}</p> : null}
         </div>
 
         <div className="space-y-2">
-          <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Mật khẩu</label>
+          <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant" htmlFor="signup-password">
+            Mật khẩu
+          </label>
           <div className="relative">
             <input
               className="w-full rounded-xl border-none border-b-2 border-transparent bg-surface-container-lowest px-4 py-3.5 transition-all duration-300 placeholder:text-outline-variant focus:border-b-2 focus:border-primary-container focus:ring-0"
+              id="signup-password"
+              name="password"
               placeholder="Tối thiểu 8 ký tự"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
             />
-            <button className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant" type="button">
-              <span className="material-symbols-outlined text-xl">visibility_off</span>
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant"
+              onClick={() => setShowPassword((current) => !current)}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-xl">{showPassword ? 'visibility' : 'visibility_off'}</span>
             </button>
           </div>
+          {fieldErrors.password ? <p className="text-sm text-error">{fieldErrors.password}</p> : null}
         </div>
 
         <div className="space-y-2">
@@ -117,7 +240,9 @@ function SignupForm({ prefillEmail }) {
           <label className="group flex cursor-pointer items-start gap-3">
             <input
               className="mt-1 h-5 w-5 rounded border-none bg-surface-container text-primary focus:ring-primary"
+              checked={agreeTerms}
               type="checkbox"
+              onChange={(event) => setAgreeTerms(event.target.checked)}
             />
             <span className="select-none text-sm leading-snug text-on-surface-variant">
               Tôi đồng ý với{' '}
@@ -131,15 +256,36 @@ function SignupForm({ prefillEmail }) {
               của RYEX Vietnam.
             </span>
           </label>
+          {fieldErrors.agreeTerms ? <p className="text-sm text-error">{fieldErrors.agreeTerms}</p> : null}
         </div>
+        {submitError ? <p className="text-sm text-error">{submitError}</p> : null}
 
         <button
           className="mt-4 w-full rounded-xl py-4 font-bold text-white shadow-[0_8px_24px_rgba(0,108,79,0.2)] transition-all duration-200 active:scale-95 liquidity-gradient"
+          disabled={isSubmitDisabled}
           type="submit"
         >
-          Đăng ký tài khoản
+          {isSubmitting ? 'Đang xử lý...' : 'Đăng ký tài khoản'}
         </button>
       </form>
+
+      {showVerifyNotice ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-6">
+          <div className="w-full max-w-md rounded-2xl bg-surface-container-lowest p-6 shadow-xl">
+            <h3 className="text-xl font-bold text-on-surface">Đã gửi email xác minh</h3>
+            <p className="mt-3 text-sm text-on-surface-variant">
+              RYEX đã gửi email verify đến địa chỉ của bạn. Vui lòng kiểm tra inbox hoặc spam để hoàn tất kích hoạt tài khoản.
+            </p>
+            <button
+              className="mt-5 w-full rounded-xl py-3 font-semibold text-white liquidity-gradient"
+              onClick={() => setShowVerifyNotice(false)}
+              type="button"
+            >
+              Tôi đã hiểu
+            </button>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
