@@ -1,12 +1,27 @@
 import { randomUUID } from 'node:crypto';
+import { NextResponse } from 'next/server';
 import { getFirebaseAuth } from '@/server/auth/firebaseAdmin';
 import { AUTH_ERROR, AuthApiError, jsonError } from '@/server/auth/errors';
 import { withTransaction } from '@/server/db/postgres';
 import { enforceRateLimit } from '@/server/auth/rateLimit';
 import { getRequestMeta } from '@/server/auth/http';
-import { createUserSession, insertAuditEvent, insertLoginEvent, upsertAuthIdentity, upsertUser } from '@/server/auth/repository';
+import {
+  createUserSession,
+  insertAuditEvent,
+  insertLoginEvent,
+  insertTrustedDevice,
+  upsertAuthIdentity,
+  upsertUser,
+} from '@/server/auth/repository';
+import { attachSessionToResponse, attachTrustedDeviceCookie } from '@/server/auth/sessionCookies';
+import { createTrustedTokenPayload, generateDeviceId, getTrustedExpiryMs, hashTrustToken } from '@/server/auth/trustedDevice';
 
 export const runtime = 'nodejs';
+
+function sessionCookieMaxAgeSeconds() {
+  const n = Number(process.env.AUTH_REFRESH_TOKEN_TTL_SECONDS);
+  return Number.isFinite(n) && n > 0 ? n : 86400;
+}
 
 export async function POST(request) {
   const { requestId, ip, userAgent } = getRequestMeta(request);
@@ -14,7 +29,7 @@ export async function POST(request) {
   try {
     enforceRateLimit(`session-sync:${ip}`, 60, 15 * 60 * 1000);
 
-    const { idToken, deviceId } = await request.json();
+    const { idToken, deviceId: bodyDeviceId, rememberDevice = false } = await request.json();
     if (!idToken) {
       throw new AuthApiError(AUTH_ERROR.INVALID_INPUT, 'idToken is required', 400);
     }
@@ -33,6 +48,7 @@ export async function POST(request) {
     }
 
     const sessionRef = randomUUID();
+    const sessionMaxAge = sessionCookieMaxAgeSeconds();
 
     const result = await withTransaction(async (client) => {
       const user = await upsertUser(client, {
@@ -49,12 +65,14 @@ export async function POST(request) {
         emailVerified: true,
       });
 
+      const normalizedDeviceId = bodyDeviceId || generateDeviceId();
+
       await createUserSession(client, {
         userId: user.id,
         sessionRef,
         ip,
         userAgent,
-        deviceId,
+        deviceId: normalizedDeviceId,
       });
 
       await insertLoginEvent(client, {
@@ -65,7 +83,7 @@ export async function POST(request) {
         requestId,
         ip,
         userAgent,
-        deviceId,
+        deviceId: normalizedDeviceId,
       });
 
       await insertAuditEvent(client, {
@@ -80,18 +98,52 @@ export async function POST(request) {
         payload: { source: 'api_v1_auth_session_sync' },
       });
 
-      return { user };
+      let trustedToken = null;
+      let trustedExpiresAtMs = null;
+
+      if (rememberDevice) {
+        trustedExpiresAtMs = getTrustedExpiryMs();
+        trustedToken = createTrustedTokenPayload({
+          email: firebaseUser.email || '',
+          deviceId: normalizedDeviceId,
+          expiresAt: trustedExpiresAtMs,
+        });
+
+        await insertTrustedDevice(client, {
+          userId: user.id,
+          email: firebaseUser.email || '',
+          deviceId: normalizedDeviceId,
+          trustTokenHash: hashTrustToken(trustedToken),
+          expiresAt: new Date(trustedExpiresAtMs).toISOString(),
+        });
+      }
+
+      return { user, trustedToken, trustedExpiresAtMs, deviceId: normalizedDeviceId };
     });
 
-    return Response.json(
+    const response = NextResponse.json(
       {
         sessionRef,
         userStatus: result.user.status,
         emailVerified: true,
+        trustedDeviceEnabled: Boolean(rememberDevice && result.trustedToken),
+        deviceId: result.deviceId,
         requestId,
       },
       { status: 200 }
     );
+
+    attachSessionToResponse(response, sessionRef, sessionMaxAge);
+
+    if (rememberDevice && result.trustedToken && result.trustedExpiresAtMs) {
+      const trustedMaxAge = Math.max(
+        60,
+        Math.ceil((result.trustedExpiresAtMs - Date.now()) / 1000)
+      );
+      attachTrustedDeviceCookie(response, result.trustedToken, trustedMaxAge);
+    }
+
+    return response;
   } catch (error) {
     return jsonError(error, requestId);
   }

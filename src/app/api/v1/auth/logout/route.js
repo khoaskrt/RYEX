@@ -1,40 +1,52 @@
-import { AUTH_ERROR, AuthApiError, jsonError } from '@/server/auth/errors';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { jsonError } from '@/server/auth/errors';
 import { withTransaction } from '@/server/db/postgres';
 import { getRequestMeta } from '@/server/auth/http';
-import { closeSession, insertAuditEvent } from '@/server/auth/repository';
+import { closeSession, insertAuditEvent, revokeTrustedDevicesForUser } from '@/server/auth/repository';
+import { SESSION_COOKIE_NAME, clearAuthCookies } from '@/server/auth/sessionCookies';
 
 export const runtime = 'nodejs';
 
 export async function POST(request) {
   const { requestId, ip, userAgent } = getRequestMeta(request);
 
+  let body = {};
   try {
-    const { sessionRef } = await request.json();
+    body = await request.json();
+  } catch {
+    body = {};
+  }
 
-    if (!sessionRef) {
-      throw new AuthApiError(AUTH_ERROR.INVALID_INPUT, 'sessionRef is required', 400);
-    }
+  const cookieStore = cookies();
+  const sessionRef = body.sessionRef || cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-    await withTransaction(async (client) => {
-      const session = await closeSession(client, sessionRef);
-      if (!session) {
-        throw new AuthApiError(AUTH_ERROR.UNAUTHORIZED, 'Session not found or already closed', 401);
-      }
-
-      await insertAuditEvent(client, {
-        actorType: 'user',
-        action: 'AUTH_LOGOUT',
-        resourceType: 'session',
-        resourceId: sessionRef,
-        requestId,
-        ip,
-        userAgent,
-        payload: { source: 'api_v1_auth_logout' },
+  try {
+    if (sessionRef) {
+      await withTransaction(async (client) => {
+        const closed = await closeSession(client, sessionRef);
+        if (closed?.user_id) {
+          await revokeTrustedDevicesForUser(client, closed.user_id);
+        }
+        if (closed) {
+          await insertAuditEvent(client, {
+            actorType: 'user',
+            action: 'AUTH_LOGOUT',
+            resourceType: 'session',
+            resourceId: sessionRef,
+            requestId,
+            ip,
+            userAgent,
+            payload: { source: 'api_v1_auth_logout' },
+          });
+        }
       });
-    });
-
-    return new Response(null, { status: 204 });
+    }
   } catch (error) {
     return jsonError(error, requestId);
   }
+
+  const res = new NextResponse(null, { status: 204 });
+  clearAuthCookies(res);
+  return res;
 }

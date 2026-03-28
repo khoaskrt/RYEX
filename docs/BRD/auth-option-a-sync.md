@@ -1,171 +1,236 @@
-# Auth Option A Sync Addendum (MVP)
+# Auth Option A — BRD / Plan đồng bộ (MVP)
 
-## 1) Problem framing
-- **Business goal:** Chốt auth flow Option A để user hoàn tất signup -> verify -> login vào app/market an toàn, đồng thời có cơ chế trusted device để giảm ma sát lặp lại.
-- **User pain:** User dễ drop nếu không nhận mail hoặc không hiểu vì sao bị yêu cầu xác minh lại khi login.
-- **Success metric:**
-  - `signup_submit -> email_verified` >= 55%
-  - `login_start -> login_success` >= 85% (với trusted device), >= 70% (không trusted device)
-  - `resend_click -> resend_success` >= 95%
-  - Auth technical error rate < 2% sessions
-
-## 2) Assumptions
-- PO chốt **Option A cho MVP**: login yêu cầu email-link challenge mỗi lần, ngoại trừ trusted device còn hiệu lực.
-- Verify email là bắt buộc trước khi vào `/app/market`; account chưa verify không được vào app/market.
-- Trusted device TTL = 30 ngày, gắn theo user + device fingerprint/session binding phía backend.
-- Nếu mail provider chậm/lỗi, user tự bấm resend; chưa triển khai edge cases nâng cao ngoài cooldown + cap.
-- Resend verification email được đưa vào scope triển khai ngay (P0).
-- UX signup giữ constraint từ skill: không landing nav, logo về `/`, bug dải đen phải vào defect backlog.
-
-## 3) User stories
-- **US-01 (P0):** Là user mới, tôi muốn signup bằng email/password để tạo account.
-- **US-02 (P0):** Là user mới, tôi muốn verify email bắt buộc trước khi vào app/market để account được kích hoạt đúng chuẩn.
-- **US-03 (P0):** Là user đăng nhập, tôi muốn nhận email-link challenge mỗi lần login để đảm bảo an toàn.
-- **US-04 (P0):** Là user thường dùng, tôi muốn trusted device 30 ngày để giảm bước xác minh lặp lại.
-- **US-05 (P0):** Là user chưa nhận được email, tôi muốn bấm resend verification email để tiếp tục flow.
-- **US-06 (P0):** Là user, tôi muốn signup page đúng layout (không nav landing, logo về `/`) để không bị nhiễu onboarding.
-
-## 4) Acceptance criteria (Given/When/Then)
-
-### AC-01 Signup tạo account
-- **Given** user ở `/app/auth/signup`, nhập email hợp lệ và password đạt policy
-- **When** user bấm `Create account`
-- **Then** hệ thống tạo account trạng thái `pending_email_verification` và hiển thị trạng thái đã gửi email verify.
-
-### AC-02 Chặn vào app khi chưa verify
-- **Given** account chưa verify email
-- **When** user cố truy cập `/app/market`
-- **Then** hệ thống chặn truy cập và điều hướng về auth flow kèm thông báo cần verify email.
-
-### AC-03 Verify email thành công
-- **Given** user mở verification link hợp lệ
-- **When** callback verify thành công
-- **Then** account chuyển `active`, user được vào app/market theo redirect contract.
-
-### AC-04 Login challenge mỗi lần (không trusted)
-- **Given** user đã có account verified nhưng không có trusted device còn hiệu lực
-- **When** user bấm login
-- **Then** hệ thống gửi email-link challenge và chỉ login thành công sau khi user click link hợp lệ.
-
-### AC-05 Bypass challenge với trusted device 30 ngày
-- **Given** user đã từng hoàn tất challenge trên cùng device và chọn trusted device
-- **When** user login lại trong vòng 30 ngày
-- **Then** hệ thống cho phép login không yêu cầu email-link challenge mới.
-
-### AC-06 Trusted device hết hạn
-- **Given** trusted device đã quá 30 ngày hoặc bị revoke
-- **When** user login
-- **Then** hệ thống yêu cầu email-link challenge như flow chuẩn.
-
-### AC-07 Resend verification email thành công
-- **Given** user ở trạng thái chờ verify hoặc chờ login challenge email
-- **When** user bấm `Resend email`
-- **Then** hệ thống gửi lại email, hiển thị thông báo thành công, và áp dụng cooldown 60 giây.
-
-### AC-08 Cooldown resend
-- **Given** user vừa bấm resend thành công
-- **When** user tiếp tục bấm resend trong 60 giây
-- **Then** nút resend bị disable hoặc trả lỗi cooldown rõ ràng.
-
-### AC-09 Cap resend theo giờ
-- **Given** cùng một email đã resend đủ 5 lần trong 1 giờ
-- **When** user bấm resend lần tiếp theo
-- **Then** hệ thống từ chối, trả mã lỗi rate-limit và hướng dẫn thử lại sau.
-
-### AC-10 Provider chậm/lỗi
-- **Given** mail provider timeout/chậm/lỗi tạm thời
-- **When** user submit signup/login challenge hoặc resend
-- **Then** hiển thị lỗi có thể retry/resend; không hiển thị trạng thái như đã hoàn tất verify/login.
-
-### AC-11 UX signup constraints
-- **Given** user mở `/app/auth/signup`
-- **When** trang render
-- **Then** không có landing nav; logo RYEX click về `/`.
-
-### AC-12 Defect layout/theme signup
-- **Given** xuất hiện dải đen header/footer trên signup
-- **When** QA hoặc FE phát hiện
-- **Then** ghi nhận defect riêng, gắn severity và bắt buộc fix trước release nếu ảnh hưởng onboarding trust.
-
-## 5) Prioritized backlog (P0/P1/P2 + dependency + effort)
-
-| ID | Backlog item | Priority | Effort | Dependency |
-|---|---|---|---|---|
-| BA-AUTH-01 | Chốt contract Option A: verify bắt buộc trước app/market | P0 | S | PO decision finalized |
-| BE-AUTH-01 | Signup tạo account + trạng thái pending verification | P0 | M | BE auth baseline |
-| BE-AUTH-02 | Gate `/app/market` theo `email_verified`/user status | P0 | M | BE-AUTH-01 |
-| BE-AUTH-03 | Login email-link challenge mỗi lần (default path) | P0 | M/L | BE-AUTH-01, provider integration |
-| BE-AUTH-04 | Trusted device 30 ngày (issue/check/revoke token) | P0 | M/L | BE-AUTH-03 |
-| BE-AUTH-05 | Resend endpoint + cooldown 60s + cap 5/giờ/email | P0 | M | BE-AUTH-03, rate-limit service |
-| FE-AUTH-01 | Signup UI state: sent/check inbox/spam + error states | P0 | M | BE-AUTH-01 |
-| FE-AUTH-02 | Login flow với challenge mỗi lần + trusted device UX | P0 | M | BE-AUTH-03, BE-AUTH-04 |
-| FE-AUTH-03 | Resend button/state/cooldown countdown | P0 | M | BE-AUTH-05 |
-| FE-AUTH-04 | Enforce signup UX constraints + defect hook dải đen | P0 | S | Existing layout wrapper |
-| QA-AUTH-01 | E2E test matrix signup/verify/login/trusted/resend | P0 | M | BE/FE P0 ready on staging |
-| QA-AUTH-02 | Rate-limit + cooldown + expiry tests | P0 | M | BE-AUTH-04, BE-AUTH-05 |
-| ANA-AUTH-01 | Instrument analytics events auth funnel Option A | P1 | S/M | FE/BE instrumentation |
-| AUTH-OPS-01 | Alerting cho provider failure và resend rate-limit spike | P1 | S | Observability baseline |
-| AUTH-UX-01 | Edge cases nâng cao resend/fallback automation | P2 | M | Post-MVP |
-
-## 6) Risks and mitigations
-- **Product risk:** Login mỗi lần tăng ma sát, giảm conversion.  
-  **Mitigation:** trusted device 30 ngày, copy rõ ràng về lý do bảo mật, đo funnel theo nhóm trusted/non-trusted.
-- **Compliance risk:** wording có thể bị hiểu nhầm email verify = KYC done.  
-  **Mitigation:** tách rõ copy; cần xác thực với legal/compliance theo thị trường mục tiêu.
-- **Fraud/abuse risk:** resend bị abuse để spam mailbox.  
-  **Mitigation:** cooldown 60s, cap 5/giờ/email, rate-limit theo IP/device, monitor anomaly.
-- **Technical delivery risk:** mismatch FE/BE contract cho trusted device và callback status.  
-  **Mitigation:** chốt error taxonomy + contract test + staging E2E bắt buộc trước release.
-
-## 7) Analytics events
-
-| Event name | Trigger point | Required properties |
-|---|---|---|
-| `auth_signup_submitted` | User submit signup | `route`, `email_domain`, `password_policy_pass` |
-| `auth_signup_created` | Account tạo thành công | `user_id_hash`, `verification_required=true` |
-| `auth_verification_email_sent` | Gửi mail verify/challenge thành công | `flow_type` (`signup_verify`/`login_challenge`), `provider` |
-| `auth_verification_link_clicked` | Callback nhận click link | `flow_type`, `link_status` |
-| `auth_login_challenge_required` | Login cần email-link challenge | `trusted_device_present=false` |
-| `auth_login_trusted_device_bypass` | Login bypass challenge | `trusted_device_age_days`, `trusted_device_present=true` |
-| `auth_resend_clicked` | User bấm resend | `flow_type`, `cooldown_remaining_sec` |
-| `auth_resend_blocked` | Resend bị chặn | `reason` (`cooldown`/`hourly_cap`), `attempt_count_last_hour` |
-| `auth_login_success` | User vào `/app/market` | `method` (`email_link`/`trusted_device`), `email_verified=true` |
-| `auth_login_failed` | Login fail | `error_code`, `flow_step` |
-
-## 8) Open questions
-- Trusted device revoke có cần UI self-service ngay trong MVP hay chỉ revoke khi logout all sessions?
-- Device fingerprint strategy dùng cookie ký + UA/IP hash ở mức nào để cân bằng bảo mật và false positive?
-- Khi provider down kéo dài, có cần fallback provider tự động hay giữ manual resend cho MVP (PO hiện chốt manual)?
-- Resend cap 5/giờ/email có cần thêm cap theo IP để chống abuse nhóm email?
-- Copy tiếng Việt cuối cùng cho trạng thái `cooldown` và `hourly_cap` do ai duyệt (PO hay Compliance)?
-
-## 9) Task-ready breakdown (assign ngay)
-
-### BE tasks (ready for implementation)
-1. Thêm/chuẩn hóa endpoint signup + verification status gate + login challenge theo Option A.
-2. Implement trusted device 30 ngày: issue token, validate token, expiry, revoke path.
-3. Implement resend endpoint với rule: cooldown 60s, cap 5 lần/giờ/email, error code rõ.
-4. Chuẩn hóa error codes cho FE map state: invalid/expired link, cooldown, hourly cap, provider temporary failure.
-5. Bổ sung audit log + analytics hooks server-side (không log secret/token/password).
-
-### FE tasks (ready for implementation)
-1. Signup flow: hiển thị trạng thái sent/check inbox/spam + xử lý error state đầy đủ.
-2. Login flow: mặc định yêu cầu challenge mỗi lần, trừ khi backend trả trusted-device bypass.
-3. Resend UI: nút resend + countdown 60s + thông báo khi chạm cap 5/giờ/email.
-4. Enforce UX constraints signup: không landing nav, logo về `/`; mở defect nếu có dải đen.
-5. Bắn analytics events theo spec và không gửi dữ liệu nhạy cảm.
-
-### QA tasks (ready for execution)
-1. Test matrix P0: signup -> verify -> login challenge -> trusted bypass -> market access gate.
-2. Test resend rules: cooldown 60s, cap 5/giờ/email, provider timeout/error.
-3. Test security/privacy: không lộ secret/token/password trong UI/network/log.
-4. Test UX constraints signup và regression bug dải đen theo nhiều viewport.
-5. Xuất defect report severity-based (P0/P1/P2) với repro rõ + evidence.
+Tài liệu này là **single source of truth** cho Option A (verify bắt buộc, login email-link + trusted device 30 ngày, resend có cooldown/cap). Cập nhật theo **ba-crypto-mvp** và chốt PO.
 
 ---
 
-### Definition of done (gói Option A sync)
-- FE/BE/QA thống nhất contract cho 4 nhánh: signup verify, login challenge, trusted bypass, resend.
-- Toàn bộ AC-01..AC-12 pass trên staging.
-- Không còn defect P0 ở auth flow trước release.
-- Event tracking chính bắn đủ để đo conversion Option A.
+## A. Problem framing
+
+- **Business goal:** User hoàn tất **đăng ký → verify email → đăng nhập**; **tài khoản được lưu trong DB** nội bộ; vào khu vực app (vd. `/app/market`) chỉ khi email đã verify và session hợp lệ theo contract Option A.
+- **User pain:** Không nhận/không hiểu email verify hoặc login challenge; UI gợi có tính năng (OAuth, referral, SĐT) nhưng không chạy → mất niềm tin onboarding.
+- **KPI (mục tiêu đo lường):**
+  - `signup_submit → email_verified` ≥ 55% (điều chỉnh theo dữ liệu thực tế sau sprint đầu).
+  - `login_start → login_success` ≥ 85% (trusted), ≥ 70% (không trusted) — tham chiếu.
+  - `resend_click → resend_success` ≥ 95%.
+  - Auth technical error rate dưới 2% sessions (staging/prod).
+
+---
+
+## B. Assumptions
+
+- PO chốt **Option A**: login mặc định **email-link challenge** mỗi lần, **trừ** khi **trusted device** còn hiệu lực (30 ngày).
+- **Verify email bắt buộc** trước khi vào `/app/market` (hoặc route app được PO liệt kê).
+- Trusted device gắn **user + device id** (cookie ký + DB) theo triển khai BE hiện tại; không mở rộng fingerprint nâng cao trong MVP.
+- Resend: cooldown **60s**, cap **5 lần/giờ/email** (signup verify + login challenge/resend theo contract API).
+- **PO chốt: Logout không bắt buộc trong MVP** — API logout có thể tồn tại cho dev/QA hoặc sau MVP; không đưa logout UI vào DoD MVP.
+- UX signup: **không** nav kiểu landing; logo RYEX về `/`; defect dải đen header/footer → backlog defect (skill ba-crypto-mvp).
+
+---
+
+## C. Scope MVP vs post-MVP
+
+### MVP (must-have — đủ để ship luồng PO)
+
+- Signup email/password → lưu user + identity trong DB → gửi / hướng dẫn verify email.
+- Verify qua link → đồng bộ session (cookie) → vào app khi đủ điều kiện verify + session.
+- Login: challenge email-link; trusted bypass trong TTL; resend có cooldown + cap.
+- Gate app (vd. market) theo session + `email_verified` (server-side).
+- **UX trung thực:** không hiển thị nút/field “giả” (xem backlog **FE-AUTH-HONEST-***).
+
+### Post-MVP (nâng cấp — không chặn MVP theo PO)
+
+- Middleware tập trung cho mọi route `/app/*` (khi số trang nhạy cảm tăng).
+- `GET /api/v1/auth/session` cho client.
+- Rate limit **distributed** (Redis/DB) thay vì in-memory đơn instance.
+- **Logout UI** và self-service revoke trusted device qua UI.
+- Cooldown resend đồng bộ sau F5 (localStorage timestamp hoặc API).
+- Email validation client chặt hơn (ngoài validate Firebase).
+- Password reset, OAuth, phone auth, referral **khi PO đưa vào backlog**.
+- Hiển thị `requestId` trên thông báo lỗi (hỗ trợ CS).
+- Client-side polling session (bổ sung sau server guard).
+
+---
+
+## D. User stories
+
+| ID | Story | Priority |
+|----|--------|----------|
+| **US-01** | Là user mới, tôi muốn đăng ký bằng email/password để có account và dữ liệu lưu trong hệ thống. | P0 |
+| **US-02** | Là user mới, tôi muốn **bắt buộc verify email** trước khi vào app/market. | P0 |
+| **US-03** | Là user đã verify, tôi muốn đăng nhập qua **email-link challenge** khi không có trusted device. | P0 |
+| **US-04** | Là user thường xuyên, tôi muốn **trusted device 30 ngày** để giảm bước mở email lặp lại. | P0 |
+| **US-05** | Là user chưa nhận mail, tôi muốn **resend** với giới hạn cooldown/cap rõ ràng. | P0 |
+| **US-06** | Là user, tôi muốn trang signup/login **không gợi tính năng chưa có** (OAuth, referral, SĐT như đã bật). | P0 |
+| **US-07** | Là user, tôi muốn trang signup đúng layout (không landing nav, logo về `/`). | P0 |
+| **US-08** | *(Post-MVP)* Là user, tôi muốn **đăng xuất** từ UI để kết thúc phiên trên máy dùng chung. | P1 |
+
+---
+
+## E. Acceptance criteria (Given / When / Then)
+
+### E.1 Luồng core (P0)
+
+**AC-01 Signup tạo account + DB**  
+- **Given** user ở `/app/auth/signup`, email hợp lệ, password đạt policy  
+- **When** submit đăng ký  
+- **Then** có bản ghi user (và identity liên quan) trong DB trạng thái chờ verify; UI báo đã gửi / cần kiểm tra email.
+
+**AC-02 Chặn app khi chưa verify**  
+- **Given** account chưa `email_verified`  
+- **When** truy cập `/app/market` (hoặc route được gate)  
+- **Then** redirect về auth kèm lý do (vd. `verify_required`).
+
+**AC-03 Verify email thành công**  
+- **Given** link verify hợp lệ  
+- **When** callback xử lý xong + sync session  
+- **Then** identity phản ánh verified; user vào được app theo redirect contract.
+
+**AC-04 Login challenge (không trusted)**  
+- **Given** user verified, không trusted còn hạn  
+- **When** login  
+- **Then** gửi email-link; chỉ hoàn tất sau khi mở link hợp lệ + sync session.
+
+**AC-05 Trusted bypass**  
+- **Given** trusted device còn hạn và khớp BE  
+- **When** login cùng email  
+- **Then** tạo session hợp lệ **không** yêu cầu gửi challenge mới (theo contract BE/FE).
+
+**AC-06 Trusted hết hạn / revoke**  
+- **Given** trusted hết hạn hoặc đã revoke  
+- **When** login  
+- **Then** quay về flow challenge.
+
+**AC-07–AC-09 Resend**  
+- Resend thành công có phản hồi rõ; trong 60s: UI hoặc API từ chối cooldown; sau 5 lần/giờ/email: từ chối cap với mã lỗi thống nhất.
+
+**AC-10 Provider lỗi**  
+- **Given** provider tạm lỗi  
+- **When** signup / challenge / resend  
+- **Then** không báo success giả; cho phép retry/resend khi hợp lệ.
+
+**AC-11 UX signup constraints**  
+- **Given** `/app/auth/signup`  
+- **When** render  
+- **Then** không nav landing; logo RYEX → `/`.
+
+**AC-12 Dải đen layout**  
+- Nếu có → defect riêng, severity theo QA; fix trước release nếu ảnh hưởng niềm tin onboarding.
+
+### E.2 UX trung thực (P0 — bổ sung theo rà soát MVP)
+
+**AC-13 Không referral “chết”**  
+- **Given** MVP **không** có nghiệp vụ referral  
+- **When** user mở signup  
+- **Then** không có field mã giới thiệu **hoặc** field được ẩn hoàn toàn đến khi PO mở scope.
+
+**AC-14 Không OAuth giả**  
+- **Given** chưa tích hợp Google/Apple/Facebook  
+- **When** user mở login/signup  
+- **Then** không có nút như đã bật sẵn; nếu hiển thị thì **disabled + nhãn** (vd. “Sắp có”) — không click im lặng.
+
+**AC-15 Tab SĐT**  
+- **Given** phone auth chưa có  
+- **When** render  
+- **Then** không có tab/separator gợi đã có kênh SĐT; hoặc một dòng copy “Sắp có” ngoài tab.
+
+**AC-16 Điều khoản / privacy**  
+- **Given** user tick đồng ý điều khoản  
+- **When** xem link  
+- **Then** không dùng `href="#"` giả là trang pháp lý; **URL thật** hoặc copy rõ “Nội dung sẽ được công bố tại …” — **PO/legal chốt** trước release nếu có rủi ro compliance.
+
+### E.3 Logout (ngoài DoD MVP)
+
+**AC-17 (P1 / post-MVP)**  
+- Logout từ UI: chỉ bắt buộc khi PO đưa **US-08** vào phạm vi release; **không** nằm trong Definition of Done MVP hiện tại.
+
+---
+
+## F. Backlog ưu tiên (P0 / P1 / P2)
+
+| ID | Item | P | Effort | Dependency / ghi chú |
+|----|------|---|--------|----------------------|
+| BA-AUTH-01 | Chốt contract Option A + gate app | P0 | S | PO |
+| BE-AUTH-01 | Signup + persist DB + verify path | P0 | M | Firebase + DB |
+| BE-AUTH-02 | Gate app theo session + `email_verified` | P0 | M | BE-AUTH-01 |
+| BE-AUTH-03 | Login challenge + session khi trusted/challenge | P0 | M/L | BE-AUTH-01 |
+| BE-AUTH-04 | Trusted device 30d + revoke (API) | P0 | M/L | BE-AUTH-03 |
+| BE-AUTH-05 | Resend + cooldown + cap | P0 | M | BE-AUTH-03 |
+| FE-AUTH-01 | Signup states + errors | P0 | M | BE-AUTH-01 |
+| FE-AUTH-02 | Login challenge + trusted UX | P0 | M | BE-AUTH-03,04 |
+| FE-AUTH-03 | Resend UI + map lỗi cooldown/cap | P0 | M | BE-AUTH-05 |
+| FE-AUTH-04 | Signup layout constraints + defect dải đen | P0 | S | Layout |
+| **FE-AUTH-HONEST-01** | Ẩn/gỡ referral / OAuth giả / tab SĐT misleading | P0 | S | AC-13–15 |
+| **FE-AUTH-HONEST-02** | Điều khoản & privacy: URL hoặc copy tạm PO/legal | P0 | S | AC-16 |
+| QA-AUTH-01 | E2E signup → verify → login → trusted → gate | P0 | M | Staging |
+| QA-AUTH-02 | Resend cooldown/cap + provider error | P0 | M | BE-AUTH-05 |
+| ANA-AUTH-01 | Events funnel Option A | P1 | S/M | Instrumentation |
+| **FE-AUTH-LOGOUT-01** | Nút logout + gọi API (chỉ khi PO bật US-08) | P1 | S | PO, API logout |
+| AUTH-OPS-01 | Alerting provider / resend spike | P1 | S | Observability |
+| AUTH-MW-01 | Middleware `/app` thống nhất | P2 | M | Nhiều route nhạy cảm |
+| AUTH-API-01 | `GET /api/v1/auth/session` | P2 | M | Client state nâng cao |
+| AUTH-RATE-01 | Rate limit Redis/DB | P2 | M | Scale multi-instance |
+| AUTH-UX-01 | Cooldown persist sau F5 | P2 | S | Polish |
+| AUTH-UX-02 | Email regex client chặt | P2 | S | Polish |
+| AUTH-DEBT-01 | Dọn component/login legacy không dùng | P2 | S | Code hygiene |
+
+---
+
+## G. Risks và mitigation
+
+| Risk | Mitigation |
+|------|------------|
+| Login challenge tăng ma sát | Trusted 30d; copy rõ; đo funnel trusted vs không |
+| User hiểu nhầm verify = KYC | Copy tách biệt; legal review thị trường |
+| Abuse resend | Cooldown + cap + IP limit (khi PO yêu cầu); monitor |
+| FE/BE contract lệch | Error taxonomy chung; contract test; E2E staging |
+| UI misleading (OAuth/referral) | AC-13–15; ưu tiên P0 honest UI |
+| Link điều khoản giả | AC-16; PO/legal chốt URL hoặc tạm thời |
+
+---
+
+## H. Analytics events (tối thiểu)
+
+| Event | Trigger | Properties gợi ý |
+|-------|---------|------------------|
+| `auth_signup_submitted` | Submit signup | `route`, `email_domain` (hash nếu cần), policy pass |
+| `auth_signup_created` | Tạo account thành công | `verification_required=true` |
+| `auth_verification_email_sent` | Gửi mail verify/challenge | `flow_type`, provider |
+| `auth_verification_link_clicked` | Callback mở link | `flow_type`, outcome |
+| `auth_login_challenge_required` | Cần challenge | `trusted_present` |
+| `auth_login_trusted_device_bypass` | Bypass | optional age bucket |
+| `auth_resend_clicked` / `auth_resend_blocked` | Resend | `reason`, cooldown/cap meta |
+| `auth_login_success` | Vào app thành công | `method`, verified |
+
+Không gửi password, token thô, secret lên analytics.
+
+---
+
+## I. Open questions
+
+- Điều khoản & privacy: **URL chính thức** và ngôn ngữ pháp lý do ai duyệt trước go-live?
+- Trusted revoke khi **chưa có logout UI**: chấp nhận revoke chỉ qua hết hạn TTL / thao tác support / API nội bộ cho đến P1?
+- Provider down kéo dài: giữ **manual resend** hay cần fallback (post-MVP)?
+- Có cần **cap resend theo IP** thêm (PO) hay đủ cap theo email cho MVP?
+
+---
+
+## J. Task-ready (gán team)
+
+**BE:** signup + verify gate + login challenge + trusted + resend + error codes + audit (không log secret).
+
+**FE:** signup/login/resend states; **FE-AUTH-HONEST**; layout signup; analytics.
+
+**QA:** matrix P0; resend; honest UI regression; không lộ secret trong network/UI log.
+
+---
+
+## K. Definition of Done — gói Option A MVP (đồng bộ PO)
+
+- Toàn bộ **AC-01–AC-12** và **AC-13–AC-16** pass trên staging.
+- **Không** yêu cầu **AC-17 (logout UI)** trong go-live MVP trừ khi PO thay đổi scope.
+- Không defect **P0** trên luồng auth; defect layout (dải đen) xử lý theo severity QA.
+- Events chính trong mục **H** đã bắn đủ để đọc funnel cơ bản.
+
+---
+
+*Tài liệu thay thế phiên bản plan cũ trong cùng file; mọi thay đổi contract cần BA + PO xác nhận.*

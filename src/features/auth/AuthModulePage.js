@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const AUTH_ERROR_MESSAGES = {
   AUTH_EMAIL_ALREADY_EXISTS: 'Email đã được sử dụng, hãy sử dụng email khác',
@@ -10,6 +10,9 @@ const AUTH_ERROR_MESSAGES = {
   AUTH_RATE_LIMITED: 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.',
   AUTH_PROVIDER_TEMPORARY_FAILURE: 'Hệ thống xác thực đang tạm thời gián đoạn, vui lòng thử lại.',
   AUTH_INTERNAL_ERROR: 'Đã có lỗi hệ thống. Vui lòng thử lại sau.',
+  AUTH_RESEND_COOLDOWN: 'Vui lòng đợi trước khi gửi lại email.',
+  AUTH_RESEND_HOURLY_CAP_REACHED: 'Đã đạt giới hạn gửi email trong một giờ. Thử lại sau.',
+  AUTH_EMAIL_NOT_VERIFIED: 'Email chưa được xác minh. Hoàn tất xác minh trước khi đăng nhập.',
 };
 
 const leftPanelFeatures = [
@@ -79,6 +82,7 @@ function validatePasswordPolicy(password) {
 function SignupForm({ prefillEmail }) {
   const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState('');
+  const [rememberAfterVerify, setRememberAfterVerify] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -152,6 +156,7 @@ function SignupForm({ prefillEmail }) {
 
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('ryex_pending_verify_email', email.trim());
+        window.localStorage.setItem('ryex_remember_device', rememberAfterVerify ? '1' : '0');
       }
       setShowVerifyNotice(true);
       setPassword('');
@@ -165,23 +170,7 @@ function SignupForm({ prefillEmail }) {
 
   return (
     <>
-      <div className="mb-6 flex gap-1 rounded-xl bg-surface-container-low p-1">
-        <button
-          className="flex-1 rounded-lg bg-surface-container-lowest py-2.5 text-sm font-semibold text-primary shadow-sm transition-all duration-200"
-          type="button"
-        >
-          Email
-        </button>
-        <button
-          aria-disabled="true"
-          className="flex-1 cursor-not-allowed rounded-lg py-2.5 text-sm font-medium text-on-surface-variant/70 transition-all duration-200"
-          disabled
-          title="Coming soon"
-          type="button"
-        >
-          Số điện thoại
-        </button>
-      </div>
+      {/* AC-15: Phone tab ẩn - MVP không có phone auth */}
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
@@ -225,18 +214,20 @@ function SignupForm({ prefillEmail }) {
           {fieldErrors.password ? <p className="text-sm text-error">{fieldErrors.password}</p> : null}
         </div>
 
-        <div className="space-y-2">
-          <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-            Mã giới thiệu (Tùy chọn)
-          </label>
-          <input
-            className="w-full rounded-xl border-none border-b-2 border-transparent bg-surface-container-lowest px-4 py-3.5 transition-all duration-300 placeholder:text-outline-variant focus:border-b-2 focus:border-primary-container focus:ring-0"
-            placeholder="Nhập mã giới thiệu"
-            type="text"
-          />
-        </div>
+        {/* Referral code hidden - AC-13: MVP không có nghiệp vụ referral */}
 
         <div className="space-y-3 pt-2">
+          <label className="group flex cursor-pointer items-start gap-3">
+            <input
+              className="mt-1 h-5 w-5 rounded border-none bg-surface-container text-primary focus:ring-primary"
+              checked={rememberAfterVerify}
+              type="checkbox"
+              onChange={(event) => setRememberAfterVerify(event.target.checked)}
+            />
+            <span className="select-none text-sm leading-snug text-on-surface-variant">
+              Ghi nhớ thiết bị này 30 ngày sau khi xác minh email (bỏ qua link đăng nhập lần sau trên máy này).
+            </span>
+          </label>
           <label className="group flex cursor-pointer items-start gap-3">
             <input
               className="mt-1 h-5 w-5 rounded border-none bg-surface-container text-primary focus:ring-primary"
@@ -246,13 +237,13 @@ function SignupForm({ prefillEmail }) {
             />
             <span className="select-none text-sm leading-snug text-on-surface-variant">
               Tôi đồng ý với{' '}
-              <a className="font-semibold text-primary hover:underline" href="#">
+              <span className="font-semibold text-primary" title="Nội dung đang được xây dựng (internal product)">
                 Điều khoản dịch vụ
-              </a>{' '}
+              </span>{' '}
               và{' '}
-              <a className="font-semibold text-primary hover:underline" href="#">
+              <span className="font-semibold text-primary" title="Nội dung đang được xây dựng (internal product)">
                 Chính sách bảo mật
-              </a>{' '}
+              </span>{' '}
               của RYEX Vietnam.
             </span>
           </label>
@@ -291,36 +282,160 @@ function SignupForm({ prefillEmail }) {
 }
 
 function LoginForm() {
+  const [email, setEmail] = useState('');
+  const [rememberDevice, setRememberDevice] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [challengeSent, setChallengeSent] = useState(false);
+  const [cooldownLeft, setCooldownLeft] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let id = window.localStorage.getItem('ryex_device_id');
+    if (!id) {
+      id = crypto.randomUUID();
+      window.localStorage.setItem('ryex_device_id', id);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (cooldownLeft <= 0) return undefined;
+    const timer = setInterval(() => setCooldownLeft((value) => Math.max(0, value - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [cooldownLeft]);
+
+  function getLoginErrorMessage(errorCode, fallbackMessage) {
+    if (errorCode && AUTH_ERROR_MESSAGES[errorCode]) {
+      return AUTH_ERROR_MESSAGES[errorCode];
+    }
+    return fallbackMessage || AUTH_ERROR_MESSAGES.AUTH_INTERNAL_ERROR;
+  }
+
+  async function handleLoginSubmit(event) {
+    event.preventDefault();
+    setSubmitError('');
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed) {
+      setSubmitError('Vui lòng nhập email.');
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('ryex_remember_device', rememberDevice ? '1' : '0');
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/v1/auth/login-challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ email: trimmed }),
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setSubmitError(getLoginErrorMessage(payload?.error?.code, payload?.error?.message));
+        return;
+      }
+
+      if (payload.trustedBypass) {
+        window.location.href = payload.next || '/app/market';
+        return;
+      }
+
+      if (payload.challengeRequired) {
+        setChallengeSent(true);
+        setCooldownLeft(Number(payload.cooldownSeconds) || 60);
+      }
+    } catch {
+      setSubmitError(AUTH_ERROR_MESSAGES.AUTH_INTERNAL_ERROR);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleResend() {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || cooldownLeft > 0) return;
+    setSubmitError('');
+    try {
+      const response = await fetch('/api/v1/auth/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ email: trimmed, flowType: 'login_challenge' }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setSubmitError(getLoginErrorMessage(payload?.error?.code, payload?.error?.message));
+        return;
+      }
+      setCooldownLeft(Number(payload.cooldownSeconds) || 60);
+    } catch {
+      setSubmitError(AUTH_ERROR_MESSAGES.AUTH_INTERNAL_ERROR);
+    }
+  }
+
   return (
-    <form className="space-y-5">
+    <form className="space-y-5" onSubmit={handleLoginSubmit}>
+      <p className="text-sm text-on-surface-variant">
+        Đăng nhập Option A: nhập email để nhận liên kết đăng nhập. Không dùng mật khẩu trên bước này.
+      </p>
       <div className="space-y-2">
-        <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Địa chỉ Email</label>
+        <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant" htmlFor="login-email">
+          Địa chỉ Email
+        </label>
         <input
           className="w-full rounded-xl border-none border-b-2 border-transparent bg-surface-container-lowest px-4 py-3.5 transition-all duration-300 placeholder:text-outline-variant focus:border-b-2 focus:border-primary-container focus:ring-0"
+          id="login-email"
           placeholder="name@company.com"
           type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Mật khẩu</label>
-        <div className="relative">
-          <input
-            className="w-full rounded-xl border-none border-b-2 border-transparent bg-surface-container-lowest px-4 py-3.5 transition-all duration-300 placeholder:text-outline-variant focus:border-b-2 focus:border-primary-container focus:ring-0"
-            placeholder="Nhập mật khẩu"
-            type="password"
-          />
-          <button className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant" type="button">
-            <span className="material-symbols-outlined text-xl">visibility_off</span>
+      <label className="group flex cursor-pointer items-start gap-3">
+        <input
+          className="mt-1 h-5 w-5 rounded border-none bg-surface-container text-primary focus:ring-primary"
+          checked={rememberDevice}
+          type="checkbox"
+          onChange={(event) => setRememberDevice(event.target.checked)}
+        />
+        <span className="select-none text-sm leading-snug text-on-surface-variant">
+          Ghi nhớ thiết bị 30 ngày sau khi mở liên kết từ email (áp dụng từ lần đăng nhập có link thành công).
+        </span>
+      </label>
+
+      {submitError ? <p className="text-sm text-error">{submitError}</p> : null}
+
+      {challengeSent ? (
+        <div className="rounded-xl bg-surface-container-low p-4 text-sm text-on-surface-variant">
+          <p>Đã gửi liên kết đăng nhập đến email của bạn. Kiểm tra hộp thư và mở liên kết trên thiết bị này.</p>
+          <button
+            className="mt-3 text-sm font-semibold text-primary disabled:text-on-surface-variant/50"
+            disabled={cooldownLeft > 0}
+            type="button"
+            onClick={handleResend}
+          >
+            {cooldownLeft > 0 ? `Gửi lại sau ${cooldownLeft}s` : 'Gửi lại email'}
           </button>
         </div>
-      </div>
+      ) : null}
 
       <button
         className="mt-4 w-full rounded-xl py-4 font-bold text-white shadow-[0_8px_24px_rgba(0,108,79,0.2)] transition-all duration-200 active:scale-95 liquidity-gradient"
+        disabled={isSubmitting || (challengeSent && cooldownLeft > 0)}
         type="submit"
       >
-        Đăng nhập
+        {isSubmitting
+          ? 'Đang xử lý...'
+          : challengeSent
+            ? cooldownLeft > 0
+              ? `Đã gửi — chờ ${cooldownLeft}s hoặc dùng Gửi lại`
+              : 'Gửi lại link đăng nhập'
+            : 'Tiếp tục bằng email'}
       </button>
     </form>
   );
@@ -366,7 +481,9 @@ export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
 
             <div className="mb-8 grid grid-cols-3 gap-4">
               <button
-                className="flex items-center justify-center rounded-xl border border-transparent bg-surface-container-lowest py-3 transition-colors duration-200 hover:bg-surface-container-low active:scale-95"
+                className="flex cursor-not-allowed items-center justify-center rounded-xl border border-transparent bg-surface-container-lowest py-3 opacity-50 transition-colors duration-200"
+                disabled
+                title="Sắp có - Đăng nhập Google"
                 type="button"
               >
                 <img
@@ -376,7 +493,9 @@ export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
                 />
               </button>
               <button
-                className="flex items-center justify-center rounded-xl border border-transparent bg-surface-container-lowest py-3 transition-colors duration-200 hover:bg-surface-container-low active:scale-95"
+                className="flex cursor-not-allowed items-center justify-center rounded-xl border border-transparent bg-surface-container-lowest py-3 opacity-50 transition-colors duration-200"
+                disabled
+                title="Sắp có - Đăng nhập Apple"
                 type="button"
               >
                 <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -384,7 +503,9 @@ export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
                 </span>
               </button>
               <button
-                className="flex items-center justify-center rounded-xl border border-transparent bg-surface-container-lowest py-3 transition-colors duration-200 hover:bg-surface-container-low active:scale-95"
+                className="flex cursor-not-allowed items-center justify-center rounded-xl border border-transparent bg-surface-container-lowest py-3 opacity-50 transition-colors duration-200"
+                disabled
+                title="Sắp có - Đăng nhập Facebook"
                 type="button"
               >
                 <svg className="h-5 w-5 fill-current text-[#1877F2]" viewBox="0 0 24 24">

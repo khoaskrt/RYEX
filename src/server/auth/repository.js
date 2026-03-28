@@ -121,8 +121,84 @@ export async function closeSession(client, sessionRef) {
     UPDATE user_sessions
     SET ended_at = NOW(), termination_reason = 'logout', last_seen_at = NOW()
     WHERE session_ref = $1 AND ended_at IS NULL
-    RETURNING id;
+    RETURNING id, user_id;
   `;
   const { rows } = await client.query(query, [sessionRef]);
+  return rows[0] || null;
+}
+
+export async function getRecentResendStats(client, email) {
+  const query = `
+    SELECT
+      MAX(occurred_at) FILTER (
+        WHERE event_type IN ('challenge_email_sent', 'resend_email_sent', 'verification_email_sent')
+          AND event_status = 'success'
+      ) AS last_sent_at,
+      COUNT(*) FILTER (
+        WHERE event_type IN ('challenge_email_sent', 'resend_email_sent', 'verification_email_sent')
+          AND event_status = 'success'
+          AND occurred_at > NOW() - INTERVAL '1 hour'
+      )::int AS sent_count_last_hour
+    FROM auth_verification_events
+    WHERE email = $1
+  `;
+  const { rows } = await client.query(query, [email]);
+  return rows[0] || { last_sent_at: null, sent_count_last_hour: 0 };
+}
+
+export async function getTrustedDevice(client, { email, deviceId, trustTokenHash }) {
+  const query = `
+    SELECT id, user_id, email, device_id, expires_at
+    FROM trusted_devices
+    WHERE email = $1
+      AND device_id = $2
+      AND trust_token_hash = $3
+      AND expires_at > NOW()
+      AND revoked_at IS NULL
+    LIMIT 1
+  `;
+  const { rows } = await client.query(query, [email, deviceId, trustTokenHash]);
+  return rows[0] || null;
+}
+
+export async function insertTrustedDevice(client, payload) {
+  const query = `
+    INSERT INTO trusted_devices (id, user_id, email, device_id, trust_token_hash, expires_at)
+    VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::timestamptz)
+    ON CONFLICT (user_id, device_id) DO UPDATE SET
+      email = EXCLUDED.email,
+      trust_token_hash = EXCLUDED.trust_token_hash,
+      expires_at = EXCLUDED.expires_at,
+      revoked_at = NULL,
+      revoke_reason = NULL,
+      updated_at = NOW()
+  `;
+  await client.query(query, [
+    payload.userId,
+    payload.email,
+    payload.deviceId,
+    payload.trustTokenHash,
+    payload.expiresAt,
+  ]);
+}
+
+export async function revokeTrustedDevicesForUser(client, userId) {
+  const query = `
+    UPDATE trusted_devices
+    SET revoked_at = NOW(), revoke_reason = 'logout', updated_at = NOW()
+    WHERE user_id = $1 AND revoked_at IS NULL
+  `;
+  await client.query(query, [userId]);
+}
+
+export async function getVerifiedAuthUserByEmail(client, email) {
+  const query = `
+    SELECT u.id AS user_id, u.email, ai.firebase_uid, ai.email_verified
+    FROM users u
+    INNER JOIN auth_identities ai ON ai.user_id = u.id AND ai.provider = 'password'
+    WHERE u.email = $1
+    LIMIT 1
+  `;
+  const { rows } = await client.query(query, [email]);
   return rows[0] || null;
 }

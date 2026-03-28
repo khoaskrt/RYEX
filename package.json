@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "reinstall": "node scripts/reinstall.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

@@ -34,7 +34,13 @@ export async function POST(request) {
 
     try {
       firebaseUser = await auth.createUser({ email, password, displayName });
-      await auth.generateEmailVerificationLink(email);
+      const verificationLink = await auth.generateEmailVerificationLink(email);
+
+      // TODO: Send actual email via SendGrid/Mailgun in production
+      // For local testing, log the link to console
+      console.log('\n🔗 VERIFICATION LINK FOR:', email);
+      console.log('Copy this link to browser:', verificationLink);
+      console.log('Or extract oobCode from URL and use: http://localhost:3000/app/auth/verify-email/callback?oobCode=YOUR_CODE\n');
     } catch (error) {
       throw mapFirebaseSignupError(error);
     }

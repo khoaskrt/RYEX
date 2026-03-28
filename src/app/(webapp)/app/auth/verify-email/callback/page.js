@@ -71,12 +71,25 @@ export default function VerifyEmailCallbackPage() {
         return;
       }
 
+      let deviceId = typeof window !== 'undefined' ? window.localStorage.getItem('ryex_device_id') || '' : '';
+      if (typeof window !== 'undefined' && !deviceId) {
+        deviceId = crypto.randomUUID();
+        window.localStorage.setItem('ryex_device_id', deviceId);
+      }
+      const rememberDevice =
+        typeof window !== 'undefined' && window.localStorage.getItem('ryex_remember_device') === '1';
+
       const syncResponse = await fetch('/api/v1/auth/session/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ idToken }),
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          idToken,
+          deviceId: deviceId || undefined,
+          rememberDevice,
+        }),
       });
       const syncPayload = await syncResponse.json().catch(() => ({}));
 
@@ -84,6 +97,10 @@ export default function VerifyEmailCallbackPage() {
         setStatus('error');
         setErrorMessage(getErrorMessage(syncPayload?.error?.code, syncPayload?.error?.message));
         return;
+      }
+
+      if (syncPayload.deviceId && typeof window !== 'undefined') {
+        window.localStorage.setItem('ryex_device_id', syncPayload.deviceId);
       }
 
       window.localStorage.removeItem('ryex_pending_verify_email');
