@@ -109,69 +109,9 @@ export function StitchLoginPage({ prefillEmail = '' }) {
         return;
       }
 
-      // ✅ SYNC USER DATA VÀO SUPABASE
-      const idToken = await credential.user.getIdToken();
-      const syncResponse = await fetch('/api/v1/auth/session/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idToken,
-          rememberDevice: false,
-        }),
-      });
-
-      if (!syncResponse.ok) {
-        const syncError = await syncResponse.json();
-        throw new Error(syncError.error || 'Failed to sync session');
-      }
-
       router.replace(DASHBOARD_ROUTE);
     } catch (error) {
-<<<<<<< HEAD
-      setSubmitError(getLoginErrorMessage(error?.code));
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleGoogleLogin() {
-    setSubmitError('');
-    setIsSubmitting(true);
-    try {
-      const auth = getFirebaseClientAuth();
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      const credential = await signInWithPopup(auth, provider);
-
-      if (!credential.user.emailVerified) {
-        const nextEmail = credential.user.email || email.trim();
-        await signOut(auth);
-        setVerificationEmail(nextEmail);
-        return;
-      }
-
-      // ✅ SYNC USER DATA VÀO SUPABASE
-      const idToken = await credential.user.getIdToken();
-      const syncResponse = await fetch('/api/v1/auth/session/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idToken,
-          rememberDevice: false,
-        }),
-      });
-
-      if (!syncResponse.ok) {
-        const syncError = await syncResponse.json();
-        throw new Error(syncError.error || 'Failed to sync session');
-      }
-
-      router.replace(DASHBOARD_ROUTE);
-    } catch (error) {
-      setSubmitError(getGoogleErrorMessage(error?.code));
-=======
       setSubmitError(getLoginErrorMessage(error));
->>>>>>> 7acf0d8 (migrate firebase sang supabase)
     } finally {
       setIsSubmitting(false);
     }
