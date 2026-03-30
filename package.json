@@ -9,12 +9,14 @@
     "start": "next start",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "db:logs": "docker compose logs -f postgres"
+    "db:logs": "docker compose logs -f postgres",
+    "db:test": "node scripts/test-supabase-connection.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.100.1",
     "firebase": "^12.11.0",
     "firebase-admin": "^13.7.0",
     "next": "^14.2.35",
