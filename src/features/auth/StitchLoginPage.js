@@ -94,6 +94,22 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
         return;
       }
 
+      // ✅ SYNC USER DATA VÀO SUPABASE
+      const idToken = await credential.user.getIdToken();
+      const syncResponse = await fetch('/api/v1/auth/session/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idToken,
+          rememberDevice: false,
+        }),
+      });
+
+      if (!syncResponse.ok) {
+        const syncError = await syncResponse.json();
+        throw new Error(syncError.error || 'Failed to sync session');
+      }
+
       router.replace(DASHBOARD_ROUTE);
     } catch (error) {
       setSubmitError(getLoginErrorMessage(error?.code));
@@ -116,6 +132,22 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
         await signOut(auth);
         setVerificationEmail(nextEmail);
         return;
+      }
+
+      // ✅ SYNC USER DATA VÀO SUPABASE
+      const idToken = await credential.user.getIdToken();
+      const syncResponse = await fetch('/api/v1/auth/session/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idToken,
+          rememberDevice: false,
+        }),
+      });
+
+      if (!syncResponse.ok) {
+        const syncError = await syncResponse.json();
+        throw new Error(syncError.error || 'Failed to sync session');
       }
 
       router.replace(DASHBOARD_ROUTE);
