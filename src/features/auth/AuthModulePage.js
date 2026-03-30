@@ -479,38 +479,17 @@ export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
               </div>
             </div>
 
-            <div className="mb-8 grid grid-cols-3 gap-4">
+            <div className="mb-8">
               <button
-                className="flex cursor-not-allowed items-center justify-center rounded-xl border border-transparent bg-surface-container-lowest py-3 opacity-50 transition-colors duration-200"
-                disabled
-                title="Sắp có - Đăng nhập Google"
+                className="flex w-full items-center justify-center gap-3 rounded-xl border border-transparent bg-surface-container-lowest py-3 transition-colors duration-200 hover:bg-surface-container-low active:scale-95"
                 type="button"
               >
                 <img
                   alt="Google"
-                  className="h-5 w-5"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwc4zWwjonNRYY5mDUB4lK9AGFNxsxbSBsIIkZDYXLMA5gKo47UJHr6ncOUIOGDmyA24j6CVb8P-NtS24iegYO3A3EvKdnnv-Tdhg0rtT09o7LE1XLMtLUT1VgeZU8x_JLO4wujYzyOgsOYyEUZ9boQ_tFwcYG58EHiLvMgRBboxbHZho-hDk1J6fjhVanr_uXy-9NCqmFAKmS3J7dnmm6N73nGny0KViwoZpiadk9irKkF_nwVuYNi6i8PxydQ6Bk-vEvZOquasxX"
+                  className="h-7 w-7 object-contain"
+                  src="/images/google-icon.png"
                 />
-              </button>
-              <button
-                className="flex cursor-not-allowed items-center justify-center rounded-xl border border-transparent bg-surface-container-lowest py-3 opacity-50 transition-colors duration-200"
-                disabled
-                title="Sắp có - Đăng nhập Apple"
-                type="button"
-              >
-                <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  ios
-                </span>
-              </button>
-              <button
-                className="flex cursor-not-allowed items-center justify-center rounded-xl border border-transparent bg-surface-container-lowest py-3 opacity-50 transition-colors duration-200"
-                disabled
-                title="Sắp có - Đăng nhập Facebook"
-                type="button"
-              >
-                <svg className="h-5 w-5 fill-current text-[#1877F2]" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
+                <span className="font-semibold text-on-surface">Google</span>
               </button>
             </div>
 

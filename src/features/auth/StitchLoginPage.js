@@ -152,32 +152,17 @@ export function StitchLoginPage() {
               <div className="flex-grow border-t border-outline-variant/15" />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div>
               <button
-                className="flex items-center justify-center rounded-xl border border-outline-variant/10 bg-surface-container-low py-3 transition-all hover:bg-surface-container-high"
+                className="flex w-full items-center justify-center gap-3 rounded-xl border border-outline-variant/10 bg-surface-container-low py-3 transition-all hover:bg-surface-container-high"
                 type="button"
               >
                 <img
                   alt="Google"
-                  className="h-5 w-5"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3i-wTmEyl6KYZlvZ2UXzKzZNHGwomY-tVM0jMqhh-CI_d4cPMyj-ahcCCddlxiVvXJDwgNtZ_S0R0QSrL144ql1u_ROMElRJ_VwPbDKq0WMislfbPm6O6elX6bNwNNihdlyP_5o9vQZToLYsW9xlTBuBmEn5y90EtCZwOpLrU-XLklLdai_MRkpTkwwFCIF0x9GOqaDAjEk_q6U17fL7mILAiHPdoCIwy3nJdCOe194wBkNL1rx2x42O_ipIw164ldbdPzc0zRRj_"
+                  className="h-7 w-7 object-contain"
+                  src="/images/google-icon.png"
                 />
-              </button>
-              <button
-                className="flex items-center justify-center rounded-xl border border-outline-variant/10 bg-surface-container-low py-3 transition-all hover:bg-surface-container-high"
-                type="button"
-              >
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  ios
-                </span>
-              </button>
-              <button
-                className="flex items-center justify-center rounded-xl border border-outline-variant/10 bg-surface-container-low py-3 transition-all hover:bg-surface-container-high"
-                type="button"
-              >
-                <svg className="h-5 w-5 fill-current text-[#1877F2]" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12S0 5.446 0 12.073c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
+                <span className="font-semibold text-on-surface">Google</span>
               </button>
             </div>
 
