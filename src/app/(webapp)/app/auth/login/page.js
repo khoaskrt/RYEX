@@ -10,7 +10,6 @@ function sanitizePrefillEmail(email) {
 
 export default function LoginPage({ searchParams }) {
   const prefillEmail = sanitizePrefillEmail(searchParams?.email);
-  const showVerification = searchParams?.verify === '1';
 
-  return <StitchLoginPage prefillEmail={prefillEmail} showVerification={showVerification} />;
+  return <StitchLoginPage prefillEmail={prefillEmail} />;
 }

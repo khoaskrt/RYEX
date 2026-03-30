@@ -2,23 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  sendEmailVerification,
-  signInWithPopup,
-  signOut,
-} from 'firebase/auth';
 import { useEffect, useMemo, useState } from 'react';
-import { getFirebaseClientAuth } from '@/shared/lib/firebaseClient';
-import { EmailVerificationNotice } from './EmailVerificationNotice';
+import { supabase } from '@/supabaseClient';
 
 const AUTH_ERROR_MESSAGES = {
-  AUTH_EMAIL_ALREADY_EXISTS: 'Email đã tồn tại. Vui lòng đăng nhập hoặc sử dụng email khác',
   AUTH_INVALID_INPUT: 'Vui lòng kiểm tra lại thông tin đã nhập.',
   AUTH_PASSWORD_POLICY_FAILED: 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, số và ký tự đặc biệt.',
   AUTH_RATE_LIMITED: 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.',
+  AUTH_EMAIL_SEND_RATE_LIMITED: 'Hệ thống đang giới hạn gửi email xác thực. Vui lòng thử lại sau khoảng 1 giờ.',
   AUTH_PROVIDER_TEMPORARY_FAILURE: 'Hệ thống xác thực đang tạm thời gián đoạn, vui lòng thử lại.',
   AUTH_INTERNAL_ERROR: 'Đã có lỗi hệ thống. Vui lòng thử lại sau.',
   AUTH_RESEND_COOLDOWN: 'Vui lòng đợi trước khi gửi lại email.',
@@ -26,7 +17,7 @@ const AUTH_ERROR_MESSAGES = {
   AUTH_EMAIL_NOT_VERIFIED: 'Email chưa được xác minh. Hoàn tất xác minh trước khi đăng nhập.',
 };
 
-const DASHBOARD_ROUTE = '/app/market';
+const DASHBOARD_ROUTE = '/';
 
 const leftPanelFeatures = [
   {
@@ -96,32 +87,31 @@ function SignupForm({ prefillEmail }) {
   const router = useRouter();
   const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState('');
-  const [rememberAfterVerify, setRememberAfterVerify] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
-  const [verificationEmail, setVerificationEmail] = useState('');
+  const [pendingSignupEmail, setPendingSignupEmail] = useState('');
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
+  const [verificationModalError, setVerificationModalError] = useState('');
 
   useEffect(() => {
-    const auth = getFirebaseClientAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        if (user.emailVerified) {
-          router.replace(DASHBOARD_ROUTE);
-          return;
-        }
+    let isMounted = true;
 
-        const nextEmail = user.email || prefillEmail;
-        if (nextEmail) {
-          setVerificationEmail(nextEmail);
-        }
-        signOut(auth).catch(() => {});
+    async function bootstrapSession() {
+      const { data } = await supabase.auth.getSession();
+      if (isMounted && data.session) {
+        router.replace(DASHBOARD_ROUTE);
       }
-    });
+    }
 
-    return () => unsubscribe();
+    bootstrapSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, [prefillEmail, router]);
 
   const isSubmitDisabled = useMemo(
@@ -159,6 +149,38 @@ function SignupForm({ prefillEmail }) {
     return fallbackMessage || AUTH_ERROR_MESSAGES.AUTH_INTERNAL_ERROR;
   }
 
+  function getSupabaseSignupErrorCode(error) {
+    const status = Number(error?.status || 0);
+    const code = (error?.code || '').toLowerCase();
+    const message = (error?.message || '').toLowerCase();
+
+    if (
+      status === 429
+      || code === 'over_email_send_rate_limit'
+      || message.includes('email rate limit exceeded')
+    ) {
+      return 'AUTH_EMAIL_SEND_RATE_LIMITED';
+    }
+
+    if (
+      code === 'over_request_rate_limit'
+      || message.includes('too many requests')
+      || message.includes('rate limit')
+    ) {
+      return 'AUTH_RATE_LIMITED';
+    }
+
+    if (
+      code === 'user_already_exists'
+      || message.includes('already registered')
+      || message.includes('already exists')
+    ) {
+      return 'AUTH_EMAIL_ALREADY_EXISTS';
+    }
+
+    return null;
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setSubmitError('');
@@ -170,24 +192,64 @@ function SignupForm({ prefillEmail }) {
     setIsSubmitting(true);
 
     try {
-      const auth = getFirebaseClientAuth();
-      const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      await sendEmailVerification(credential.user);
-      await signOut(auth);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('ryex_remember_device', rememberAfterVerify ? '1' : '0');
+      const trimmedEmail = email.trim();
+      const { data, error } = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password,
+      });
+
+      if (error) {
+        const mappedErrorCode = getSupabaseSignupErrorCode(error);
+        setSubmitError(getErrorMessage(mappedErrorCode, error?.message));
+        return;
       }
-      setVerificationEmail(email.trim());
+
+      if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        setSubmitError(AUTH_ERROR_MESSAGES.AUTH_EMAIL_ALREADY_EXISTS);
+        return;
+      }
+
+      // Ensure sign-up flow does not keep an authenticated session.
+      await supabase.auth.signOut();
+
       setPassword('');
       setFieldErrors({});
+      setPendingSignupEmail(trimmedEmail);
+      setVerificationModalError('');
+      setIsVerificationModalOpen(true);
     } catch (error) {
-      if (error?.code === 'auth/email-already-in-use') {
-        setSubmitError(AUTH_ERROR_MESSAGES.AUTH_EMAIL_ALREADY_EXISTS);
-      } else {
-        setSubmitError(getErrorMessage(null, error?.message));
-      }
+      setSubmitError(getErrorMessage(null, error?.message));
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  function navigateToSignInWithEmail(nextEmail) {
+    router.replace(`/app/auth/login?signup=success&email=${encodeURIComponent(nextEmail)}`);
+  }
+
+  async function handleResendVerification() {
+    if (!pendingSignupEmail || isResendingVerification) return;
+
+    setVerificationModalError('');
+    setIsResendingVerification(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: pendingSignupEmail,
+      });
+
+      if (error) {
+        const mappedErrorCode = getSupabaseSignupErrorCode(error);
+        setVerificationModalError(getErrorMessage(mappedErrorCode, error?.message));
+        return;
+      }
+
+      navigateToSignInWithEmail(pendingSignupEmail);
+    } catch (error) {
+      setVerificationModalError(getErrorMessage(null, error?.message));
+    } finally {
+      setIsResendingVerification(false);
     }
   }
 
@@ -195,10 +257,7 @@ function SignupForm({ prefillEmail }) {
     <>
       {/* AC-15: Phone tab ẩn - MVP không có phone auth */}
 
-      {verificationEmail ? (
-        <EmailVerificationNotice email={verificationEmail} />
-      ) : (
-        <form className="space-y-5" onSubmit={handleSubmit}>
+      <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant" htmlFor="signup-email">
             Địa chỉ Email
@@ -246,17 +305,6 @@ function SignupForm({ prefillEmail }) {
           <label className="group flex cursor-pointer items-start gap-3">
             <input
               className="mt-1 h-5 w-5 rounded border-none bg-surface-container text-primary focus:ring-primary"
-              checked={rememberAfterVerify}
-              type="checkbox"
-              onChange={(event) => setRememberAfterVerify(event.target.checked)}
-            />
-            <span className="select-none text-sm leading-snug text-on-surface-variant">
-              Ghi nhớ thiết bị này 30 ngày sau khi xác minh email (bỏ qua link đăng nhập lần sau trên máy này).
-            </span>
-          </label>
-          <label className="group flex cursor-pointer items-start gap-3">
-            <input
-              className="mt-1 h-5 w-5 rounded border-none bg-surface-container text-primary focus:ring-primary"
               checked={agreeTerms}
               type="checkbox"
               onChange={(event) => setAgreeTerms(event.target.checked)}
@@ -284,8 +332,38 @@ function SignupForm({ prefillEmail }) {
         >
           {isSubmitting ? 'Đang xử lý...' : 'Đăng ký tài khoản'}
         </button>
-        </form>
-      )}
+      </form>
+
+      {isVerificationModalOpen ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-surface-container-lowest p-6 shadow-[0_24px_48px_rgba(0,0,0,0.2)]">
+            <h3 className="mb-2 text-xl font-bold text-on-surface">Kiểm tra email</h3>
+            <p className="mb-5 text-sm text-on-surface-variant">
+              Vui lòng kiểm tra hộp thư của bạn và xác nhận email <span className="font-semibold text-on-surface">{pendingSignupEmail}</span> trước khi đăng nhập.
+            </p>
+
+            {verificationModalError ? <p className="mb-4 text-sm text-error">{verificationModalError}</p> : null}
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                className="rounded-xl border border-outline-variant/30 px-4 py-2.5 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-low"
+                type="button"
+                onClick={() => navigateToSignInWithEmail(pendingSignupEmail)}
+              >
+                Đã xác nhận
+              </button>
+              <button
+                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white liquidity-gradient disabled:opacity-60"
+                disabled={isResendingVerification}
+                type="button"
+                onClick={handleResendVerification}
+              >
+                {isResendingVerification ? 'Đang gửi...' : 'Vui lòng gửi lại'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
     </>
   );
@@ -452,44 +530,7 @@ function LoginForm() {
 }
 
 export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
-  const router = useRouter();
   const isSignup = mode === 'signup';
-  const [googleError, setGoogleError] = useState('');
-  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
-
-  function getGoogleErrorMessage(errorCode) {
-    if (errorCode === 'auth/popup-closed-by-user') {
-      return 'Bạn đã đóng cửa sổ đăng nhập Google.';
-    }
-    if (errorCode === 'auth/popup-blocked') {
-      return 'Trình duyệt đã chặn cửa sổ Google. Vui lòng cho phép popup và thử lại.';
-    }
-    return 'Không thể đăng nhập bằng Google lúc này. Vui lòng thử lại.';
-  }
-
-  async function handleGoogleAuth() {
-    setGoogleError('');
-    setIsGoogleSubmitting(true);
-    try {
-      const auth = getFirebaseClientAuth();
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      const credential = await signInWithPopup(auth, provider);
-
-      if (!credential.user.emailVerified) {
-        const nextEmail = credential.user.email ? encodeURIComponent(credential.user.email) : '';
-        await signOut(auth);
-        router.replace(`/app/auth/login?verify=1${nextEmail ? `&email=${nextEmail}` : ''}`);
-        return;
-      }
-
-      router.replace(DASHBOARD_ROUTE);
-    } catch (error) {
-      setGoogleError(getGoogleErrorMessage(error?.code));
-    } finally {
-      setIsGoogleSubmitting(false);
-    }
-  }
 
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-x-hidden bg-surface text-on-surface antialiased">
@@ -529,18 +570,17 @@ export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
             <div className="mb-8">
               <button
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-transparent bg-surface-container-lowest py-3 transition-colors duration-200 hover:bg-surface-container-low active:scale-95"
-                disabled={isGoogleSubmitting}
-                onClick={handleGoogleAuth}
+                disabled
                 type="button"
+                title="Google login sẽ được bổ sung sau"
               >
                 <img
                   alt="Google"
                   className="h-7 w-7 object-contain"
                   src="/images/google-icon.png"
                 />
-                <span className="font-semibold text-on-surface">Google</span>
+                <span className="font-semibold text-on-surface">Google (Coming soon)</span>
               </button>
-              {googleError ? <p className="mt-3 text-sm text-error">{googleError}</p> : null}
             </div>
 
             <div className="text-center">

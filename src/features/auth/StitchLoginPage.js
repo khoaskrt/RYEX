@@ -1,71 +1,90 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  sendEmailVerification,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-} from 'firebase/auth';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getFirebaseClientAuth } from '@/shared/lib/firebaseClient';
-import { EmailVerificationNotice } from './EmailVerificationNotice';
+import { supabase } from '@/supabaseClient';
 
 const DASHBOARD_ROUTE = '/app/market';
-const INVALID_CREDENTIALS_MESSAGE = 'Email hoặc mật khẩu không chính xác';
+const AUTH_ERROR_MESSAGES = {
+  AUTH_INVALID_CREDENTIALS: 'Email or password is incorrect',
+  AUTH_RATE_LIMITED: 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.',
+  AUTH_INTERNAL_ERROR: 'Unable to sign in right now. Please try again.',
+  AUTH_EMAIL_ALREADY_EXISTS: 'Đăng ký thành công. Vui lòng đăng nhập để tiếp tục.',
+};
 
-export function StitchLoginPage({ prefillEmail = '', showVerification = false }) {
+export function StitchLoginPage({ prefillEmail = '' }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [authMethod, setAuthMethod] = useState('email');
   const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [verificationEmail, setVerificationEmail] = useState(showVerification ? prefillEmail : '');
+  const [signupSuccessMessage, setSignupSuccessMessage] = useState('');
 
   useEffect(() => {
-    const auth = getFirebaseClientAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        if (user.emailVerified) {
-          router.replace(DASHBOARD_ROUTE);
-          return;
-        }
+    const emailFromQuery = (searchParams.get('email') || '').trim();
+    if (emailFromQuery) {
+      setEmail(emailFromQuery);
+    }
 
-        const nextEmail = user.email || prefillEmail;
-        setVerificationEmail(nextEmail);
-        signOut(auth).catch(() => {});
+    if (searchParams.get('signup') === 'success') {
+      setSignupSuccessMessage(AUTH_ERROR_MESSAGES.AUTH_EMAIL_ALREADY_EXISTS);
+    } else {
+      setSignupSuccessMessage('');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function bootstrapSession() {
+      const { data } = await supabase.auth.getSession();
+      if (isMounted && data.session) {
+        router.replace(DASHBOARD_ROUTE);
+      }
+    }
+
+    bootstrapSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        router.replace(DASHBOARD_ROUTE);
       }
     });
 
-    return () => unsubscribe();
-  }, [prefillEmail, router]);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
-  function getLoginErrorMessage(errorCode) {
+  function getLoginErrorMessage(error) {
+    const status = Number(error?.status || 0);
+    const code = error?.code || '';
+    const message = (error?.message || '').toLowerCase();
     if (
-      errorCode === 'auth/invalid-credential'
-      || errorCode === 'auth/wrong-password'
-      || errorCode === 'auth/user-not-found'
-      || errorCode === 'auth/invalid-email'
+      status === 429
+      || message.includes('too many requests')
+      || message.includes('rate limit')
     ) {
-      return INVALID_CREDENTIALS_MESSAGE;
+      return AUTH_ERROR_MESSAGES.AUTH_RATE_LIMITED;
     }
 
-    return 'Unable to sign in right now. Please try again.';
-  }
+    if (
+      code === 'invalid_credentials'
+      || code === 'invalid_grant'
+      || message.includes('invalid login credentials')
+      || message.includes('invalid credentials')
+    ) {
+      return AUTH_ERROR_MESSAGES.AUTH_INVALID_CREDENTIALS;
+    }
 
-  function getGoogleErrorMessage(errorCode) {
-    if (errorCode === 'auth/popup-closed-by-user') {
-      return 'Bạn đã đóng cửa sổ đăng nhập Google.';
-    }
-    if (errorCode === 'auth/popup-blocked') {
-      return 'Trình duyệt đã chặn cửa sổ Google. Vui lòng cho phép popup và thử lại.';
-    }
-    return 'Không thể đăng nhập bằng Google lúc này. Vui lòng thử lại.';
+    return AUTH_ERROR_MESSAGES.AUTH_INTERNAL_ERROR;
   }
 
   async function handleSubmit(event) {
@@ -74,23 +93,19 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !password) {
-      setSubmitError(INVALID_CREDENTIALS_MESSAGE);
+      setSubmitError(AUTH_ERROR_MESSAGES.AUTH_INVALID_CREDENTIALS);
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const auth = getFirebaseClientAuth();
-      const credential = await signInWithEmailAndPassword(auth, trimmedEmail, password);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password,
+      });
 
-      if (!credential.user.emailVerified) {
-        try {
-          await sendEmailVerification(credential.user);
-        } catch {
-          // Ignore resend failures to keep login flow unblocked.
-        }
-        await signOut(auth);
-        setVerificationEmail(trimmedEmail);
+      if (error) {
+        setSubmitError(getLoginErrorMessage(error));
         return;
       }
 
@@ -112,6 +127,7 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
 
       router.replace(DASHBOARD_ROUTE);
     } catch (error) {
+<<<<<<< HEAD
       setSubmitError(getLoginErrorMessage(error?.code));
     } finally {
       setIsSubmitting(false);
@@ -153,6 +169,9 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
       router.replace(DASHBOARD_ROUTE);
     } catch (error) {
       setSubmitError(getGoogleErrorMessage(error?.code));
+=======
+      setSubmitError(getLoginErrorMessage(error));
+>>>>>>> 7acf0d8 (migrate firebase sang supabase)
     } finally {
       setIsSubmitting(false);
     }
@@ -243,10 +262,13 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
               </button>
             </div>
 
-            {verificationEmail ? (
-              <EmailVerificationNotice email={verificationEmail} />
-            ) : (
-              <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {signupSuccessMessage ? (
+                <p className="rounded-lg bg-primary-container/10 px-3 py-2 text-sm text-primary">
+                  {signupSuccessMessage}
+                </p>
+              ) : null}
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="ml-1 text-sm font-semibold text-on-surface" htmlFor="auth-input">
@@ -303,8 +325,7 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
               >
                 {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </button>
-              </form>
-            )}
+            </form>
 
             <div className="relative flex items-center py-2">
               <div className="flex-grow border-t border-outline-variant/15" />
@@ -317,16 +338,16 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
             <div>
               <button
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-outline-variant/10 bg-surface-container-low py-3 transition-all hover:bg-surface-container-high"
-                disabled={isSubmitting}
-                onClick={handleGoogleLogin}
+                disabled
                 type="button"
+                title="Google login sẽ được bổ sung sau"
               >
                 <img
                   alt="Google"
                   className="h-7 w-7 object-contain"
                   src="/images/google-icon.png"
                 />
-                <span className="font-semibold text-on-surface">Google</span>
+                <span className="font-semibold text-on-surface">Google (Coming soon)</span>
               </button>
             </div>
 

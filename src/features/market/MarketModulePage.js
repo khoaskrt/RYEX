@@ -1,9 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { getFirebaseClientAuth } from '@/shared/lib/firebaseClient';
+import { supabase } from '@/shared/lib/supabaseClient';
 
 export function MarketModulePage() {
   const router = useRouter();
@@ -11,29 +10,40 @@ export function MarketModulePage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
-    const auth = getFirebaseClientAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
+    let isMounted = true;
+
+    async function bootstrapSession() {
+      const { data } = await supabase.auth.getSession();
+      if (!isMounted) return;
+      if (!data.session) {
         router.replace('/app/auth/login');
         return;
       }
-      if (!user.emailVerified) {
-        const nextEmail = user.email ? encodeURIComponent(user.email) : '';
-        signOut(auth).catch(() => {});
-        router.replace(`/app/auth/login?verify=1${nextEmail ? `&email=${nextEmail}` : ''}`);
+      setIsAuthResolved(true);
+    }
+
+    bootstrapSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        router.replace('/app/auth/login');
         return;
       }
       setIsAuthResolved(true);
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [router]);
 
   async function handleLogout() {
     setIsLoggingOut(true);
     try {
-      const auth = getFirebaseClientAuth();
-      await signOut(auth);
+      await supabase.auth.signOut();
       router.replace('/app/auth/login');
     } finally {
       setIsLoggingOut(false);
