@@ -3,11 +3,42 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/shared/lib/supabaseClient';
+import {
+  fetchMarketTickers,
+  formatPercentChange,
+  formatUsdCompact,
+  formatUsdPrice,
+  getMarketRefreshIntervalMs,
+} from './realtime/marketClient';
+
+const TOKEN_VISUAL_MAP = {
+  BTCUSDT: { mark: '₿', color: '#f2a900', iconUrl: '/images/tokens/btc.png' },
+  ETHUSDT: { mark: 'Ξ', color: '#627eea', iconUrl: '/images/tokens/eth.png' },
+  SOLUSDT: { mark: 'S', color: '#14f195', iconUrl: '/images/tokens/sol.png' },
+  BNBUSDT: { mark: 'B', color: '#f3ba2f', iconUrl: '/images/tokens/bnb.png' },
+  XRPUSDT: { mark: 'X', color: '#23292f', iconUrl: '/images/tokens/xrp.png' },
+  ADAUSDT: { mark: 'A', color: '#0033ad', iconUrl: '/images/tokens/ada.png' },
+};
+
+const DEFAULT_VISUAL = { mark: '•', color: '#006c4f', iconUrl: '' };
+
+function toNumber(value, fallback = 0) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
 
 export function MarketModulePage() {
   const router = useRouter();
   const [isAuthResolved, setIsAuthResolved] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [marketRows, setMarketRows] = useState([]);
+  const [marketMeta, setMarketMeta] = useState({
+    loading: true,
+    error: '',
+    stale: false,
+    lastUpdated: '',
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -49,6 +80,73 @@ export function MarketModulePage() {
       setIsLoggingOut(false);
     }
   }
+
+  useEffect(() => {
+    if (!isAuthResolved) return;
+
+    let isMounted = true;
+    const refreshMs = getMarketRefreshIntervalMs();
+
+    async function loadMarketData() {
+      try {
+        const payload = await fetchMarketTickers();
+        if (!isMounted) return;
+
+        setMarketRows(Array.isArray(payload.data) ? payload.data : []);
+        setMarketMeta({
+          loading: false,
+          error: '',
+          stale: Boolean(payload.stale),
+          lastUpdated: payload.fetchedAt || new Date().toISOString(),
+        });
+      } catch (error) {
+        if (!isMounted) return;
+
+        setMarketMeta((prev) => ({
+          ...prev,
+          loading: false,
+          stale: true,
+          error: 'Không thể cập nhật dữ liệu thị trường lúc này.',
+        }));
+      }
+    }
+
+    loadMarketData();
+    const intervalId = setInterval(loadMarketData, refreshMs);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [isAuthResolved]);
+
+  const normalizedSearchTerm = searchTerm.trim().toUpperCase();
+  const filteredRows = marketRows.filter((row) => {
+    if (!normalizedSearchTerm) return true;
+    const symbol = (row.symbol || '').toUpperCase();
+    const shortSymbol = symbol.replace(/USDT$/, '');
+    const name = (row.name || '').toUpperCase();
+    return symbol.includes(normalizedSearchTerm) || shortSymbol.includes(normalizedSearchTerm) || name.includes(normalizedSearchTerm);
+  });
+
+  const topGainer =
+    marketRows.length > 0
+      ? marketRows.reduce((maxItem, item) =>
+          toNumber(item.change24hPercent, 0) > toNumber(maxItem.change24hPercent, 0) ? item : maxItem
+        )
+      : null;
+
+  const topVolume =
+    marketRows.length > 0
+      ? marketRows.reduce((maxItem, item) => (toNumber(item.volume24h, 0) > toNumber(maxItem.volume24h, 0) ? item : maxItem))
+      : null;
+
+  const topLoser =
+    marketRows.length > 0
+      ? marketRows.reduce((minItem, item) =>
+          toNumber(item.change24hPercent, 0) < toNumber(minItem.change24hPercent, 0) ? item : minItem
+        )
+      : null;
 
   if (!isAuthResolved) {
     return (
@@ -138,6 +236,8 @@ export function MarketModulePage() {
               <input
                 className="w-full rounded-xl border-none bg-surface-container-lowest py-3 pl-12 pr-4 ring-1 ring-[#bbcac1]/30 transition-all outline-none focus:ring-2 focus:ring-primary-container"
                 placeholder="Tìm kiếm đồng coin..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 type="text"
               />
             </div>
@@ -150,9 +250,13 @@ export function MarketModulePage() {
               <div className="mb-4 flex items-start justify-between">
                 <div className="flex flex-col">
                   <span className="mb-1 text-sm font-medium text-on-surface-variant">Tăng mạnh nhất</span>
-                  <span className="text-lg font-bold">SOL / USDT</span>
+                  <span className="text-lg font-bold">
+                    {topGainer ? `${topGainer.symbol.replace(/USDT$/, '')} / USDT` : '-- / USDT'}
+                  </span>
                 </div>
-                <span className="rounded bg-primary-container/10 px-2 py-1 text-xs font-bold text-primary">+12.4%</span>
+                <span className="rounded bg-primary-container/10 px-2 py-1 text-xs font-bold text-primary">
+                  {topGainer ? formatPercentChange(topGainer.change24hPercent) : '--'}
+                </span>
               </div>
               <div className="flex h-16 w-full items-end gap-1">
                 <div className="h-[30%] flex-1 rounded-t-sm bg-primary-container/20" />
@@ -169,9 +273,13 @@ export function MarketModulePage() {
               <div className="mb-4 flex items-start justify-between">
                 <div className="flex flex-col">
                   <span className="mb-1 text-sm font-medium text-on-surface-variant">Khối lượng 24h</span>
-                  <span className="text-lg font-bold">BTC / USDT</span>
+                  <span className="text-lg font-bold">
+                    {topVolume ? `${topVolume.symbol.replace(/USDT$/, '')} / USDT` : '-- / USDT'}
+                  </span>
                 </div>
-                <span className="text-xs font-bold text-on-surface-variant">$42.18B</span>
+                <span className="text-xs font-bold text-on-surface-variant">
+                  {topVolume ? formatUsdCompact(topVolume.volume24h) : '--'}
+                </span>
               </div>
               <div className="flex h-16 w-full items-end gap-1">
                 <div className="h-[70%] flex-1 rounded-t-sm bg-outline-variant/20" />
@@ -185,15 +293,19 @@ export function MarketModulePage() {
             </div>
 
             <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[#bbcac1]/10 bg-surface-container-lowest p-6 shadow-[0_12px_32px_rgba(0,0,0,0.02)]">
-              <div className="absolute right-0 top-0 rounded-bl-lg bg-primary-container p-1 text-[10px] font-bold uppercase text-white">
-                Mới niêm yết
+              <div className="absolute right-0 top-0 rounded-bl-lg bg-[#ba1a1a] p-1 text-[10px] font-bold uppercase text-white">
+                Giảm mạnh
               </div>
               <div className="mb-4 flex items-start justify-between">
                 <div className="flex flex-col">
-                  <span className="mb-1 text-sm font-medium text-on-surface-variant">Dự án tiềm năng</span>
-                  <span className="text-lg font-bold">TIA / USDT</span>
+                  <span className="mb-1 text-sm font-medium text-on-surface-variant">Giảm mạnh nhất</span>
+                  <span className="text-lg font-bold">
+                    {topLoser ? `${topLoser.symbol.replace(/USDT$/, '')} / USDT` : '-- / USDT'}
+                  </span>
                 </div>
-                <span className="rounded bg-primary-container/10 px-2 py-1 text-xs font-bold text-primary">+2.1%</span>
+                <span className="rounded bg-[#ba1a1a]/10 px-2 py-1 text-xs font-bold text-[#ba1a1a]">
+                  {topLoser ? formatPercentChange(topLoser.change24hPercent) : '--'}
+                </span>
               </div>
               <div className="flex h-16 w-full items-end gap-1">
                 <div className="h-[20%] flex-1 rounded-t-sm bg-primary-container/20" />
@@ -228,6 +340,20 @@ export function MarketModulePage() {
                 </div>
               </div>
             </div>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-1 text-sm">
+              <div className="font-medium text-on-surface-variant">
+                {marketMeta.loading ? 'Đang tải dữ liệu thị trường...' : `${filteredRows.length} tài sản`}
+              </div>
+              <div className="flex items-center gap-3">
+                {marketMeta.error ? <span className="text-[#ba1a1a]">{marketMeta.error}</span> : null}
+                {marketMeta.stale && !marketMeta.error ? (
+                  <span className="rounded bg-[#ba1a1a]/10 px-2 py-1 text-xs font-bold text-[#ba1a1a]">Dữ liệu tạm thời</span>
+                ) : null}
+                {marketMeta.lastUpdated ? (
+                  <span className="text-xs text-on-surface-variant">Cập nhật: {new Date(marketMeta.lastUpdated).toLocaleTimeString('vi-VN')}</span>
+                ) : null}
+              </div>
+            </div>
 
             <div className="overflow-hidden rounded-3xl bg-surface-container-lowest shadow-[0_32px_64px_-12px_rgba(0,0,0,0.03)]">
               <div className="overflow-x-auto">
@@ -243,22 +369,26 @@ export function MarketModulePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-container-high">
-                    {[
-                      ['Bitcoin', 'BTC', '₿', '#f2a900', '$64,289.42', '+1.24%', '$1.2T', '$32.5B', true],
-                      ['Ethereum', 'ETH', 'Ξ', '#627eea', '$3,482.11', '-0.82%', '$418.2B', '$14.1B', false],
-                      ['Solana', 'SOL', 'bolt', '#14f195', '$152.88', '+12.4%', '$68.2B', '$6.8B', true],
-                      ['BNB', 'BNB', 'B', '#f3ba2f', '$592.45', '+2.15%', '$91.4B', '$1.2B', true],
-                      ['XRP', 'XRP', 'X', '#23292f', '$0.618', '-1.42%', '$33.9B', '$890M', false],
-                      ['Cardano', 'ADA', 'A', '#0033ad', '$0.452', '+0.88%', '$16.1B', '$420M', true],
-                    ].map(([name, symbol, mark, color, price, change, cap, vol, up], idx) => (
-                      <tr className="group transition-colors hover:bg-surface-container-low" key={`${symbol}-${idx}`}>
+                    {filteredRows.map((row, idx) => {
+                      const symbol = row.symbol || '';
+                      const symbolShort = symbol.replace(/USDT$/, '');
+                      const visual = TOKEN_VISUAL_MAP[symbol] || DEFAULT_VISUAL;
+                      const mark = visual.mark;
+                      const color = visual.color;
+                      const iconUrl = visual.iconUrl;
+
+                      return (
+                        <tr className="group transition-colors hover:bg-surface-container-low" key={`${symbol}-${idx}`}>
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: `${color}1A` }}>
-                              {mark === 'bolt' ? (
-                                <span className="material-symbols-outlined text-[20px]" style={{ color }}>
-                                  bolt
-                                </span>
+                              {iconUrl ? (
+                                <img
+                                  alt={`${row.name} logo`}
+                                  className="h-6 w-6 rounded-full object-contain"
+                                  loading="lazy"
+                                  src={iconUrl}
+                                />
                               ) : (
                                 <span className="text-lg font-bold" style={{ color }}>
                                   {mark}
@@ -266,22 +396,32 @@ export function MarketModulePage() {
                               )}
                             </div>
                             <div>
-                              <div className="text-lg font-bold">{name}</div>
-                              <div className="text-sm text-on-surface-variant">{symbol}</div>
+                              <div className="text-lg font-bold">{row.name}</div>
+                              <div className="text-sm text-on-surface-variant">{symbolShort}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-6 text-lg font-bold">{price}</td>
-                        <td className={`px-6 py-6 font-bold ${up ? 'text-[#01bc8d]' : 'text-[#ba1a1a]'}`}>{change}</td>
-                        <td className="px-6 py-6 font-medium text-on-surface-variant">{cap}</td>
-                        <td className="px-6 py-6 font-medium text-on-surface-variant">{vol}</td>
+                        <td className="px-6 py-6 text-lg font-bold">{formatUsdPrice(row.price)}</td>
+                        <td className={`px-6 py-6 font-bold ${row.isUp ? 'text-[#01bc8d]' : 'text-[#ba1a1a]'}`}>
+                          {formatPercentChange(row.change24hPercent)}
+                        </td>
+                        <td className="px-6 py-6 font-medium text-on-surface-variant">{row.marketCapDisplay}</td>
+                        <td className="px-6 py-6 font-medium text-on-surface-variant">{formatUsdCompact(row.volume24h)}</td>
                         <td className="px-8 py-6 text-right">
                           <button className="rounded-xl bg-surface-container-highest px-6 py-2.5 text-sm font-bold transition-all group-hover:liquidity-gradient group-hover:text-white">
                             Giao dịch
                           </button>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
+                    {!marketMeta.loading && filteredRows.length === 0 ? (
+                      <tr>
+                        <td className="px-8 py-8 text-center text-sm text-on-surface-variant" colSpan={6}>
+                          Không tìm thấy tài sản phù hợp.
+                        </td>
+                      </tr>
+                    ) : null}
                   </tbody>
                 </table>
               </div>
