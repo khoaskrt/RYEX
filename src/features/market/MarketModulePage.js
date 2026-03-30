@@ -1,6 +1,53 @@
-import Link from 'next/link';
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { useEffect, useState } from 'react';
+import { getFirebaseClientAuth } from '@/shared/lib/firebaseClient';
 
 export function MarketModulePage() {
+  const router = useRouter();
+  const [isAuthResolved, setIsAuthResolved] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    const auth = getFirebaseClientAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.replace('/app/auth/login');
+        return;
+      }
+      if (!user.emailVerified) {
+        const nextEmail = user.email ? encodeURIComponent(user.email) : '';
+        signOut(auth).catch(() => {});
+        router.replace(`/app/auth/login?verify=1${nextEmail ? `&email=${nextEmail}` : ''}`);
+        return;
+      }
+      setIsAuthResolved(true);
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  async function handleLogout() {
+    setIsLoggingOut(true);
+    try {
+      const auth = getFirebaseClientAuth();
+      await signOut(auth);
+      router.replace('/app/auth/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
+
+  if (!isAuthResolved) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface text-on-surface">
+        <p className="text-sm text-on-surface-variant">Loading dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-surface text-on-surface antialiased">
       <nav className="fixed top-0 z-50 w-full border-b border-[#bbcac1]/15 bg-[#f7f9fb]/80 shadow-[0_12px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
@@ -55,15 +102,14 @@ export function MarketModulePage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Link
+            <button
               className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
-              href="/app/auth/login"
+              disabled={isLoggingOut}
+              onClick={handleLogout}
+              type="button"
             >
-              Đăng nhập
-            </Link>
-            <Link className="liquidity-gradient rounded-lg px-5 py-2 text-sm font-bold text-white shadow-sm" href="/app/auth/signup">
-              Đăng ký
-            </Link>
+              {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+            </button>
           </div>
         </div>
       </nav>

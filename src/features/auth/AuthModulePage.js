@@ -1,10 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signOut } from 'firebase/auth';
 import { useEffect, useMemo, useState } from 'react';
+import { getFirebaseClientAuth } from '@/shared/lib/firebaseClient';
+import { EmailVerificationNotice } from './EmailVerificationNotice';
 
 const AUTH_ERROR_MESSAGES = {
-  AUTH_EMAIL_ALREADY_EXISTS: 'Email đã được sử dụng, hãy sử dụng email khác',
+  AUTH_EMAIL_ALREADY_EXISTS: 'Email đã tồn tại. Vui lòng đăng nhập hoặc sử dụng email khác',
   AUTH_INVALID_INPUT: 'Vui lòng kiểm tra lại thông tin đã nhập.',
   AUTH_PASSWORD_POLICY_FAILED: 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, số và ký tự đặc biệt.',
   AUTH_RATE_LIMITED: 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.',
@@ -14,6 +18,8 @@ const AUTH_ERROR_MESSAGES = {
   AUTH_RESEND_HOURLY_CAP_REACHED: 'Đã đạt giới hạn gửi email trong một giờ. Thử lại sau.',
   AUTH_EMAIL_NOT_VERIFIED: 'Email chưa được xác minh. Hoàn tất xác minh trước khi đăng nhập.',
 };
+
+const DASHBOARD_ROUTE = '/app/market';
 
 const leftPanelFeatures = [
   {
@@ -80,6 +86,7 @@ function validatePasswordPolicy(password) {
 }
 
 function SignupForm({ prefillEmail }) {
+  const router = useRouter();
   const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState('');
   const [rememberAfterVerify, setRememberAfterVerify] = useState(false);
@@ -88,7 +95,27 @@ function SignupForm({ prefillEmail }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
-  const [showVerifyNotice, setShowVerifyNotice] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+
+  useEffect(() => {
+    const auth = getFirebaseClientAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if (user.emailVerified) {
+          router.replace(DASHBOARD_ROUTE);
+          return;
+        }
+
+        const nextEmail = user.email || prefillEmail;
+        if (nextEmail) {
+          setVerificationEmail(nextEmail);
+        }
+        signOut(auth).catch(() => {});
+      }
+    });
+
+    return () => unsubscribe();
+  }, [prefillEmail, router]);
 
   const isSubmitDisabled = useMemo(
     () => isSubmitting || !email.trim() || !password || !agreeTerms,
@@ -136,33 +163,22 @@ function SignupForm({ prefillEmail }) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/v1/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-        }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        setSubmitError(getErrorMessage(payload?.error?.code, payload?.error?.message));
-        return;
-      }
-
+      const auth = getFirebaseClientAuth();
+      const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      await sendEmailVerification(credential.user);
+      await signOut(auth);
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem('ryex_pending_verify_email', email.trim());
         window.localStorage.setItem('ryex_remember_device', rememberAfterVerify ? '1' : '0');
       }
-      setShowVerifyNotice(true);
+      setVerificationEmail(email.trim());
       setPassword('');
       setFieldErrors({});
-    } catch {
-      setSubmitError(AUTH_ERROR_MESSAGES.AUTH_INTERNAL_ERROR);
+    } catch (error) {
+      if (error?.code === 'auth/email-already-in-use') {
+        setSubmitError(AUTH_ERROR_MESSAGES.AUTH_EMAIL_ALREADY_EXISTS);
+      } else {
+        setSubmitError(getErrorMessage(null, error?.message));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -172,7 +188,10 @@ function SignupForm({ prefillEmail }) {
     <>
       {/* AC-15: Phone tab ẩn - MVP không có phone auth */}
 
-      <form className="space-y-5" onSubmit={handleSubmit}>
+      {verificationEmail ? (
+        <EmailVerificationNotice email={verificationEmail} />
+      ) : (
+        <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <label className="ml-1 text-xs font-bold uppercase tracking-wider text-on-surface-variant" htmlFor="signup-email">
             Địa chỉ Email
@@ -258,25 +277,9 @@ function SignupForm({ prefillEmail }) {
         >
           {isSubmitting ? 'Đang xử lý...' : 'Đăng ký tài khoản'}
         </button>
-      </form>
+        </form>
+      )}
 
-      {showVerifyNotice ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-6">
-          <div className="w-full max-w-md rounded-2xl bg-surface-container-lowest p-6 shadow-xl">
-            <h3 className="text-xl font-bold text-on-surface">Đã gửi email xác minh</h3>
-            <p className="mt-3 text-sm text-on-surface-variant">
-              RYEX đã gửi email verify đến địa chỉ của bạn. Vui lòng kiểm tra inbox hoặc spam để hoàn tất kích hoạt tài khoản.
-            </p>
-            <button
-              className="mt-5 w-full rounded-xl py-3 font-semibold text-white liquidity-gradient"
-              onClick={() => setShowVerifyNotice(false)}
-              type="button"
-            >
-              Tôi đã hiểu
-            </button>
-          </div>
-        </div>
-      ) : null}
     </>
   );
 }

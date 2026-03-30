@@ -1,11 +1,89 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged, sendEmailVerification, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { useEffect, useState } from 'react';
+import { getFirebaseClientAuth } from '@/shared/lib/firebaseClient';
+import { EmailVerificationNotice } from './EmailVerificationNotice';
 
-export function StitchLoginPage() {
+const DASHBOARD_ROUTE = '/app/market';
+const INVALID_CREDENTIALS_MESSAGE = 'Email hoặc mật khẩu không chính xác';
+
+export function StitchLoginPage({ prefillEmail = '', showVerification = false }) {
+  const router = useRouter();
   const [authMethod, setAuthMethod] = useState('email');
+  const [email, setEmail] = useState(prefillEmail);
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [verificationEmail, setVerificationEmail] = useState(showVerification ? prefillEmail : '');
+
+  useEffect(() => {
+    const auth = getFirebaseClientAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if (user.emailVerified) {
+          router.replace(DASHBOARD_ROUTE);
+          return;
+        }
+
+        const nextEmail = user.email || prefillEmail;
+        setVerificationEmail(nextEmail);
+        signOut(auth).catch(() => {});
+      }
+    });
+
+    return () => unsubscribe();
+  }, [prefillEmail, router]);
+
+  function getLoginErrorMessage(errorCode) {
+    if (
+      errorCode === 'auth/invalid-credential'
+      || errorCode === 'auth/wrong-password'
+      || errorCode === 'auth/user-not-found'
+      || errorCode === 'auth/invalid-email'
+    ) {
+      return INVALID_CREDENTIALS_MESSAGE;
+    }
+
+    return 'Unable to sign in right now. Please try again.';
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setSubmitError('');
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) {
+      setSubmitError(INVALID_CREDENTIALS_MESSAGE);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const auth = getFirebaseClientAuth();
+      const credential = await signInWithEmailAndPassword(auth, trimmedEmail, password);
+
+      if (!credential.user.emailVerified) {
+        try {
+          await sendEmailVerification(credential.user);
+        } catch {
+          // Ignore resend failures to keep login flow unblocked.
+        }
+        await signOut(auth);
+        setVerificationEmail(trimmedEmail);
+        return;
+      }
+
+      router.replace(DASHBOARD_ROUTE);
+    } catch (error) {
+      setSubmitError(getLoginErrorMessage(error?.code));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="bg-surface text-on-surface font-body antialiased">
@@ -92,7 +170,10 @@ export function StitchLoginPage() {
               </button>
             </div>
 
-            <form className="space-y-6">
+            {verificationEmail ? (
+              <EmailVerificationNotice email={verificationEmail} />
+            ) : (
+              <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="ml-1 text-sm font-semibold text-on-surface" htmlFor="auth-input">
@@ -103,6 +184,8 @@ export function StitchLoginPage() {
                     id="auth-input"
                     placeholder={authMethod === 'email' ? 'name@company.com' : 'Nhập số điện thoại'}
                     type={authMethod === 'email' ? 'email' : 'tel'}
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
                   />
                 </div>
 
@@ -121,6 +204,8 @@ export function StitchLoginPage() {
                       id="password"
                       placeholder="••••••••"
                       type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
                     />
                     <button
                       aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
@@ -136,13 +221,17 @@ export function StitchLoginPage() {
                 </div>
               </div>
 
+              {submitError ? <p className="text-sm text-error">{submitError}</p> : null}
+
               <button
                 className="liquidity-gradient w-full rounded-xl py-4 font-bold text-white shadow-lg shadow-primary/10 transition-all hover:shadow-primary/20"
+                disabled={isSubmitting}
                 type="submit"
               >
-                Đăng nhập
+                {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
               </button>
-            </form>
+              </form>
+            )}
 
             <div className="relative flex items-center py-2">
               <div className="flex-grow border-t border-outline-variant/15" />
