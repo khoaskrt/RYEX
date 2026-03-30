@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signOut } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  sendEmailVerification,
+  signInWithPopup,
+  signOut,
+} from 'firebase/auth';
 import { useEffect, useMemo, useState } from 'react';
 import { getFirebaseClientAuth } from '@/shared/lib/firebaseClient';
 import { EmailVerificationNotice } from './EmailVerificationNotice';
@@ -445,7 +452,44 @@ function LoginForm() {
 }
 
 export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
+  const router = useRouter();
   const isSignup = mode === 'signup';
+  const [googleError, setGoogleError] = useState('');
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+
+  function getGoogleErrorMessage(errorCode) {
+    if (errorCode === 'auth/popup-closed-by-user') {
+      return 'Bạn đã đóng cửa sổ đăng nhập Google.';
+    }
+    if (errorCode === 'auth/popup-blocked') {
+      return 'Trình duyệt đã chặn cửa sổ Google. Vui lòng cho phép popup và thử lại.';
+    }
+    return 'Không thể đăng nhập bằng Google lúc này. Vui lòng thử lại.';
+  }
+
+  async function handleGoogleAuth() {
+    setGoogleError('');
+    setIsGoogleSubmitting(true);
+    try {
+      const auth = getFirebaseClientAuth();
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const credential = await signInWithPopup(auth, provider);
+
+      if (!credential.user.emailVerified) {
+        const nextEmail = credential.user.email ? encodeURIComponent(credential.user.email) : '';
+        await signOut(auth);
+        router.replace(`/app/auth/login?verify=1${nextEmail ? `&email=${nextEmail}` : ''}`);
+        return;
+      }
+
+      router.replace(DASHBOARD_ROUTE);
+    } catch (error) {
+      setGoogleError(getGoogleErrorMessage(error?.code));
+    } finally {
+      setIsGoogleSubmitting(false);
+    }
+  }
 
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-x-hidden bg-surface text-on-surface antialiased">
@@ -485,6 +529,8 @@ export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
             <div className="mb-8">
               <button
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-transparent bg-surface-container-lowest py-3 transition-colors duration-200 hover:bg-surface-container-low active:scale-95"
+                disabled={isGoogleSubmitting}
+                onClick={handleGoogleAuth}
                 type="button"
               >
                 <img
@@ -494,6 +540,7 @@ export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
                 />
                 <span className="font-semibold text-on-surface">Google</span>
               </button>
+              {googleError ? <p className="mt-3 text-sm text-error">{googleError}</p> : null}
             </div>
 
             <div className="text-center">

@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, sendEmailVerification, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import {
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+} from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { getFirebaseClientAuth } from '@/shared/lib/firebaseClient';
 import { EmailVerificationNotice } from './EmailVerificationNotice';
@@ -51,6 +58,16 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
     return 'Unable to sign in right now. Please try again.';
   }
 
+  function getGoogleErrorMessage(errorCode) {
+    if (errorCode === 'auth/popup-closed-by-user') {
+      return 'Bạn đã đóng cửa sổ đăng nhập Google.';
+    }
+    if (errorCode === 'auth/popup-blocked') {
+      return 'Trình duyệt đã chặn cửa sổ Google. Vui lòng cho phép popup và thử lại.';
+    }
+    return 'Không thể đăng nhập bằng Google lúc này. Vui lòng thử lại.';
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setSubmitError('');
@@ -80,6 +97,30 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
       router.replace(DASHBOARD_ROUTE);
     } catch (error) {
       setSubmitError(getLoginErrorMessage(error?.code));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    setSubmitError('');
+    setIsSubmitting(true);
+    try {
+      const auth = getFirebaseClientAuth();
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const credential = await signInWithPopup(auth, provider);
+
+      if (!credential.user.emailVerified) {
+        const nextEmail = credential.user.email || email.trim();
+        await signOut(auth);
+        setVerificationEmail(nextEmail);
+        return;
+      }
+
+      router.replace(DASHBOARD_ROUTE);
+    } catch (error) {
+      setSubmitError(getGoogleErrorMessage(error?.code));
     } finally {
       setIsSubmitting(false);
     }
@@ -244,6 +285,8 @@ export function StitchLoginPage({ prefillEmail = '', showVerification = false })
             <div>
               <button
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-outline-variant/10 bg-surface-container-low py-3 transition-all hover:bg-surface-container-high"
+                disabled={isSubmitting}
+                onClick={handleGoogleLogin}
                 type="button"
               >
                 <img
