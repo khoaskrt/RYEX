@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/supabaseClient';
 
 const AUTH_ERROR_MESSAGES = {
+  AUTH_EMAIL_ALREADY_EXISTS: 'Email đã tồn tại. Vui lòng đăng nhập hoặc sử dụng email khác.',
   AUTH_INVALID_INPUT: 'Vui lòng kiểm tra lại thông tin đã nhập.',
   AUTH_PASSWORD_POLICY_FAILED: 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, số và ký tự đặc biệt.',
   AUTH_RATE_LIMITED: 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.',
@@ -142,11 +143,11 @@ function SignupForm({ prefillEmail }) {
     return Object.keys(nextErrors).length === 0;
   }
 
-  function getErrorMessage(errorCode, fallbackMessage) {
+  function getErrorMessage(errorCode) {
     if (errorCode && AUTH_ERROR_MESSAGES[errorCode]) {
       return AUTH_ERROR_MESSAGES[errorCode];
     }
-    return fallbackMessage || AUTH_ERROR_MESSAGES.AUTH_INTERNAL_ERROR;
+    return AUTH_ERROR_MESSAGES.AUTH_INTERNAL_ERROR;
   }
 
   function getSupabaseSignupErrorCode(error) {
@@ -172,6 +173,8 @@ function SignupForm({ prefillEmail }) {
 
     if (
       code === 'user_already_exists'
+      || code === 'user_already_registered'
+      || message.includes('user already registered')
       || message.includes('already registered')
       || message.includes('already exists')
     ) {
@@ -200,7 +203,7 @@ function SignupForm({ prefillEmail }) {
 
       if (error) {
         const mappedErrorCode = getSupabaseSignupErrorCode(error);
-        setSubmitError(getErrorMessage(mappedErrorCode, error?.message));
+        setSubmitError(getErrorMessage(mappedErrorCode));
         return;
       }
 
@@ -218,7 +221,7 @@ function SignupForm({ prefillEmail }) {
       setVerificationModalError('');
       setIsVerificationModalOpen(true);
     } catch (error) {
-      setSubmitError(getErrorMessage(null, error?.message));
+      setSubmitError(getErrorMessage(null));
     } finally {
       setIsSubmitting(false);
     }
@@ -241,13 +244,13 @@ function SignupForm({ prefillEmail }) {
 
       if (error) {
         const mappedErrorCode = getSupabaseSignupErrorCode(error);
-        setVerificationModalError(getErrorMessage(mappedErrorCode, error?.message));
+        setVerificationModalError(getErrorMessage(mappedErrorCode));
         return;
       }
 
       navigateToSignInWithEmail(pendingSignupEmail);
     } catch (error) {
-      setVerificationModalError(getErrorMessage(null, error?.message));
+      setVerificationModalError(getErrorMessage(null));
     } finally {
       setIsResendingVerification(false);
     }
