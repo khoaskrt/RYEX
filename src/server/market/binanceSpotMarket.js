@@ -581,3 +581,87 @@ export async function getMarketPriceDetail(symbolInput = 'BTCUSDT') {
     throw wrappedError;
   }
 }
+
+const marketKlineCache = new Map();
+
+function buildKlineUrl(baseUrl, symbol, interval, limit) {
+  const url = new URL('/api/v3/klines', baseUrl);
+  url.searchParams.set('symbol', symbol);
+  url.searchParams.set('interval', interval);
+  url.searchParams.set('limit', String(limit));
+  return url.toString();
+}
+
+async function fetchMarketKline(symbolInput, interval = '1h', limit = 100) {
+  const symbol = normalizeMarketPairSymbol(symbolInput);
+  const baseUrl = process.env.BINANCE_MARKET_BASE_URL || DEFAULT_BASE_URL;
+  const fetchedAtIso = new Date().toISOString();
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(buildKlineUrl(baseUrl, symbol, interval, limit), {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const error = new Error(`Binance kline API returned ${response.status}`);
+      error.statusCode = response.status;
+      throw error;
+    }
+
+    const klines = await response.json();
+    if (!Array.isArray(klines) || klines.length === 0) {
+      throw new Error('Binance returned empty kline data');
+    }
+
+    const data = klines.map((k) => ({
+      time: Math.floor(k[0] / 1000),
+      open: Number.parseFloat(k[1]),
+      high: Number.parseFloat(k[2]),
+      low: Number.parseFloat(k[3]),
+      close: Number.parseFloat(k[4]),
+      volume: Number.parseFloat(k[5]),
+    }));
+
+    return {
+      symbol,
+      interval,
+      data,
+      fetchedAt: fetchedAtIso,
+      stale: false,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function getMarketKline(symbolInput = 'BTCUSDT', interval = '1h', limit = 100) {
+  const symbol = normalizeMarketPairSymbol(symbolInput);
+  const cacheKey = `${symbol}_${interval}_${limit}`;
+  const cacheEntry = marketKlineCache.get(cacheKey);
+  const now = Date.now();
+
+  if (cacheEntry && now - cacheEntry.cachedAt < DEFAULT_CACHE_TTL_MS) {
+    return cacheEntry.payload;
+  }
+
+  try {
+    const payload = await fetchMarketKline(symbol, interval, limit);
+    marketKlineCache.set(cacheKey, { payload, cachedAt: now });
+    return payload;
+  } catch (error) {
+    if (cacheEntry?.payload) {
+      return {
+        ...cacheEntry.payload,
+        stale: true,
+      };
+    }
+    const wrappedError = new Error(error.message || 'Failed to fetch kline data');
+    wrappedError.statusCode = 503;
+    throw wrappedError;
+  }
+}

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import PriceChart from '@/features/market/PriceChart';
 
 const TOKEN_VISUAL_MAP = {
   BTCUSDT: { mark: '₿', color: '#f2a900', iconUrl: '/images/tokens/btc.png' },
@@ -211,48 +212,7 @@ export default function PricePage({ searchParams, data }) {
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             <div className="space-y-8 lg:col-span-8">
-              <div className="rounded-3xl bg-surface-container-lowest p-8 shadow-[0_12px_32px_rgba(0,0,0,0.04)]">
-                <div className="mb-8 flex items-center justify-between">
-                  <div className="flex gap-2">
-                    <button className="rounded-lg bg-surface-container-high px-4 py-1.5 text-sm font-bold text-primary">1h</button>
-                    <button className="rounded-lg px-4 py-1.5 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container-low">1d</button>
-                    <button className="rounded-lg px-4 py-1.5 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container-low">1w</button>
-                    <button className="rounded-lg px-4 py-1.5 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container-low">1m</button>
-                  </div>
-                  <div className="flex items-center gap-4 text-on-surface-variant">
-                    <span className="material-symbols-outlined cursor-pointer transition-colors hover:text-primary">settings</span>
-                    <span className="material-symbols-outlined cursor-pointer transition-colors hover:text-primary">fullscreen</span>
-                  </div>
-                </div>
-                <div className="relative flex h-[400px] w-full items-end justify-between gap-1">
-                  <div className="pointer-events-none absolute inset-0 flex flex-col justify-between border-l border-outline-variant/15 py-2">
-                    <div className="flex w-full justify-end border-t border-outline-variant/15"><span className="p-1 text-[10px] text-outline">$320.00</span></div>
-                    <div className="flex w-full justify-end border-t border-outline-variant/15"><span className="p-1 text-[10px] text-outline">$315.00</span></div>
-                    <div className="flex w-full justify-end border-t border-outline-variant/15"><span className="p-1 text-[10px] text-outline">$310.00</span></div>
-                    <div className="flex w-full justify-end border-t border-outline-variant/15"><span className="p-1 text-[10px] text-outline">$305.00</span></div>
-                  </div>
-                  <div className="h-3/4 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)] opacity-20" />
-                  <div className="h-2/3 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)] opacity-30" />
-                  <div className="h-4/5 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)] opacity-40" />
-                  <div className="h-3/5 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)] opacity-50" />
-                  <div className="h-5/6 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)] opacity-60" />
-                  <div className="h-3/4 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)] opacity-70" />
-                  <div className="h-2/3 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)] opacity-80" />
-                  <div className="h-3/5 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)] opacity-90" />
-                  <div className="h-4/5 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)]" />
-                  <div className="h-5/6 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)]" />
-                  <div className="h-4/5 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)]" />
-                  <div className="h-3/4 w-3 rounded-t bg-error opacity-40" />
-                  <div className="h-2/3 w-3 rounded-t bg-error opacity-60" />
-                  <div className="h-1/2 w-3 rounded-t bg-error opacity-80" />
-                  <div className="h-2/5 w-3 rounded-t bg-error" />
-                  <div className="h-1/3 w-3 rounded-t bg-error" />
-                  <div className="h-1/2 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)]" />
-                  <div className="h-3/5 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)]" />
-                  <div className="h-2/3 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)]" />
-                  <div className="h-4/5 w-3 rounded-t bg-[linear-gradient(135deg,#006c4f_0%,#01bc8d_100%)]" />
-                </div>
-              </div>
+              <PriceChart symbol={requestedSymbol} defaultInterval="1h" />
 
               <div className="rounded-3xl bg-surface-container-lowest p-10 shadow-[0_12px_32px_rgba(0,0,0,0.04)]">
                 <h2 className="mb-6 text-2xl font-extrabold tracking-tight">{token.aboutTitle}</h2>
