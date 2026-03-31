@@ -363,7 +363,7 @@ async function fetchCoinGeckoSupplementalData(symbols) {
   const baseUrl = process.env.COINGECKO_BASE_URL || DEFAULT_COINGECKO_BASE_URL;
 
   const ids = symbols.map((symbol) => SYMBOL_COINGECKO_ID_MAP[symbol]).filter(Boolean);
-  if ((!demoApiKey && !proApiKey) || ids.length === 0) {
+  if (ids.length === 0) {
     return {};
   }
 
@@ -371,9 +371,12 @@ async function fetchCoinGeckoSupplementalData(symbols) {
   const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
   try {
+    // Fallback to public CoinGecko access when API keys are not configured.
     const headers = proApiKey
       ? { 'x-cg-pro-api-key': proApiKey }
-      : { 'x-cg-demo-api-key': demoApiKey };
+      : demoApiKey
+        ? { 'x-cg-demo-api-key': demoApiKey }
+        : undefined;
 
     const response = await fetch(buildCoinGeckoUrl(baseUrl, ids), {
       method: 'GET',
