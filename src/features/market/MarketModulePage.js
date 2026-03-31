@@ -419,9 +419,22 @@ export function MarketModulePage() {
                       const mark = visual.mark;
                       const color = visual.color;
                       const iconUrl = row.iconUrl || visual.iconUrl;
+                      const detailHref = `/app/price/${encodeURIComponent((symbolShort || 'BTC').toUpperCase())}`;
 
                       return (
-                        <tr className="group transition-colors hover:bg-surface-container-low" key={`${symbol}-${idx}`}>
+                        <tr
+                          className="group cursor-pointer transition-colors hover:bg-surface-container-low"
+                          key={`${symbol}-${idx}`}
+                          onClick={() => router.push(detailHref)}
+                          role="link"
+                          tabIndex={0}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              router.push(detailHref);
+                            }
+                          }}
+                        >
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
                             <div className="flex h-6 w-6 items-center justify-center bg-transparent">
@@ -451,7 +464,14 @@ export function MarketModulePage() {
                         <td className="px-6 py-6 font-medium text-on-surface-variant">{row.marketCapDisplay}</td>
                         <td className="px-6 py-6 font-medium text-on-surface-variant">{formatUsdCompact(row.volume24h)}</td>
                         <td className="px-8 py-6 text-right">
-                          <button className="rounded-xl bg-surface-container-highest px-6 py-2.5 text-sm font-bold transition-all group-hover:liquidity-gradient group-hover:text-white">
+                          <button
+                            className="rounded-xl bg-surface-container-highest px-6 py-2.5 text-sm font-bold transition-all group-hover:liquidity-gradient group-hover:text-white"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              router.push(detailHref);
+                            }}
+                            type="button"
+                          >
                             Giao dịch
                           </button>
                         </td>

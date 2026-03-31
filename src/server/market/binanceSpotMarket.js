@@ -165,6 +165,7 @@ let marketCache = {
   cachedAt: 0,
   payload: null,
 };
+const marketPriceDetailCache = new Map();
 
 function parseSymbols(envValue) {
   if (!envValue) return DEFAULT_SYMBOLS;
@@ -234,6 +235,126 @@ function buildCoinGeckoUrl(baseUrl, ids) {
   url.searchParams.set('per_page', String(ids.length));
   url.searchParams.set('page', '1');
   return url.toString();
+}
+
+function buildSingleTickerUrl(baseUrl, symbol) {
+  const url = new URL('/api/v3/ticker/24hr', baseUrl);
+  url.searchParams.set('symbol', symbol);
+  return url.toString();
+}
+
+function formatUsdPrice(value) {
+  const number = toNumber(value, 0);
+  if (number <= 0) return '--';
+  return `$${new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(number)}`;
+}
+
+function formatPercent(value) {
+  const number = toNumber(value, 0);
+  const sign = number > 0 ? '+' : '';
+  return `${sign}${number.toFixed(2)}%`;
+}
+
+function formatTokenSupply(value, symbol) {
+  const number = toNumber(value, 0);
+  if (number <= 0) return `-- ${symbol}`;
+  return `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(number)} ${symbol}`;
+}
+
+function formatTokenVolume(value, symbol) {
+  const number = toNumber(value, 0);
+  if (number <= 0) return '--';
+  return `${new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: 2,
+  }).format(number)} ${symbol}`;
+}
+
+function getCoinGeckoHeaders() {
+  const demoApiKey = process.env.COINGECKO_API_KEY || '';
+  const proApiKey = process.env.COINGECKO_PRO_API_KEY || '';
+  if (proApiKey) return { 'x-cg-pro-api-key': proApiKey };
+  if (demoApiKey) return { 'x-cg-demo-api-key': demoApiKey };
+  return null;
+}
+
+async function fetchCoinGeckoPriceDetail(symbol) {
+  const coinId = SYMBOL_COINGECKO_ID_MAP[symbol];
+  if (!coinId) return null;
+
+  const headers = getCoinGeckoHeaders();
+  const baseUrl = process.env.COINGECKO_BASE_URL || DEFAULT_COINGECKO_BASE_URL;
+  const normalizedBaseUrl = `${baseUrl.replace(/\/+$/, '')}/`;
+  const url = new URL('coins/markets', normalizedBaseUrl);
+  url.searchParams.set('vs_currency', 'usd');
+  url.searchParams.set('ids', coinId);
+  url.searchParams.set('sparkline', 'false');
+  url.searchParams.set('price_change_percentage', '24h');
+  url.searchParams.set('locale', 'en');
+  url.searchParams.set('per_page', '1');
+  url.searchParams.set('page', '1');
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+      headers: headers || undefined,
+    });
+    if (!response.ok) return null;
+
+    const body = await response.json();
+    const coin = Array.isArray(body) ? body[0] : null;
+    if (!coin) return null;
+
+    return {
+      marketCapDisplay: formatUsdCompact(coin.market_cap),
+      circulatingSupplyDisplay: formatTokenSupply(coin.circulating_supply, symbol.replace(/USDT$/, '')),
+      totalSupplyDisplay: formatTokenSupply(coin.max_supply || coin.total_supply, symbol.replace(/USDT$/, '')),
+      rankDisplay: coin.market_cap_rank ? `#${coin.market_cap_rank}` : '--',
+      iconUrl: coin.image || '',
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchBtcDominanceDisplay() {
+  const headers = getCoinGeckoHeaders();
+  const baseUrl = process.env.COINGECKO_BASE_URL || DEFAULT_COINGECKO_BASE_URL;
+  const normalizedBaseUrl = `${baseUrl.replace(/\/+$/, '')}/`;
+  const url = new URL('global', normalizedBaseUrl);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+      headers: headers || undefined,
+    });
+    if (!response.ok) return '--';
+
+    const body = await response.json();
+    const dominance = toNumber(body?.data?.market_cap_percentage?.btc, NaN);
+    if (!Number.isFinite(dominance)) return '--';
+    return `${dominance.toFixed(2)}%`;
+  } catch {
+    return '--';
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function fetchCoinGeckoSupplementalData(symbols) {
@@ -371,6 +492,88 @@ export async function getMarketTickers() {
     }
 
     const wrappedError = new Error(error.message || 'Failed to fetch market tickers');
+    wrappedError.statusCode = 503;
+    throw wrappedError;
+  }
+}
+
+function normalizeMarketPairSymbol(symbolInput) {
+  const raw = String(symbolInput || 'BTCUSDT').trim().toUpperCase();
+  return raw.endsWith('USDT') ? raw : `${raw}USDT`;
+}
+
+async function fetchMarketPriceDetail(symbolInput) {
+  const symbol = normalizeMarketPairSymbol(symbolInput);
+  const baseUrl = process.env.BINANCE_MARKET_BASE_URL || DEFAULT_BASE_URL;
+  const fetchedAtIso = new Date().toISOString();
+  const symbolShort = symbol.replace(/USDT$/, '');
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(buildSingleTickerUrl(baseUrl, symbol), {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const error = new Error(`Binance upstream returned ${response.status}`);
+      error.statusCode = response.status;
+      throw error;
+    }
+
+    const ticker = await response.json();
+    const cgDetail = await fetchCoinGeckoPriceDetail(symbol);
+    const btcDominance = symbol === 'BTCUSDT' ? await fetchBtcDominanceDisplay() : '--';
+
+    return {
+      symbol,
+      symbolShort,
+      name: SYMBOL_NAME_MAP[symbol] || symbolShort,
+      priceDisplay: formatUsdPrice(ticker?.lastPrice),
+      change24hPercent: toNumber(ticker?.priceChangePercent, 0),
+      change24hDisplay: formatPercent(ticker?.priceChangePercent),
+      high24hDisplay: formatUsdPrice(ticker?.highPrice),
+      low24hDisplay: formatUsdPrice(ticker?.lowPrice),
+      volumeTokenDisplay: formatTokenVolume(ticker?.volume, symbolShort),
+      volumeUsdDisplay: formatUsdCompact(ticker?.quoteVolume),
+      marketCapDisplay: cgDetail?.marketCapDisplay || '--',
+      circulatingSupplyDisplay: cgDetail?.circulatingSupplyDisplay || `-- ${symbolShort}`,
+      totalSupplyDisplay: cgDetail?.totalSupplyDisplay || `-- ${symbolShort}`,
+      rankDisplay: cgDetail?.rankDisplay || '--',
+      dominanceDisplay: btcDominance,
+      iconUrl: cgDetail?.iconUrl || '',
+      updatedAt: toIsoTime(ticker?.closeTime, fetchedAtIso),
+      fetchedAt: fetchedAtIso,
+      stale: false,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function getMarketPriceDetail(symbolInput = 'BTCUSDT') {
+  const symbol = normalizeMarketPairSymbol(symbolInput);
+  const cacheEntry = marketPriceDetailCache.get(symbol);
+  const now = Date.now();
+  if (cacheEntry && now - cacheEntry.cachedAt < DEFAULT_CACHE_TTL_MS) {
+    return cacheEntry.payload;
+  }
+
+  try {
+    const payload = await fetchMarketPriceDetail(symbol);
+    marketPriceDetailCache.set(symbol, { payload, cachedAt: now });
+    return payload;
+  } catch (error) {
+    if (cacheEntry?.payload) {
+      return {
+        ...cacheEntry.payload,
+        stale: true,
+      };
+    }
+    const wrappedError = new Error(error.message || 'Failed to fetch market price detail');
     wrappedError.statusCode = 503;
     throw wrappedError;
   }
