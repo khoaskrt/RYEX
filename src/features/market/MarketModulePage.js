@@ -252,14 +252,24 @@ export function MarketModulePage() {
           </div>
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
-              <button
-                className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
-                disabled={isLoggingOut}
-                onClick={handleLogout}
-                type="button"
-              >
-                {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
-              </button>
+              <>
+                <button
+                  className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
+                  disabled={isLoggingOut}
+                  onClick={handleLogout}
+                  type="button"
+                >
+                  {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+                </button>
+                <Link
+                  aria-label="Hồ sơ người dùng"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-[#3c4a43] transition-colors hover:bg-surface-container-high"
+                  href="/app/users"
+                  title="Hồ sơ"
+                >
+                  <span className="material-symbols-outlined text-[20px]">person</span>
+                </Link>
+              </>
             ) : (
               <>
                 <button
