@@ -40,6 +40,10 @@ description: Frontend execution rules for RYEX. Use when editing UI in this repo
 - FE không sửa code BE (API/service/repository/schema).
 - FE chỉ xử lý UI/component/presentation/client-state.
 
+7. Global background changes (must):
+- Khi đổi nền toàn app, chỉnh ở token màu (`tailwind.config.js`) + `body`/layout global, không override rải rác từng component.
+- Sau khi đổi `tailwind.config.js`, phải restart dev server và xoá `.next` nếu màu không cập nhật.
+
 ## 3) Optimized Working Flow
 Before editing:
 1. Locate exact entrypoint chain from route -> feature.

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ryex-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ryex_local
+      POSTGRES_USER: ryex
+      POSTGRES_PASSWORD: ryex_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ryex_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ryex -d ryex_local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ryex_postgres_data:

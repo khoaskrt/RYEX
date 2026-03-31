@@ -17,6 +17,11 @@
 
 body {
   font-family: 'Manrope', sans-serif;
-  background-color: #f7f9fb;
+  background-color: #ffffff;
   color: #191c1e;
+}
+
+.landing-page-bg {
+  background-color: #f7f9fb;
+  min-height: 100vh;
 }
