@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/shared/lib/supabaseClient';
@@ -58,6 +59,7 @@ function getPaginationItems(totalPages, currentPage, windowSize = PAGINATION_WIN
 export function MarketModulePage() {
   const router = useRouter();
   const [isAuthResolved, setIsAuthResolved] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -75,10 +77,7 @@ export function MarketModulePage() {
     async function bootstrapSession() {
       const { data } = await supabase.auth.getSession();
       if (!isMounted) return;
-      if (!data.session) {
-        router.replace('/app/auth/login');
-        return;
-      }
+      setIsAuthenticated(Boolean(data.session));
       setIsAuthResolved(true);
     }
 
@@ -87,10 +86,7 @@ export function MarketModulePage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        router.replace('/app/auth/login');
-        return;
-      }
+      setIsAuthenticated(Boolean(session));
       setIsAuthResolved(true);
     });
 
@@ -98,7 +94,7 @@ export function MarketModulePage() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, []);
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -204,7 +200,9 @@ export function MarketModulePage() {
       <nav className="fixed top-0 z-50 w-full border-b border-[#bbcac1]/15 bg-[#f7f9fb]/80 shadow-[0_12px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between px-8">
           <div className="flex items-center gap-10">
-            <span className="text-2xl font-black tracking-tighter text-[#006c4f]">RYEX</span>
+            <Link className="text-2xl font-black tracking-tighter text-[#006c4f]" href="/">
+              RYEX
+            </Link>
             <div className="hidden h-full items-center gap-8 md:flex">
               <a className="flex h-full items-center border-b-2 border-[#01bc8d] pb-1 font-bold text-[#006c4f]" href="#">
                 Thị trường
@@ -253,14 +251,33 @@ export function MarketModulePage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button
-              className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
-              disabled={isLoggingOut}
-              onClick={handleLogout}
-              type="button"
-            >
-              {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
-            </button>
+            {isAuthenticated ? (
+              <button
+                className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
+                disabled={isLoggingOut}
+                onClick={handleLogout}
+                type="button"
+              >
+                {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+              </button>
+            ) : (
+              <>
+                <button
+                  className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
+                  onClick={() => router.push('/app/auth/login')}
+                  type="button"
+                >
+                  Đăng nhập
+                </button>
+                <button
+                  className="rounded-xl px-6 py-2.5 text-sm font-bold text-white liquidity-gradient shadow-lg transition-transform duration-200 active:scale-95"
+                  onClick={() => router.push('/app/auth/signup')}
+                  type="button"
+                >
+                  Đăng ký
+                </button>
+              </>
+            )}
           </div>
         </div>
       </nav>

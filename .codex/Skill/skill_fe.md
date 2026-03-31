@@ -3,6 +3,13 @@ name: ryex-fe-skill
 description: Frontend execution rules for RYEX. Use when editing UI in this repo to preserve design consistency, strict scope boundaries, and market-baseline header/footer and token icon standards.
 ---
 
+## 0) Mandatory Pre-Task Rule Read
+- Trước khi thực hiện bất kỳ tác vụ nào, bắt buộc đọc file rule FE tương ứng với hệ đang chạy:
+  - `.codex`: `.codex/Rule/rule_fe.md`
+  - `.claude`: `.claude/Rules/rule_fe.md`
+- Nếu chưa đọc rule, không được bắt đầu edit/code/test cho task FE.
+
+
 # RYEX FE Skill (Simple + Optimized)
 
 ## 1) Project Context (Must Keep in Mind)

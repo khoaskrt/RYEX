@@ -99,7 +99,9 @@ export default function PricePage({ searchParams, data }) {
         <nav className="fixed top-0 z-50 w-full border-b border-[#bbcac1]/15 bg-[#f7f9fb]/80 shadow-[0_12px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
           <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between px-8">
             <div className="flex items-center gap-10">
-              <span className="text-2xl font-black tracking-tighter text-[#006c4f]">RYEX</span>
+              <Link className="text-2xl font-black tracking-tighter text-[#006c4f]" href="/">
+                RYEX
+              </Link>
               <div className="hidden h-full items-center gap-8 md:flex">
                 <Link className="flex h-full items-center border-b-2 border-[#01bc8d] pb-1 font-bold text-[#006c4f]" href="/app/market">
                   Thị trường

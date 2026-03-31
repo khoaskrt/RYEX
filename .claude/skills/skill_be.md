@@ -3,6 +3,13 @@ name: ryex-be-skill
 description: Backend engineering execution rules for RYEX. Use when editing API routes, server domain logic, auth/session, database access, and third-party market/auth integrations.
 ---
 
+## 0) Mandatory Pre-Task Rule Read
+- Trước khi thực hiện bất kỳ tác vụ nào, bắt buộc đọc file rule BE tương ứng với hệ đang chạy:
+  - `.codex`: `.codex/Rule/rule_be.md`
+  - `.claude`: `.claude/Rules/rule_be.md`
+- Nếu chưa đọc rule, không được bắt đầu edit/code/test cho task BE.
+
+
 # RYEX BE Skill (Simple + Optimized) — v1
 
 ## 0) Rule vs Skill Scope (BE)

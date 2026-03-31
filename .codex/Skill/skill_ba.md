@@ -4,6 +4,13 @@ description: Business Analyst execution skill for RYEX. Use to write concise BRD
 version: 1.1
 ---
 
+## 0) Mandatory Pre-Task Rule Read
+- Trước khi thực hiện bất kỳ tác vụ nào, bắt buộc đọc file rule BA tương ứng với hệ đang chạy:
+  - `.codex`: `.codex/Rule/rule_ba.md`
+  - `.claude`: `.claude/Rules/rule_ba.md`
+- Nếu chưa đọc rule, không được bắt đầu phân tích/viết output cho task BA.
+
+
 # RYEX BA Skill (Simple + Optimized) — v1.1
 
 ## 0) Rule vs Skill Scope (BA)

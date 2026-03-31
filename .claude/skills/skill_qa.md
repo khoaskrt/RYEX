@@ -3,6 +3,13 @@ name: ryex-qa-skill
 description: QA execution skill for RYEX. Run fast, risk-first checks for auth, market realtime, and core profile APIs with clear PASS/FAIL/BLOCKED evidence.
 ---
 
+## 0) Mandatory Pre-Task Rule Read
+- Trước khi thực hiện bất kỳ tác vụ nào, bắt buộc đọc file rule QA tương ứng với hệ đang chạy:
+  - `.codex`: `.codex/Rule/rule_qa.md`
+  - `.claude`: `.claude/Rules/rule_qa.md`
+- Nếu chưa đọc rule, không được bắt đầu run test/verify/report cho task QA.
+
+
 # RYEX QA Skill (Simple + Optimized) — v1
 
 ## 1) Project Context (Must Keep in Mind)
