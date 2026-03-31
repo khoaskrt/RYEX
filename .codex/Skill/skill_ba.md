@@ -1,9 +1,10 @@
 ---
 name: ryex-ba-skill
 description: Business Analyst execution skill for RYEX. Use to write concise BRD-lite outputs, prioritized backlog, and handoff-ready acceptance criteria.
+version: 1.1
 ---
 
-# RYEX BA Skill (Simple + Optimized) — v1
+# RYEX BA Skill (Simple + Optimized) — v1.1
 
 ## 0) Rule vs Skill Scope (BA)
 - Rule: các ràng buộc bắt buộc (không được vi phạm).
@@ -113,3 +114,15 @@ Khi nhận 1 yêu cầu mới, BA luôn bàn giao theo 6 block ngắn:
 2. Mỗi domain thêm 1 mini-pack khi đủ dữ liệu (`Auth`, `Market`, `Profile`, `Compliance`, `Analytics`).
 3. Mỗi lần update ghi version + changelog ngắn.
 4. Archive tài liệu cũ, luôn giữ 1 bản active source-of-truth cho từng domain.
+
+---
+
+## Changelog
+
+### v1.1 - 2026-03-31
+- **Added Domain**: OAuth authentication flow
+  - New pattern: Third-party OAuth integration (Google, etc.)
+  - Template applied: Google OAuth implementation documented in `/docs/ba/google-oauth-implementation-v1.0.md`
+- **New checklist item**: OAuth implementations require environment config verification (Supabase dashboard, redirect URLs)
+- **Impact map update**: OAuth flows are FE-only initially; BE session sync deferred
+- **Reference example**: Google OAuth login follows client-side redirect pattern with callback handler

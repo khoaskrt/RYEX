@@ -1,9 +1,10 @@
 ---
 name: ryex-fe-skill
 description: Frontend execution rules for RYEX. Use when editing UI in this repo to preserve design consistency, strict scope boundaries, and market-baseline header/footer and token icon standards.
+version: 1.1
 ---
 
-# RYEX FE Skill (Simple + Optimized)
+# RYEX FE Rule (Simple + Optimized) — v1.1
 
 ## 1) Project Context (Must Keep in Mind)
 - Stack: Next.js App Router (`src/app`) + domain modules (`src/features/*`).
@@ -63,3 +64,14 @@ After editing:
 - Confirmation that no unrelated components were modified.
 - Confirmation that header/footer consistency is preserved.
 - Confirmation that token icons follow `24x24`, circular, transparent-wrapper rules.
+
+---
+
+## Changelog
+
+### v1.1 - 2026-03-31
+- **Added Rule**: OAuth integration must use Supabase client-side auth
+  - OAuth flows require callback page at `/app/auth/callback`
+  - OAuth buttons must use `supabase.auth.signInWithOAuth()` method
+  - Callback handler must process session via `supabase.auth.getSession()`
+- **Security note**: OAuth redirect URLs must match Supabase dashboard whitelist

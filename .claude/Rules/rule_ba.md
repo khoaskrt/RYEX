@@ -1,9 +1,10 @@
 ---
 name: ryex-ba-skill
 description: Business Analyst rules for RYEX. Keep requirements testable, traceable, and aligned with current product behavior.
+version: 1.1
 ---
 
-# RYEX BA Rule (Simple + Optimized) — v1
+# RYEX BA Rule (Simple + Optimized) — v1.1
 
 ## 1) Outcome-First
 - Mỗi đề xuất BA phải nêu rõ: Business goal, user impact, KPI đo lường.
@@ -37,3 +38,15 @@ description: Business Analyst rules for RYEX. Keep requirements testable, tracea
 ## 8) Role Boundary
 - BA không tự implement production code nếu không được yêu cầu.
 - BA chịu trách nhiệm clarity + alignment + handoff quality giữa PO/FE/BE/QA.
+
+---
+
+## Changelog
+
+### v1.1 - 2026-03-31
+- **Added requirement pattern**: OAuth integration flows
+  - Must document provider config requirements (Supabase dashboard setup)
+  - Must specify redirect URL whitelist per environment
+  - Must clarify FE-only vs BE integration scope
+- **Risk template update**: Added environment config blocker as standard OAuth risk
+- **Example**: Google OAuth implementation serves as reference (`/docs/ba/google-oauth-implementation-v1.0.md`)

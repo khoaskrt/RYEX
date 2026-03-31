@@ -1,9 +1,10 @@
 ---
 name: ryex-fe-skill
 description: Frontend execution rules for RYEX. Use when editing UI in this repo to preserve design consistency, strict scope boundaries, and market-baseline header/footer and token icon standards.
+version: 1.1
 ---
 
-# RYEX FE Skill (Simple + Optimized)
+# RYEX FE Skill (Simple + Optimized) — v1.1
 
 ## 0) Rule vs Skill Scope (FE)
 - Rule: ràng buộc bắt buộc (design system, icon rule, role boundary).
@@ -63,3 +64,15 @@ After editing:
 - Confirmation that no unrelated components were modified.
 - Confirmation that header/footer consistency is preserved.
 - Confirmation that token icons follow `24x24`, circular, transparent-wrapper rules.
+
+---
+
+## Changelog
+
+### v1.1 - 2026-03-31
+- **Added**: OAuth integration context
+  - Google OAuth login implemented via Supabase
+  - New callback handler pattern: `/app/auth/callback/page.js`
+  - OAuth buttons use `supabase.auth.signInWithOAuth()`
+- **Pattern**: OAuth flows follow client-side redirect pattern with callback page
+- **Reference**: See `/docs/ba/google-oauth-implementation-v1.0.md` for full BA documentation

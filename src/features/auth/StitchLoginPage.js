@@ -117,6 +117,28 @@ export function StitchLoginPage({ prefillEmail = '' }) {
     }
   }
 
+  async function handleGoogleLogin() {
+    setSubmitError('');
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/app/auth/callback`,
+        },
+      });
+
+      if (error) {
+        setSubmitError(getLoginErrorMessage(error));
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      setSubmitError(getLoginErrorMessage(error));
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="bg-surface text-on-surface font-body antialiased">
       <header className="fixed top-0 z-50 w-full bg-[#f7f9fb]/80 shadow-[0_12px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
@@ -277,17 +299,19 @@ export function StitchLoginPage({ prefillEmail = '' }) {
 
             <div>
               <button
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-outline-variant/10 bg-surface-container-low py-3 transition-all hover:bg-surface-container-high"
-                disabled
+                className="flex w-full items-center justify-center gap-3 rounded-xl border border-outline-variant/10 bg-surface-container-low py-3 transition-all hover:bg-surface-container-high disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
                 type="button"
-                title="Google login sẽ được bổ sung sau"
+                onClick={handleGoogleLogin}
               >
                 <img
                   alt="Google"
                   className="h-7 w-7 object-contain"
                   src="/images/google-icon.png"
                 />
-                <span className="font-semibold text-on-surface">Google (Coming soon)</span>
+                <span className="font-semibold text-on-surface">
+                  {isSubmitting ? 'Đang xử lý...' : 'Continue with Google'}
+                </span>
               </button>
             </div>
 
