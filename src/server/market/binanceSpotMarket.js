@@ -1,4 +1,55 @@
-const DEFAULT_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT'];
+const DEFAULT_SYMBOLS = [
+  'BTCUSDT',
+  'ETHUSDT',
+  'BNBUSDT',
+  'XRPUSDT',
+  'SOLUSDT',
+  'ADAUSDT',
+  'DOGEUSDT',
+  'TRXUSDT',
+  'TONUSDT',
+  'AVAXUSDT',
+  'SHIBUSDT',
+  'DOTUSDT',
+  'LINKUSDT',
+  'BCHUSDT',
+  'NEARUSDT',
+  'LTCUSDT',
+  'UNIUSDT',
+  'APTUSDT',
+  'ICPUSDT',
+  'ETCUSDT',
+  'FILUSDT',
+  'ATOMUSDT',
+  'XLMUSDT',
+  'ARBUSDT',
+  'OPUSDT',
+  'VETUSDT',
+  'ALGOUSDT',
+  'INJUSDT',
+  'AAVEUSDT',
+  'MKRUSDT',
+  'RENDERUSDT',
+  'IMXUSDT',
+  'GRTUSDT',
+  'SANDUSDT',
+  'MANAUSDT',
+  'THETAUSDT',
+  'EOSUSDT',
+  'SEIUSDT',
+  'STXUSDT',
+  'PEPEUSDT',
+  'FLOKIUSDT',
+  'BONKUSDT',
+  'JUPUSDT',
+  'WIFUSDT',
+  'FTMUSDT',
+  'HBARUSDT',
+  'SUIUSDT',
+  'LDOUSDT',
+  'EGLDUSDT',
+  'CAKEUSDT',
+];
 const DEFAULT_BASE_URL = 'https://data-api.binance.vision';
 const DEFAULT_COINGECKO_BASE_URL = 'https://api.coingecko.com/api/v3';
 const DEFAULT_CACHE_TTL_MS = 5000;
@@ -7,19 +58,107 @@ const DEFAULT_TIMEOUT_MS = 4500;
 const SYMBOL_NAME_MAP = {
   BTCUSDT: 'Bitcoin',
   ETHUSDT: 'Ethereum',
-  SOLUSDT: 'Solana',
   BNBUSDT: 'BNB',
   XRPUSDT: 'XRP',
+  SOLUSDT: 'Solana',
   ADAUSDT: 'Cardano',
+  DOGEUSDT: 'Dogecoin',
+  TRXUSDT: 'TRON',
+  TONUSDT: 'Toncoin',
+  AVAXUSDT: 'Avalanche',
+  SHIBUSDT: 'Shiba Inu',
+  DOTUSDT: 'Polkadot',
+  LINKUSDT: 'Chainlink',
+  BCHUSDT: 'Bitcoin Cash',
+  NEARUSDT: 'NEAR Protocol',
+  LTCUSDT: 'Litecoin',
+  UNIUSDT: 'Uniswap',
+  APTUSDT: 'Aptos',
+  ICPUSDT: 'Internet Computer',
+  ETCUSDT: 'Ethereum Classic',
+  FILUSDT: 'Filecoin',
+  ATOMUSDT: 'Cosmos',
+  XLMUSDT: 'Stellar',
+  ARBUSDT: 'Arbitrum',
+  OPUSDT: 'Optimism',
+  VETUSDT: 'VeChain',
+  ALGOUSDT: 'Algorand',
+  INJUSDT: 'Injective',
+  AAVEUSDT: 'Aave',
+  MKRUSDT: 'Maker',
+  RENDERUSDT: 'Render',
+  IMXUSDT: 'Immutable',
+  GRTUSDT: 'The Graph',
+  SANDUSDT: 'The Sandbox',
+  MANAUSDT: 'Decentraland',
+  THETAUSDT: 'Theta Network',
+  EOSUSDT: 'EOS',
+  SEIUSDT: 'Sei',
+  STXUSDT: 'Stacks',
+  PEPEUSDT: 'Pepe',
+  FLOKIUSDT: 'Floki',
+  BONKUSDT: 'Bonk',
+  JUPUSDT: 'Jupiter',
+  WIFUSDT: 'dogwifhat',
+  FTMUSDT: 'Fantom',
+  HBARUSDT: 'Hedera',
+  SUIUSDT: 'Sui',
+  LDOUSDT: 'Lido DAO',
+  EGLDUSDT: 'MultiversX',
+  CAKEUSDT: 'PancakeSwap',
 };
 
 const SYMBOL_COINGECKO_ID_MAP = {
   BTCUSDT: 'bitcoin',
   ETHUSDT: 'ethereum',
-  SOLUSDT: 'solana',
   BNBUSDT: 'binancecoin',
   XRPUSDT: 'ripple',
+  SOLUSDT: 'solana',
   ADAUSDT: 'cardano',
+  DOGEUSDT: 'dogecoin',
+  TRXUSDT: 'tron',
+  TONUSDT: 'the-open-network',
+  AVAXUSDT: 'avalanche-2',
+  SHIBUSDT: 'shiba-inu',
+  DOTUSDT: 'polkadot',
+  LINKUSDT: 'chainlink',
+  BCHUSDT: 'bitcoin-cash',
+  NEARUSDT: 'near',
+  LTCUSDT: 'litecoin',
+  UNIUSDT: 'uniswap',
+  APTUSDT: 'aptos',
+  ICPUSDT: 'internet-computer',
+  ETCUSDT: 'ethereum-classic',
+  FILUSDT: 'filecoin',
+  ATOMUSDT: 'cosmos',
+  XLMUSDT: 'stellar',
+  ARBUSDT: 'arbitrum',
+  OPUSDT: 'optimism',
+  VETUSDT: 'vechain',
+  ALGOUSDT: 'algorand',
+  INJUSDT: 'injective-protocol',
+  AAVEUSDT: 'aave',
+  MKRUSDT: 'maker',
+  RENDERUSDT: 'render-token',
+  IMXUSDT: 'immutable-x',
+  GRTUSDT: 'the-graph',
+  SANDUSDT: 'the-sandbox',
+  MANAUSDT: 'decentraland',
+  THETAUSDT: 'theta-token',
+  EOSUSDT: 'eos',
+  SEIUSDT: 'sei-network',
+  STXUSDT: 'blockstack',
+  PEPEUSDT: 'pepe',
+  FLOKIUSDT: 'floki',
+  BONKUSDT: 'bonk',
+  JUPUSDT: 'jupiter-exchange-solana',
+  WIFUSDT: 'dogwifcoin',
+  FTMUSDT: 'fantom',
+  HBARUSDT: 'hedera-hashgraph',
+  SUIUSDT: 'sui',
+  LDOUSDT: 'lido-dao',
+  EGLDUSDT: 'multiversx',
+  CAKEUSDT: 'pancakeswap-token',
 };
 
 let marketCache = {
@@ -33,7 +172,11 @@ function parseSymbols(envValue) {
     .split(',')
     .map((value) => value.trim().toUpperCase())
     .filter(Boolean);
-  return symbols.length > 0 ? symbols : DEFAULT_SYMBOLS;
+  if (symbols.length === 0) return DEFAULT_SYMBOLS;
+
+  // Keep compatibility with existing env overrides while guaranteeing
+  // a minimum 50-token universe for market pagination requirements.
+  return Array.from(new Set([...symbols, ...DEFAULT_SYMBOLS])).slice(0, DEFAULT_SYMBOLS.length);
 }
 
 function toNumber(value, fallback = 0) {
@@ -68,6 +211,7 @@ function normalizeTicker(rawTicker, fallbackName, fetchedAtIso) {
     change24hPercent: rawTicker.priceChangePercent ?? '0',
     volume24h: rawTicker.quoteVolume ?? '0',
     marketCapDisplay: '--',
+    iconUrl: '',
     isUp: changePercent >= 0,
     updatedAt: toIsoTime(rawTicker.closeTime, fetchedAtIso),
   };
@@ -81,14 +225,18 @@ function buildTickerUrl(baseUrl, symbols) {
 
 function buildCoinGeckoUrl(baseUrl, ids) {
   const normalizedBaseUrl = `${baseUrl.replace(/\/+$/, '')}/`;
-  const url = new URL('simple/price', normalizedBaseUrl);
-  url.searchParams.set('vs_currencies', 'usd');
-  url.searchParams.set('include_market_cap', 'true');
+  const url = new URL('coins/markets', normalizedBaseUrl);
+  url.searchParams.set('vs_currency', 'usd');
   url.searchParams.set('ids', ids.join(','));
+  url.searchParams.set('sparkline', 'false');
+  url.searchParams.set('price_change_percentage', '24h');
+  url.searchParams.set('locale', 'en');
+  url.searchParams.set('per_page', String(ids.length));
+  url.searchParams.set('page', '1');
   return url.toString();
 }
 
-async function fetchMarketCapsFromCoinGecko(symbols) {
+async function fetchCoinGeckoSupplementalData(symbols) {
   const demoApiKey = process.env.COINGECKO_API_KEY || '';
   const proApiKey = process.env.COINGECKO_PRO_API_KEY || '';
   const baseUrl = process.env.COINGECKO_BASE_URL || DEFAULT_COINGECKO_BASE_URL;
@@ -118,15 +266,23 @@ async function fetchMarketCapsFromCoinGecko(symbols) {
     }
 
     const body = await response.json();
-    const marketCapsBySymbol = {};
+    const dataBySymbol = {};
+    const coinById = new Map(
+      (Array.isArray(body) ? body : [])
+        .filter((item) => item && typeof item.id === 'string')
+        .map((item) => [item.id, item])
+    );
 
     for (const symbol of symbols) {
       const coinId = SYMBOL_COINGECKO_ID_MAP[symbol];
-      const coinData = coinId ? body?.[coinId] : null;
-      marketCapsBySymbol[symbol] = formatUsdCompact(coinData?.usd_market_cap);
+      const coinData = coinId ? coinById.get(coinId) : null;
+      dataBySymbol[symbol] = {
+        marketCapDisplay: formatUsdCompact(coinData?.market_cap),
+        iconUrl: coinData?.image || '',
+      };
     }
 
-    return marketCapsBySymbol;
+    return dataBySymbol;
   } catch {
     return {};
   } finally {
@@ -163,16 +319,18 @@ async function fetchTickersFromBinance() {
         .map((item) => [item.symbol.toUpperCase(), item])
     );
 
-    const marketCapsBySymbol = await fetchMarketCapsFromCoinGecko(symbols);
+    const coinGeckoDataBySymbol = await fetchCoinGeckoSupplementalData(symbols);
 
     const data = symbols
       .map((symbol) => {
         const ticker = tickerBySymbol.get(symbol);
         if (!ticker) return null;
         const normalized = normalizeTicker(ticker, SYMBOL_NAME_MAP[symbol] || symbol.replace(/USDT$/, ''), fetchedAtIso);
+        const coinGeckoData = coinGeckoDataBySymbol[symbol] || {};
         return {
           ...normalized,
-          marketCapDisplay: marketCapsBySymbol[symbol] || '--',
+          marketCapDisplay: coinGeckoData.marketCapDisplay || '--',
+          iconUrl: coinGeckoData.iconUrl || '',
         };
       })
       .filter(Boolean);

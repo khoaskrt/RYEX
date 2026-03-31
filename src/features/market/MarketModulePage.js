@@ -11,6 +11,9 @@ import {
   getMarketRefreshIntervalMs,
 } from './realtime/marketClient';
 
+const TOKEN_ROWS_PER_PAGE = 10;
+const PAGINATION_WINDOW = 2;
+
 const TOKEN_VISUAL_MAP = {
   BTCUSDT: { mark: '₿', color: '#f2a900', iconUrl: '/images/tokens/btc.png' },
   ETHUSDT: { mark: 'Ξ', color: '#627eea', iconUrl: '/images/tokens/eth.png' },
@@ -27,11 +30,37 @@ function toNumber(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function getPaginationItems(totalPages, currentPage, windowSize = PAGINATION_WINDOW) {
+  if (totalPages <= 1) return [1];
+
+  const pages = new Set([1, totalPages, currentPage]);
+  for (let offset = 1; offset <= windowSize; offset += 1) {
+    pages.add(Math.max(1, currentPage - offset));
+    pages.add(Math.min(totalPages, currentPage + offset));
+  }
+
+  const sortedPages = [...pages].sort((a, b) => a - b);
+  const items = [];
+
+  sortedPages.forEach((page, index) => {
+    if (index > 0) {
+      const prevPage = sortedPages[index - 1];
+      if (page - prevPage > 1) {
+        items.push(`ellipsis-${prevPage}-${page}`);
+      }
+    }
+    items.push(page);
+  });
+
+  return items;
+}
+
 export function MarketModulePage() {
   const router = useRouter();
   const [isAuthResolved, setIsAuthResolved] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [marketRows, setMarketRows] = useState([]);
   const [marketMeta, setMarketMeta] = useState({
     loading: true,
@@ -128,6 +157,20 @@ export function MarketModulePage() {
     const name = (row.name || '').toUpperCase();
     return symbol.includes(normalizedSearchTerm) || shortSymbol.includes(normalizedSearchTerm) || name.includes(normalizedSearchTerm);
   });
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / TOKEN_ROWS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginationItems = getPaginationItems(totalPages, safeCurrentPage);
+  const paginatedRows = filteredRows.slice((safeCurrentPage - 1) * TOKEN_ROWS_PER_PAGE, safeCurrentPage * TOKEN_ROWS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [normalizedSearchTerm]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const topGainer =
     marketRows.length > 0
@@ -369,19 +412,19 @@ export function MarketModulePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-container-high">
-                    {filteredRows.map((row, idx) => {
+                    {paginatedRows.map((row, idx) => {
                       const symbol = row.symbol || '';
                       const symbolShort = symbol.replace(/USDT$/, '');
                       const visual = TOKEN_VISUAL_MAP[symbol] || DEFAULT_VISUAL;
                       const mark = visual.mark;
                       const color = visual.color;
-                      const iconUrl = visual.iconUrl;
+                      const iconUrl = row.iconUrl || visual.iconUrl;
 
                       return (
                         <tr className="group transition-colors hover:bg-surface-container-low" key={`${symbol}-${idx}`}>
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: `${color}1A` }}>
+                            <div className="flex h-6 w-6 items-center justify-center bg-transparent">
                               {iconUrl ? (
                                 <img
                                   alt={`${row.name} logo`}
@@ -425,9 +468,49 @@ export function MarketModulePage() {
                   </tbody>
                 </table>
               </div>
-              <div className="flex justify-center border-t border-surface-container-high bg-surface-container-low/30 px-8 py-5">
-                <button className="flex items-center gap-2 text-sm font-bold text-primary transition-all hover:gap-3">
-                  Xem tất cả 500+ tài sản <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+              <div className="flex flex-wrap items-center justify-center gap-2 border-t border-surface-container-high bg-surface-container-low/30 px-6 py-5">
+                <button
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#bbcac1]/40 bg-surface-container-lowest text-on-surface-variant transition-colors hover:border-[#01bc8d]/50 hover:bg-primary-container/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Trang trước"
+                  disabled={safeCurrentPage === 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                </button>
+                {paginationItems.map((item) => {
+                  if (typeof item === 'string') {
+                    return (
+                      <span className="px-1.5 text-sm font-medium text-on-surface-variant" key={item}>
+                        ...
+                      </span>
+                    );
+                  }
+
+                  const isActive = item === safeCurrentPage;
+                  return (
+                    <button
+                      className={`h-9 min-w-9 rounded-full border px-2 text-sm font-bold transition-colors ${
+                        isActive
+                          ? 'border-[#01bc8d]/40 bg-primary-container/20 text-primary'
+                          : 'border-transparent bg-transparent text-on-surface-variant hover:border-[#bbcac1]/40 hover:bg-surface-container-low hover:text-on-surface'
+                      }`}
+                      key={item}
+                      onClick={() => setCurrentPage(item)}
+                      type="button"
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+                <button
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#bbcac1]/40 bg-surface-container-lowest text-on-surface-variant transition-colors hover:border-[#01bc8d]/50 hover:bg-primary-container/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Trang sau"
+                  disabled={safeCurrentPage === totalPages}
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                 </button>
               </div>
             </div>

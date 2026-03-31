@@ -28,7 +28,7 @@
 
 Environment variables:
 
-- `MARKET_SYMBOLS` (default: `BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT,ADAUSDT`)
+- `MARKET_SYMBOLS` (default: top 50 symbols, e.g. `BTCUSDT,ETHUSDT,BNBUSDT,...,CAKEUSDT`)
 - `MARKET_REFRESH_MS` (default: `10000`)
 - `NEXT_PUBLIC_MARKET_REFRESH_MS` (optional override ở client)
 - `BINANCE_MARKET_BASE_URL` (default: `https://data-api.binance.vision`)
