@@ -8,6 +8,7 @@ description: Frontend execution rules for RYEX. Use when editing UI in this repo
   - `.codex`: `.codex/Rule/rule_fe.md`
   - `.codex (legacy path)`: `.codex/Rules/rule_fe.md`
 - Nếu chưa đọc rule, không được bắt đầu edit/code/test cho task FE.
+- Nếu task/bug liên quan Database (ảnh hưởng data contract/API), bắt buộc review log migration trong `/Users/mac/Desktop/RYEX/db/migrations` trước khi chỉnh FE.
 
 
 # RYEX FE Skill (Simple + Optimized)

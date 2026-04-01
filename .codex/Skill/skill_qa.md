@@ -8,6 +8,7 @@ description: QA execution skill for RYEX. Run fast, risk-first checks for auth, 
   - `.codex`: `.codex/Rule/rule_qa.md`
   - `.codex (legacy path)`: `.codex/Rules/rule_qa.md`
 - Nếu chưa đọc rule, không được bắt đầu run test/verify/report cho task QA.
+- Nếu task/bug liên quan Database, bắt buộc review log migration trong `/Users/mac/Desktop/RYEX/db/migrations` trước khi test và kết luận.
 
 
 # RYEX QA Skill (Simple + Optimized) — v1

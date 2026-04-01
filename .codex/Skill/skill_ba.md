@@ -9,6 +9,7 @@ version: 1.1
   - `.codex`: `.codex/Rule/rule_ba.md`
   - `.codex (legacy path)`: `.codex/Rules/rule_ba.md`
 - Nếu chưa đọc rule, không được bắt đầu phân tích/viết output cho task BA.
+- Nếu task/bug liên quan Database, bắt buộc review log migration trong `/Users/mac/Desktop/RYEX/db/migrations` trước khi phân tích và đề xuất.
 
 
 # RYEX BA Skill (Simple + Optimized) — v1.1
@@ -121,15 +122,3 @@ Khi nhận 1 yêu cầu mới, BA luôn bàn giao theo 6 block ngắn:
 2. Mỗi domain thêm 1 mini-pack khi đủ dữ liệu (`Auth`, `Market`, `Profile`, `Compliance`, `Analytics`).
 3. Mỗi lần update ghi version + changelog ngắn.
 4. Archive tài liệu cũ, luôn giữ 1 bản active source-of-truth cho từng domain.
-
----
-
-## Changelog
-
-### v1.1 - 2026-03-31
-- **Added Domain**: OAuth authentication flow
-  - New pattern: Third-party OAuth integration (Google, etc.)
-  - Template applied: Google OAuth implementation documented in `/docs/ba/google-oauth-implementation-v1.0.md`
-- **New checklist item**: OAuth implementations require environment config verification (Supabase dashboard, redirect URLs)
-- **Impact map update**: OAuth flows are FE-only initially; BE session sync deferred
-- **Reference example**: Google OAuth login follows client-side redirect pattern with callback handler

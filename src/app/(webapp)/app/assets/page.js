@@ -70,6 +70,20 @@ function formatNumber(value) {
   }).format(num);
 }
 
+function mapAssetsErrorMessage(error) {
+  const code = String(error?.code || '');
+  if (code === 'ASSET_UNAUTHORIZED') {
+    return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+  }
+  if (code === 'ASSET_FETCH_FAILED') {
+    return 'Không thể tải dữ liệu tài sản lúc này. Vui lòng thử lại sau.';
+  }
+  if (error?.status === 401) {
+    return 'Bạn cần đăng nhập để xem tài sản.';
+  }
+  return 'Không thể tải dữ liệu tài sản.';
+}
+
 export default function AssetsPage() {
   const router = useRouter();
   const [isAuthResolved, setIsAuthResolved] = useState(false);
@@ -131,8 +145,6 @@ export default function AssetsPage() {
           throw new Error('No authentication token');
         }
 
-        console.log('[Assets] Token exists:', Boolean(accessToken), 'Length:', accessToken?.length);
-
         const payload = await fetchUserAssets(accessToken);
         if (!isMounted) return;
 
@@ -140,7 +152,7 @@ export default function AssetsPage() {
       } catch (error) {
         if (!isMounted) return;
         console.error('Failed to load assets:', error);
-        setAssetsError(error.message || 'Không thể tải dữ liệu tài sản');
+        setAssetsError(mapAssetsErrorMessage(error));
       } finally {
         if (isMounted) {
           setIsLoadingAssets(false);
@@ -177,6 +189,12 @@ export default function AssetsPage() {
 
     return matchesSearch;
   });
+  const hasAnyAssets = (assetsData?.assets || []).length > 0;
+  const isFilterActive = searchTerm.trim().length > 0 || hideSmallBalances;
+  const emptyStateTitle = hasAnyAssets && isFilterActive ? 'Không tìm thấy tài sản phù hợp' : 'Chưa có tài sản';
+  const emptyStateDescription = hasAnyAssets && isFilterActive
+    ? 'Thử đổi từ khóa tìm kiếm hoặc tắt bộ lọc số dư nhỏ.'
+    : 'Bắt đầu bằng cách nạp tiền vào tài khoản của bạn';
 
   if (!isAuthResolved) {
     return (
@@ -451,8 +469,8 @@ export default function AssetsPage() {
                           <div className="flex flex-col items-center gap-4">
                             <span className="material-symbols-outlined text-6xl text-on-surface-variant/30">account_balance_wallet</span>
                             <div>
-                              <p className="text-lg font-semibold text-on-surface mb-1">Chưa có tài sản</p>
-                              <p className="text-sm text-on-surface-variant">Bắt đầu bằng cách nạp tiền vào tài khoản của bạn</p>
+                              <p className="text-lg font-semibold text-on-surface mb-1">{emptyStateTitle}</p>
+                              <p className="text-sm text-on-surface-variant">{emptyStateDescription}</p>
                             </div>
                             <button className="bg-gradient-to-br from-[#006c4f] to-[#01bc8d] text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-md transition-all hover:opacity-90 active:scale-95">
                               Nạp tiền ngay

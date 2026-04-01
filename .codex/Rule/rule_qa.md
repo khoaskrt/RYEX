@@ -49,3 +49,4 @@ description: QA rules for RYEX. Keep checks risk-first, contract-driven, and evi
 - Bắt buộc đọc/đối chiếu toàn bộ docs liên quan trước khi ghi.
 - Luôn ưu tiên bổ sung vào tài liệu sẵn có và update version theo nguyên tắc đã thống nhất.
 - Chỉ tạo file `.md` mới khi thực sự không có tài liệu liên quan.
+- Update vào /Users/mac/Desktop/RYEX/.codex/Rule/qa-living-matrix.md to grow QA coverage over time.

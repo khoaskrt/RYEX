@@ -1,9 +1,9 @@
 # RYEX API v1 Contract Standard (MVP v1)
 
 ## 1) Document Control
-- Version: `v1.0`
+- Version: `v1.1`
 - Owner: `BA + BE + QA`
-- Last updated: `2026-03-31`
+- Last updated: `2026-04-02`
 - Status: `Active`
 - Related docs:
   - `docs/00-system-map.md`
@@ -11,6 +11,7 @@
   - `docs/domain/auth-sot.md`
   - `docs/domain/market-sot.md`
   - `docs/domain/profile-sot.md`
+  - `docs/features/Assets/003-Assets-api-contract-freeze-v1.0.md`
 
 ## 2) Contract Goals
 - Chuẩn hóa 3 trục cho toàn bộ API v1:
@@ -81,6 +82,7 @@ Domain prefixes:
 - `AUTH_*`
 - `MARKET_*`
 - `PROFILE_*`
+- `ASSET_*`
 - `COMMON_*` (nếu dùng chung cross-domain)
 
 Ví dụ canonical:
@@ -89,6 +91,7 @@ Ví dụ canonical:
 - `MARKET_INVALID_INTERVAL`
 - `MARKET_SERVICE_UNAVAILABLE`
 - `PROFILE_UNAUTHORIZED`
+- `ASSET_UNAUTHORIZED`
 - `COMMON_INTERNAL_ERROR`
 
 ## 6) Endpoint Contract Matrix (Current vs Target)
@@ -105,6 +108,7 @@ Ví dụ canonical:
 | `GET /api/v1/market/kline` | `200` payload; lỗi đã có `{ error: { code, message } }` | Bổ sung `error.requestId`, chuẩn hóa success wrapper | `P1` |
 | `GET /api/v1/user/profile` | `200` `{ user: ... }`; lỗi string | Chuẩn hóa lỗi sang `PROFILE_*` + success `{ data, meta }` | `P0` |
 | `PATCH /api/v1/user/profile` | `200` `{ user: ... }`; lỗi string | Chuẩn hóa lỗi sang `PROFILE_*`; thêm validation 4xx | `P0` |
+| `GET /api/v1/user/assets` | `200` top-level payload (`totalBalance*`, `fundingAccount`, `tradingAccount`, `assets[]`, `fetchedAt`); lỗi `{ error: { code, message } }` | Freeze non-breaking theo `003-Assets-api-contract-freeze-v1.0`; phase sau thêm `requestId` và wrapper `{ data, meta }` | `P0` |
 
 ## 7) Domain-specific Error Codes (Baseline)
 ### Auth (existing baseline)
@@ -137,6 +141,11 @@ Ví dụ canonical:
 - `PROFILE_INVALID_INPUT`
 - `PROFILE_INTERNAL_ERROR`
 
+### Assets (current baseline)
+- `ASSET_UNAUTHORIZED`
+- `ASSET_FETCH_FAILED`
+- `ASSET_USER_NOT_FOUND` (reserved branch)
+
 ## 8) Rollout Strategy (Non-breaking)
 1. Phase 1:
    - Giữ nguyên success payload cũ.
@@ -166,6 +175,10 @@ Compatibility rule:
   - `Impact`
 
 ## 11) Delta
+- `v1.1` (2026-04-02):
+  - Added Assets endpoint (`GET /api/v1/user/assets`) to contract matrix.
+  - Added `ASSET_*` namespace and baseline error codes.
+  - Linked contract freeze note for non-breaking rollout.
 - `v1.0` (2026-03-31):
   - Created API v1 contract standard.
   - Baseline current-vs-target matrix cho toàn bộ endpoints hiện có.

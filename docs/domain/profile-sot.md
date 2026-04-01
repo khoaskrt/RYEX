@@ -1,9 +1,9 @@
 # RYEX Profile Domain SoT (MVP v1)
 
 ## 1) Document Control
-- Version: `v1.0`
+- Version: `v1.1`
 - Owner: `BA` (co-own: `BE`, `QA`)
-- Last updated: `2026-03-31`
+- Last updated: `2026-04-01`
 - Status: `Active`
 - Parent docs:
   - `docs/00-system-map.md`
@@ -47,7 +47,7 @@
   - Verify token qua `supabaseAdmin.auth.getUser(accessToken)`.
 - Data access:
   - Dùng `supabaseAdmin` (service role) query/update bảng `users`.
-  - Query join `auth_identities` để trả `emailVerified`.
+  - `emailVerified` lấy từ Supabase Auth payload (`auth.getUser`) để tránh phụ thuộc schema join.
 - FE touchpoint hiện tại:
   - Chưa thấy module/profile page chuyên biệt trong `src/features/*` đang gọi endpoint này trực tiếp.
 
@@ -66,7 +66,7 @@ Ghi chú contract:
 1. Client gửi request kèm bearer token.
 2. API validate header `Bearer`.
 3. API verify Supabase access token và lấy `supaUid`.
-4. Query bảng `users` + `auth_identities` theo `supa_id`.
+4. Query bảng `users` theo `supa_id` với cột an toàn (`users_id`, `supa_id`, `email`, `display_name`, timestamps).
 5. Trả normalized object cho UI.
 6. Nếu không tìm thấy user -> `404`.
 
@@ -80,11 +80,11 @@ Ghi chú contract:
 ## 7) Data Model & Persistence
 | Table | Vai trò trong Profile domain |
 |---|---|
-| `users` | Nguồn dữ liệu chính cho profile (`email`, `display_name`, `status`, timestamps) |
-| `auth_identities` | Cung cấp trạng thái `email_verified` khi đọc profile |
+| `users` | Nguồn dữ liệu chính cho profile (`users_id`, `supa_id`, `email`, `display_name`, timestamps) |
+| Supabase Auth user payload | Cung cấp trạng thái `emailVerified` khi đọc profile |
 
 Schema liên quan:
-- `db/migrations/001_auth_identity_baseline.sql` (định nghĩa `users`, `auth_identities`)
+- `db/migrations/001_users_current_truth_baseline.sql` (định nghĩa `public.users` current truth)
 - `db/migrations/005_enable_rls_policies.sql` (RLS policies)
 
 RLS note:
@@ -153,3 +153,6 @@ Ví dụ:
 - `v1.0` (2026-03-31):
   - Created initial Profile domain source-of-truth.
   - Captured current GET/PATCH profile runtime, contracts, and gaps.
+- `v1.1` (2026-04-01):
+  - Updated profile read path to be schema-safe with current `users` headers.
+  - Removed dependency on `auth_identities` join in Profile GET; `emailVerified` now sourced from Supabase Auth payload.

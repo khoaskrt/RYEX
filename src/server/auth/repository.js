@@ -1,14 +1,13 @@
 export async function upsertUser(client, { supaUid, email, displayName = null, status = 'pending_email_verification' }) {
   const query = `
-    INSERT INTO users (id, supa_id, email, display_name, status)
-    VALUES (gen_random_uuid(), $1, $2, $3, $4)
+    INSERT INTO users (users_id, supa_id, email, display_name)
+    VALUES (gen_random_uuid(), $1, $2, $3)
     ON CONFLICT (supa_id)
     DO UPDATE SET
       email = EXCLUDED.email,
       display_name = COALESCE(EXCLUDED.display_name, users.display_name),
-      status = EXCLUDED.status,
       updated_at = NOW()
-    RETURNING id, email, status;
+    RETURNING users_id AS id, email, $4::text AS status;
   `;
   const { rows } = await client.query(query, [supaUid, email, displayName, status]);
   return rows[0];
@@ -193,9 +192,9 @@ export async function revokeTrustedDevicesForUser(client, userId) {
 
 export async function getVerifiedAuthUserByEmail(client, email) {
   const query = `
-    SELECT u.id AS user_id, u.email, u.supa_id AS supa_uid, ai.email_verified
+    SELECT u.users_id AS user_id, u.email, u.supa_id AS supa_uid, ai.email_verified
     FROM users u
-    INNER JOIN auth_identities ai ON ai.user_id = u.id AND ai.provider = 'password'
+    INNER JOIN auth_identities ai ON ai.user_id = u.users_id AND ai.provider = 'password'
     WHERE u.email = $1
     LIMIT 1
   `;

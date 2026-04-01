@@ -8,6 +8,7 @@ description: Backend engineering execution rules for RYEX. Use when editing API 
   - `.codex`: `.codex/Rule/rule_be.md`
   - `.codex (legacy path)`: `.codex/Rules/rule_be.md`
 - Nếu chưa đọc rule, không được bắt đầu edit/code/test cho task BE.
+- Nếu task/bug liên quan Database, bắt buộc review log migration trong `/Users/mac/Desktop/RYEX/db/migrations` trước khi code/fix.
 
 
 # RYEX BE Skill (Simple + Optimized) — v1

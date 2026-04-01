@@ -7,26 +7,24 @@ function extractBearerToken(request) {
   return authHeader.split('Bearer ')[1];
 }
 
-async function verifySupaUid(request) {
+async function verifyAuthUser(request) {
   const token = extractBearerToken(request);
-  if (!token) return '';
+  if (!token) return null;
   const supabaseAdmin = await createClient();
   const { data, error } = await supabaseAdmin.auth.getUser(token);
-  if (error || !data?.user?.id) return '';
-  return data.user.id;
+  if (error || !data?.user?.id) return null;
+  return data.user;
 }
 
-function mapProfilePayload(user) {
-  const identities = Array.isArray(user.auth_identities) ? user.auth_identities : [];
-  const primaryIdentity = identities[0] || {};
-
+function mapProfilePayload(user, authUser) {
+  const emailVerified = Boolean(authUser?.email_confirmed_at || authUser?.confirmed_at);
   return {
     id: user.users_id || user.id || user.supa_id,
     email: user.email,
     displayName: user.display_name || '',
     status: user.status || 'pending_email_verification',
     kycStatus: user.kyc_status || 'not_started',
-    emailVerified: Boolean(primaryIdentity.email_verified),
+    emailVerified,
     createdAt: user.created_at,
     updatedAt: user.updated_at,
   };
@@ -42,8 +40,8 @@ function validateDisplayName(rawValue) {
 
 export async function GET(request) {
   try {
-    const supaUid = await verifySupaUid(request);
-    if (!supaUid) {
+    const authUser = await verifyAuthUser(request);
+    if (!authUser?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -56,14 +54,11 @@ export async function GET(request) {
           supa_id,
           email,
           display_name,
-          status,
-          kyc_status,
           created_at,
-          updated_at,
-          auth_identities(email_verified, email_verified_at)
+          updated_at
         `
       )
-      .eq('supa_id', supaUid)
+      .eq('supa_id', authUser.id)
       .single();
 
     if (error) {
@@ -73,7 +68,7 @@ export async function GET(request) {
       throw error;
     }
 
-    return NextResponse.json({ user: mapProfilePayload(user) });
+    return NextResponse.json({ user: mapProfilePayload(user, authUser) });
   } catch (error) {
     if (String(error?.message || '').toLowerCase().includes('token')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -86,8 +81,8 @@ export async function GET(request) {
 
 export async function PATCH(request) {
   try {
-    const supaUid = await verifySupaUid(request);
-    if (!supaUid) {
+    const authUser = await verifyAuthUser(request);
+    if (!authUser?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -105,8 +100,8 @@ export async function PATCH(request) {
         display_name: displayName,
         updated_at: new Date().toISOString(),
       })
-      .eq('supa_id', supaUid)
-      .select('users_id, supa_id, email, display_name, status, kyc_status, created_at, updated_at')
+      .eq('supa_id', authUser.id)
+      .select('users_id, supa_id, email, display_name, created_at, updated_at')
       .single();
 
     if (error) {

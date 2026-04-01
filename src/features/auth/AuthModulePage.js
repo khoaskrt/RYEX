@@ -18,7 +18,7 @@ const AUTH_ERROR_MESSAGES = {
   AUTH_EMAIL_NOT_VERIFIED: 'Email chưa được xác minh. Hoàn tất xác minh trước khi đăng nhập.',
 };
 
-const DASHBOARD_ROUTE = '/';
+const DASHBOARD_ROUTE = '/app/market';
 
 const leftPanelFeatures = [
   {

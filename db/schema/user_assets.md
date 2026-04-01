@@ -1,32 +1,41 @@
 # user_assets
 
 ## Purpose
-Số dư tài sản crypto theo từng user và loại tài khoản.
+Lưu số dư tài sản người dùng theo từng loại tài khoản trong `public.user_assets`.
 
 ## Column Dictionary
 | Column | Type | Null | Default | Definition |
 |---|---|---|---|---|
-| `id` | UUID | NO | `gen_random_uuid()` | ID bản ghi asset balance. |
-| `user_id` | UUID | NO | - | FK tới user sở hữu tài sản. |
-| `symbol` | VARCHAR(20) | NO | - | Mã token (vd: BTC, ETH, USDT). |
-| `balance` | NUMERIC(36,18) | NO | `0` | Số dư tài sản với độ chính xác cao. |
-| `account_type` | VARCHAR(20) | NO | - | Loại tài khoản chứa tài sản (`funding`/`trading`). |
-| `created_at` | TIMESTAMPTZ | NO | `now()` | Thời điểm tạo record. |
-| `updated_at` | TIMESTAMPTZ | NO | `now()` | Thời điểm cập nhật record gần nhất. |
+| `user_id` | UUID | NO | - | Định danh user từ Supabase Auth, map tới `public.users.supa_id`. |
+| `symbol` | TEXT | NO | - | Mã tài sản (ví dụ: `BTC`, `ETH`). |
+| `account_type` | TEXT | NO | - | Loại tài khoản: `funding` hoặc `trading`. |
+| `balance` | NUMERIC(36,18) | NO | `0` | Số dư tài sản theo user/symbol/account_type. |
+| `created_at` | TIMESTAMPTZ | NO | `now()` | Thời điểm tạo bản ghi. |
+| `updated_at` | TIMESTAMPTZ | NO | `now()` | Thời điểm cập nhật gần nhất. |
 
 ## Constraints
-- PK: `id`
-- FK: `user_id -> public.users(id)` (`ON DELETE CASCADE`)
-- CHECK: `account_type IN ('funding','trading')`
-- UNIQUE: `(user_id, symbol, account_type)`
-
-## Indexes
-- `idx_user_assets_user_id(user_id)`
-- `idx_user_assets_symbol(symbol)`
-- `idx_user_assets_account_type(account_type)`
+- Primary key: `user_assets_pkey(user_id, symbol, account_type)`
+- Foreign key: `user_assets_user_id_fkey(user_id -> users.supa_id)` (`ON DELETE CASCADE`)
+- Check constraint: `user_assets_account_type_check(account_type in ('funding', 'trading'))`
+- Index: `idx_user_assets_symbol(symbol)`
 
 ## RLS
-Enabled in migration `006_create_user_assets.sql`.
+- Enabled.
+
+## Policies
+- `user_assets_select_own`
+  - `FOR SELECT`
+  - `USING (auth.uid() = user_id)`
+- `user_assets_insert_own`
+  - `FOR INSERT`
+  - `WITH CHECK (auth.uid() = user_id)`
+- `user_assets_update_own`
+  - `FOR UPDATE`
+  - `USING (auth.uid() = user_id)`
+  - `WITH CHECK (auth.uid() = user_id)`
+- `user_assets_delete_own`
+  - `FOR DELETE`
+  - `USING (auth.uid() = user_id)`
 
 ## Source
-- `db/migrations/006_create_user_assets.sql`
+- `db/migrations/003_create_user_assets_current_truth.sql`
