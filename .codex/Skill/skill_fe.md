@@ -61,7 +61,16 @@ After editing:
 2. Run `npm run build` for meaningful FE changes.
 3. Verify diff contains no out-of-scope files.
 
-## 4) Standard Completion Report
+## 4) Definition of Ready (DoR) for FE Tasks
+- Business goal/user flow is clear (what user should see/do after task).
+- Target route(s) and acceptance criteria are explicit (desktop + mobile expectations).
+- API/data contract is available (endpoint, payload, error shape) or fallback strategy is agreed.
+- Scope boundaries are explicit (files/modules allowed to touch, no-BE-change confirmation).
+- Design references are available (Figma/Stitch/screenshot) + note on header/footer baseline alignment.
+- Environment prerequisites are ready (env vars, auth assumptions, feature flag if any).
+- Backward compatibility plan exists for route/path changes (redirect/alias when needed).
+
+## 5) Standard Completion Report
 - Files changed.
 - Confirmation that no unrelated components were modified.
 - Confirmation that header/footer consistency is preserved.

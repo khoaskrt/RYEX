@@ -1,0 +1,1 @@
+export { ProfileModulePage } from './ProfileModulePage';

@@ -1,7 +1,7 @@
 ---
 name: ryex-fe-skill
 description: Frontend execution rules for RYEX. Use when editing UI in this repo to preserve design consistency, strict scope boundaries, and market-baseline header/footer and token icon standards.
-version: 1.1
+version: 1.2
 ---
 
 ## 0) Mandatory Pre-Task Rule Read
@@ -66,7 +66,16 @@ After editing:
 2. Run `npm run build` for meaningful FE changes.
 3. Verify diff contains no out-of-scope files.
 
-## 4) Standard Completion Report
+## 4) Definition of Ready (DoR) for FE Tasks
+- Business goal/user flow is clear (what user should see/do after task).
+- Target route(s) and acceptance criteria are explicit (desktop + mobile expectations).
+- API/data contract is available (endpoint, payload, error shape) or fallback strategy is agreed.
+- Scope boundaries are explicit (files/modules allowed to touch, no-BE-change confirmation).
+- Design references are available (Figma/Stitch/screenshot) + note on header/footer baseline alignment.
+- Environment prerequisites are ready (env vars, auth assumptions, feature flag if any).
+- Backward compatibility plan exists for route/path changes (redirect/alias when needed).
+
+## 5) Standard Completion Report
 - Files changed.
 - Confirmation that no unrelated components were modified.
 - Confirmation that header/footer consistency is preserved.
@@ -75,6 +84,16 @@ After editing:
 ---
 
 ## Changelog
+
+### v1.2 - 2026-04-01
+- **Added**: FE task `Definition of Ready (DoR)` checklist
+  - Goal/flow clarity
+  - Route + acceptance criteria clarity
+  - API contract or fallback agreement
+  - Scope boundary + no-BE-change confirmation
+  - Design reference + header/footer baseline note
+  - Environment prerequisites
+  - Backward compatibility plan for route changes
 
 ### v1.1 - 2026-03-31
 - **Added**: OAuth integration context

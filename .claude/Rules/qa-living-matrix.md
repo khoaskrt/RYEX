@@ -41,6 +41,21 @@ Append new cases after each bugfix, feature, or production incident.
 | USER-03 | `PATCH /api/v1/user/profile` without bearer token | `401` |
 | USER-04 | `PATCH /api/v1/user/profile` with valid token and `displayName` | `200` and updated `displayName` |
 
+### Assets Pack (P0)
+
+| ID | Flow | Expected |
+|---|---|---|
+| ASSET-01 | `GET /api/v1/user/assets` without bearer token | `401 ASSET_UNAUTHORIZED` |
+| ASSET-02 | `GET /api/v1/user/assets` with invalid bearer token | `401 ASSET_UNAUTHORIZED` |
+| ASSET-03 | `GET /api/v1/user/assets` with valid token, user exists | `200` with correct payload shape: `totalBalanceBTC`, `totalBalanceUSDT`, `fundingAccount`, `tradingAccount`, `assets[]`, `fetchedAt` |
+| ASSET-04 | `GET /api/v1/user/assets` with valid token, user has no assets | `200` with `assets: []`, `totalBalanceUSDT: "0.00"`, `totalBalanceBTC: "0.00000000"` |
+| ASSET-05 | Verify price calculation accuracy | Given user has 1.5 BTC at price $64,714.20, `valueUSDT` should be "97071.30" |
+| ASSET-06 | Verify total balance = sum of account balances | `totalBalanceUSDT` = `fundingAccount.balanceUSDT` + `tradingAccount.balanceUSDT` |
+| ASSET-07 | Verify BTC equivalent calculation | `totalBalanceBTC` = `totalBalanceUSDT` / BTC_price |
+| ASSET-08 | FE: Empty state render for new users | When API returns empty assets, FE shows "Chưa có tài sản" message with CTA button |
+| ASSET-09 | FE: Loading state before API completes | Loading indicator visible during fetch |
+| ASSET-10 | FE: Error state on API failure | Clear error message shown with retry button when API fails |
+
 ## 3) Regression Add Rule
 
 When a defect is found:
