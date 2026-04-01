@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/supabaseClient';
+import { supabase } from '@/shared/lib/supabase/client';
 
 const DASHBOARD_ROUTE = '/app/market';
 const LOGIN_ROUTE = '/app/auth/login';

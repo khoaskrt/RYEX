@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../../shared/lib/supabase/server.js';
-import { getFirebaseAuth } from '../../../../../server/auth/firebaseAdmin.js';
 
 function extractBearerToken(request) {
   const authHeader = request.headers.get('Authorization');
@@ -8,12 +7,13 @@ function extractBearerToken(request) {
   return authHeader.split('Bearer ')[1];
 }
 
-async function verifyFirebaseUid(request) {
+async function verifySupaUid(request) {
   const token = extractBearerToken(request);
   if (!token) return '';
-
-  const decodedToken = await getFirebaseAuth().verifyIdToken(token);
-  return decodedToken.uid || '';
+  const supabaseAdmin = await createClient();
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !data?.user?.id) return '';
+  return data.user.id;
 }
 
 function mapProfilePayload(user) {
@@ -21,7 +21,7 @@ function mapProfilePayload(user) {
   const primaryIdentity = identities[0] || {};
 
   return {
-    id: user.id,
+    id: user.users_id || user.id || user.supa_id,
     email: user.email,
     displayName: user.display_name || '',
     status: user.status || 'pending_email_verification',
@@ -42,8 +42,8 @@ function validateDisplayName(rawValue) {
 
 export async function GET(request) {
   try {
-    const firebaseUid = await verifyFirebaseUid(request);
-    if (!firebaseUid) {
+    const supaUid = await verifySupaUid(request);
+    if (!supaUid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -52,7 +52,8 @@ export async function GET(request) {
       .from('users')
       .select(
         `
-          id,
+          users_id,
+          supa_id,
           email,
           display_name,
           status,
@@ -62,7 +63,7 @@ export async function GET(request) {
           auth_identities(email_verified, email_verified_at)
         `
       )
-      .eq('firebase_uid', firebaseUid)
+      .eq('supa_id', supaUid)
       .single();
 
     if (error) {
@@ -85,8 +86,8 @@ export async function GET(request) {
 
 export async function PATCH(request) {
   try {
-    const firebaseUid = await verifyFirebaseUid(request);
-    if (!firebaseUid) {
+    const supaUid = await verifySupaUid(request);
+    if (!supaUid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -104,8 +105,8 @@ export async function PATCH(request) {
         display_name: displayName,
         updated_at: new Date().toISOString(),
       })
-      .eq('firebase_uid', firebaseUid)
-      .select('id, email, display_name, status, kyc_status, created_at, updated_at')
+      .eq('supa_id', supaUid)
+      .select('users_id, supa_id, email, display_name, status, kyc_status, created_at, updated_at')
       .single();
 
     if (error) {
@@ -117,7 +118,7 @@ export async function PATCH(request) {
 
     return NextResponse.json({
       user: {
-        id: data.id,
+        id: data.users_id || data.supa_id,
         email: data.email,
         displayName: data.display_name || '',
         status: data.status || 'pending_email_verification',

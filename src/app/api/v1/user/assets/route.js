@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getFirebaseAuth } from '../../../../../server/auth/firebaseAdmin.js';
+import { createClient } from '../../../../../shared/lib/supabase/server.js';
 import { getUserAssetsPayload } from '../../../../../server/user/assetsRepository.js';
 
 export const runtime = 'nodejs';
@@ -16,17 +16,30 @@ function extractBearerToken(request) {
 }
 
 /**
- * Verify Firebase ID token and return UID
+ * Verify Supabase token and return user ID
  * @param {Request} request
- * @returns {Promise<string>} Firebase UID or empty string
+ * @returns {Promise<string>} User ID or empty string
  */
-async function verifyFirebaseUid(request) {
+async function verifySupabaseUser(request) {
   const token = extractBearerToken(request);
-  if (!token) return '';
+  if (!token) {
+    console.log('[user/assets] No token found in Authorization header');
+    return '';
+  }
+
+  console.log('[user/assets] Token received, length:', token.length);
 
   try {
-    const decodedToken = await getFirebaseAuth().verifyIdToken(token);
-    return decodedToken.uid || '';
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      console.error('[user/assets] Token verification failed:', error?.message);
+      return '';
+    }
+
+    console.log('[user/assets] Token verified successfully, user id:', user.id);
+    return user.id || '';
   } catch (error) {
     console.error('[user/assets] Token verification failed:', error.message);
     return '';
@@ -59,13 +72,13 @@ function jsonError(code, message, status) {
 export async function GET(request) {
   try {
     // Auth: verify bearer token
-    const firebaseUid = await verifyFirebaseUid(request);
-    if (!firebaseUid) {
+    const userId = await verifySupabaseUser(request);
+    if (!userId) {
       return jsonError('ASSET_UNAUTHORIZED', 'Unauthorized', 401);
     }
 
     // Domain layer: fetch and enrich user assets
-    const payload = await getUserAssetsPayload(firebaseUid);
+    const payload = await getUserAssetsPayload(userId);
 
     return NextResponse.json(payload, { status: 200 });
   } catch (error) {

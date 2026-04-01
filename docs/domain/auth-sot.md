@@ -55,7 +55,7 @@
   - `POST /resend`
   - `POST /logout`
 - Service layer (`src/server/auth/*`):
-  - Firebase Admin integration, error envelope, rate limit, password policy.
+  - Supabase Auth integration, error envelope, rate limit, password policy.
   - Cookie management (`ryex_session_ref`, `ryex_trusted_device`).
   - Repository CRUD cho users/identities/events/sessions/trusted devices.
 - Data layer:
@@ -65,8 +65,8 @@
 | Endpoint | Purpose | Input chính | Success contract | Error contract (chính) |
 |---|---|---|---|---|
 | `POST /api/v1/auth/signup` | Tạo auth user + bootstrap DB record | `email`, `password`, `displayName?` | `201` với `userId`, `email`, `verificationEmailSent`, `next`, `requestId` | `400 AUTH_INVALID_INPUT`, `422 AUTH_PASSWORD_POLICY_FAILED`, `409 AUTH_EMAIL_ALREADY_EXISTS`, `429 AUTH_RATE_LIMITED`, `503 AUTH_PROVIDER_TEMPORARY_FAILURE` |
-| `GET /api/v1/auth/verify-email/callback` | Xác minh email qua `oobCode` | Query `oobCode` | `200` với `verified`, `autoLoginReady`, `next`, `requestId` | `400 AUTH_INVALID_INPUT/AUTH_VERIFICATION_LINK_INVALID`, `410 AUTH_VERIFICATION_LINK_EXPIRED`, `503 AUTH_PROVIDER_TEMPORARY_FAILURE` |
-| `POST /api/v1/auth/session/sync` | Verify `idToken`, tạo session + optional trusted device | `idToken`, `deviceId?`, `rememberDevice?` | `200` với `sessionRef`, `userStatus`, `emailVerified`, `trustedDeviceEnabled`, `deviceId`, `requestId` + set cookie | `400 AUTH_INVALID_INPUT`, `401 AUTH_INVALID_TOKEN`, `403 AUTH_EMAIL_NOT_VERIFIED`, `429 AUTH_RATE_LIMITED` |
+| `GET /api/v1/auth/verify-email/callback` | Xác minh email qua Supabase OTP callback | Query `token_hash`, `type` | `200` với `verified`, `autoLoginReady`, `next`, `requestId` | `400 AUTH_INVALID_INPUT/AUTH_VERIFICATION_LINK_INVALID`, `410 AUTH_VERIFICATION_LINK_EXPIRED`, `503 AUTH_PROVIDER_TEMPORARY_FAILURE` |
+| `POST /api/v1/auth/session/sync` | Verify `accessToken`, tạo session + optional trusted device | `accessToken`, `deviceId?`, `rememberDevice?` | `200` với `sessionRef`, `userStatus`, `emailVerified`, `trustedDeviceEnabled`, `deviceId`, `requestId` + set cookie | `400 AUTH_INVALID_INPUT`, `401 AUTH_INVALID_TOKEN`, `403 AUTH_EMAIL_NOT_VERIFIED`, `429 AUTH_RATE_LIMITED` |
 | `POST /api/v1/auth/login-challenge` | Login challenge flow (email link) + trusted bypass | `email` | `200` với `challengeRequired` (true/false), `trustedBypass`, `requestId`, optional `sessionRef` + cookie khi bypass | `400 AUTH_INVALID_INPUT`, `403 AUTH_EMAIL_NOT_VERIFIED`, `429 AUTH_RESEND_COOLDOWN/AUTH_RESEND_HOURLY_CAP_REACHED/AUTH_RATE_LIMITED`, `503 AUTH_PROVIDER_TEMPORARY_FAILURE` |
 | `POST /api/v1/auth/resend` | Gửi lại verification/challenge email | `email`, `flowType` (`signup_verify`/`login_challenge`) | `200` với `success`, `cooldownSeconds`, `requestId` | `400 AUTH_INVALID_INPUT`, `429 AUTH_RESEND_COOLDOWN/AUTH_RESEND_HOURLY_CAP_REACHED/AUTH_RATE_LIMITED`, `503 AUTH_PROVIDER_TEMPORARY_FAILURE` |
 | `POST /api/v1/auth/logout` | Kết thúc session + clear cookies | `sessionRef?` (optional) | `204` + clear auth cookies | Error envelope qua `jsonError` khi DB failure |
@@ -81,10 +81,10 @@ Ghi chú contract:
 ## 6) Core Flows (Business View)
 ### 6.1 Signup -> Verify -> Session Sync -> Market
 1. User signup.
-2. Hệ thống tạo user tại Firebase + DB projection.
-3. User mở verify link (`oobCode`).
+2. Hệ thống tạo user tại Supabase Auth + DB projection.
+3. User mở verify link với `token_hash` + `type`.
 4. Verify callback xác thực email và cập nhật trạng thái DB.
-5. FE callback lấy `idToken` Firebase client.
+5. FE callback lấy `accessToken` từ Supabase Auth client.
 6. FE gọi `session/sync` để tạo `ryex_session_ref`.
 7. Redirect `/app/market`.
 
@@ -103,7 +103,7 @@ Ghi chú contract:
 | Table | Vai trò |
 |---|---|
 | `users` | User projection nội bộ (status/kyc metadata/các mốc thời gian) |
-| `auth_identities` | Mapping user với identity provider (`password`, Firebase uid, email_verified) |
+| `auth_identities` | Mapping user với identity provider (`password`, Supabase Auth uid, email_verified) |
 | `auth_verification_events` | Lịch sử gửi/xác minh email |
 | `auth_login_events` | Lịch sử login success/failed, method, failure reason |
 | `user_sessions` | Session trace theo `session_ref`, device, ip, termination |
@@ -125,7 +125,7 @@ Migration liên quan:
 - Verify callback page dùng backend auth APIs (`verify-email/callback` + `session/sync`) và map lỗi theo `error.code`.
 
 ### BE impact
-- Auth API chính dùng Firebase Admin + Postgres transaction repository.
+- Auth API chính dùng Supabase Auth + Postgres transaction repository.
 - Rate limit đang dùng memory store in-process (không shared giữa instance).
 - Cookie/session bảo mật phụ thuộc env:
   - `AUTH_COOKIE_SECURE`

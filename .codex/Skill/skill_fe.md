@@ -6,7 +6,7 @@ description: Frontend execution rules for RYEX. Use when editing UI in this repo
 ## 0) Mandatory Pre-Task Rule Read
 - Trước khi thực hiện bất kỳ tác vụ nào, bắt buộc đọc file rule FE tương ứng với hệ đang chạy:
   - `.codex`: `.codex/Rule/rule_fe.md`
-  - `.claude`: `.claude/Rules/rule_fe.md`
+  - `.codex (legacy path)`: `.codex/Rules/rule_fe.md`
 - Nếu chưa đọc rule, không được bắt đầu edit/code/test cho task FE.
 
 

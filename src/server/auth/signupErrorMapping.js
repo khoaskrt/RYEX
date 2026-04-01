@@ -2,10 +2,15 @@ import { AUTH_ERROR, AuthApiError } from './errors.js';
 
 const EMAIL_ALREADY_EXISTS_MESSAGE = 'Email đã được sử dụng, hãy sử dụng email khác';
 
-export function mapFirebaseSignupError(error) {
-  const message = error?.errorInfo?.code || error?.message || 'provider_error';
+export function mapAuthProviderSignupError(error) {
+  const message = String(error?.code || error?.errorInfo?.code || error?.message || 'provider_error').toLowerCase();
 
-  if (String(message).includes('email-already-exists')) {
+  if (
+    message.includes('email-already-exists')
+    || message.includes('user already registered')
+    || message.includes('already registered')
+    || message.includes('user_already_exists')
+  ) {
     return new AuthApiError(AUTH_ERROR.EMAIL_ALREADY_EXISTS, EMAIL_ALREADY_EXISTS_MESSAGE, 409);
   }
 

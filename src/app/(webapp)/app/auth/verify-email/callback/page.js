@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { getFirebaseClientAuth } from '@/shared/lib/firebaseClient';
-import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import { supabase } from '@/shared/lib/supabase/client';
 
 const CALLBACK_ERROR_MESSAGES = {
   AUTH_INVALID_INPUT: 'Liên kết xác minh không hợp lệ. Vui lòng thử lại từ email mới.',
@@ -30,8 +29,11 @@ export default function VerifyEmailCallbackPage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const runVerificationFlow = useCallback(async () => {
-    const oobCode = new URLSearchParams(window.location.search).get('oobCode');
-    if (!oobCode) {
+    const query = new URLSearchParams(window.location.search);
+    const tokenHash = query.get('token_hash');
+    const type = query.get('type');
+
+    if (!tokenHash || !type) {
       setStatus('error');
       setErrorMessage(CALLBACK_ERROR_MESSAGES.AUTH_INVALID_INPUT);
       return;
@@ -41,31 +43,21 @@ export default function VerifyEmailCallbackPage() {
     setErrorMessage('');
 
     try {
-      const verifyResponse = await fetch(`/api/v1/auth/verify-email/callback?oobCode=${encodeURIComponent(oobCode)}`, {
-        method: 'GET',
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type,
       });
-      const verifyPayload = await verifyResponse.json().catch(() => ({}));
-
-      if (!verifyResponse.ok) {
+      if (verifyError) {
         setStatus('error');
-        setErrorMessage(getErrorMessage(verifyPayload?.error?.code, verifyPayload?.error?.message));
+        setErrorMessage(getErrorMessage(null, verifyError.message));
         return;
       }
 
       setStatus('syncing');
-      const auth = getFirebaseClientAuth();
-      const fullLink = window.location.href;
-      const emailFromStorage = window.localStorage.getItem('ryex_pending_verify_email') || '';
-      const emailFromQuery = new URLSearchParams(window.location.search).get('email') || '';
-      const signInEmail = emailFromStorage || emailFromQuery;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token || '';
 
-      if (isSignInWithEmailLink(auth, fullLink) && signInEmail) {
-        await signInWithEmailLink(auth, signInEmail, fullLink);
-      }
-
-      const idToken = await auth.currentUser?.getIdToken(true);
-
-      if (!idToken) {
+      if (!accessToken) {
         setStatus('error');
         setErrorMessage(CALLBACK_ERROR_MESSAGES.AUTH_INVALID_TOKEN);
         return;
@@ -86,7 +78,7 @@ export default function VerifyEmailCallbackPage() {
         },
         credentials: 'same-origin',
         body: JSON.stringify({
-          idToken,
+          accessToken,
           deviceId: deviceId || undefined,
           rememberDevice,
         }),
@@ -103,7 +95,6 @@ export default function VerifyEmailCallbackPage() {
         window.localStorage.setItem('ryex_device_id', syncPayload.deviceId);
       }
 
-      window.localStorage.removeItem('ryex_pending_verify_email');
       setStatus('success');
       router.replace('/app/market');
     } catch {

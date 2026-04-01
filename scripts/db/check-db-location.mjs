@@ -139,7 +139,7 @@ if (db?.isSupabase || pg?.isSupabase) {
   console.log('   • View in Supabase Dashboard');
   console.log('');
   console.log('🧪 To verify data:');
-  console.log('   1. npm run db:debug');
+  console.log('   1. npm run db:verify');
   console.log('   2. Open Supabase Dashboard → Table Editor');
 } else if (db?.isLocal || pg?.isLocal) {
   console.log('⚠️  Your data is stored LOCALLY');

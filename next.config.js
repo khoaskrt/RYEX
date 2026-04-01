@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['pg', 'firebase-admin'],
+    serverComponentsExternalPackages: ['pg'],
   },
   env: {
     SUPABASE_URL: process.env.SUPABASE_URL,

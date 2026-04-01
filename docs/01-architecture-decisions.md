@@ -21,7 +21,7 @@
 | ADR ID | Title | Status | Date | Owner |
 |---|---|---|---|---|
 | ADR-001 | Layered architecture: App Router -> API v1 -> Domain Services | Accepted | 2026-03-31 | Tech Lead |
-| ADR-002 | Auth authority: Firebase Admin + Postgres/Supabase audit/session data | Accepted | 2026-03-31 | BE |
+| ADR-002 | Auth authority: Supabase Auth + Postgres/Supabase audit/session data | Accepted | 2026-03-31 | BE |
 | ADR-003 | Market data strategy: Backend proxy + stale fallback | Accepted | 2026-03-31 | BE |
 | ADR-004 | API contract normalization (`error` vs `error.code`) | Proposed | 2026-03-31 | BA + BE + QA |
 | ADR-005 | FE auth unification (2 pattern -> 1 journey chuẩn) | Proposed | 2026-03-31 | PO + BA + FE |
@@ -41,17 +41,17 @@
   - FE/BE handoff rõ hơn, giảm logic business nằm rải rác ở UI.
   - Cần kỷ luật code review để tránh route handler “phình” logic.
 
-### ADR-002: Auth authority: Firebase Admin + Postgres/Supabase audit/session data
+### ADR-002: Auth authority: Supabase Auth + Postgres/Supabase audit/session data
 - Status: `Accepted`
 - Context:
   - Cần xử lý signup/verify/session nhanh cho MVP nhưng vẫn có audit trail.
-  - Runtime hiện có Firebase Admin + lưu dữ liệu user/audit vào DB.
+  - Runtime hiện có Supabase Auth + lưu dữ liệu user/audit vào DB.
 - Decision:
-  - Firebase Admin là nguồn xác thực chính.
+  - Supabase Auth là nguồn xác thực chính.
   - Postgres/Supabase lưu user projection, verification events, audit events, session-related data.
 - Consequences:
   - Đáp ứng nhanh MVP auth và khả năng truy vết vận hành.
-  - Tăng yêu cầu đồng bộ contract giữa Firebase state và DB state.
+  - Tăng yêu cầu đồng bộ contract giữa Supabase Auth state và DB state.
 
 ### ADR-003: Market data strategy: Backend proxy + stale fallback
 - Status: `Accepted`

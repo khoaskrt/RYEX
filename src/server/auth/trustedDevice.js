@@ -4,7 +4,7 @@ const TRUSTED_COOKIE_NAME = 'ryex_trusted_device';
 const TRUSTED_DEVICE_TTL_DAYS = 30;
 
 function getTrustedSecret() {
-  return process.env.AUTH_TRUSTED_DEVICE_SECRET || process.env.FIREBASE_PRIVATE_KEY || 'dev-trusted-secret';
+  return process.env.AUTH_TRUSTED_DEVICE_SECRET || process.env.SUPABASE_JWT_SECRET || 'dev-trusted-secret';
 }
 
 export function getTrustedCookieName() {

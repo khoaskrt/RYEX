@@ -1,7 +1,7 @@
 -- RYEX Auth Identity Baseline Schema (PostgreSQL)
 -- Scope: logic-dang-ky-login MVP
 -- Notes:
--- 1) Firebase remains source of truth for credential + verification token internals.
+-- 1) Supabase Auth là nguồn xác thực chính.
 -- 2) This schema stores internal product metadata, audit, and session traces.
 
 BEGIN;
@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY,
-  firebase_uid VARCHAR(128) NOT NULL UNIQUE,
+  supa_id VARCHAR(128) NOT NULL UNIQUE,
   email CITEXT NOT NULL UNIQUE,
   display_name VARCHAR(120),
   status VARCHAR(32) NOT NULL DEFAULT 'pending_email_verification',
@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
 CREATE TABLE IF NOT EXISTS auth_identities (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  firebase_uid VARCHAR(128) NOT NULL,
+  supa_id VARCHAR(128) NOT NULL,
   provider VARCHAR(30) NOT NULL DEFAULT 'password',
   email CITEXT NOT NULL,
   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS auth_identities (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT auth_identities_provider_check CHECK (provider IN ('password')),
   CONSTRAINT auth_identities_user_provider_unique UNIQUE (user_id, provider),
-  CONSTRAINT auth_identities_firebase_provider_unique UNIQUE (firebase_uid, provider)
+  CONSTRAINT auth_identities_supa_provider_unique UNIQUE (supa_id, provider)
 );
 
 CREATE INDEX IF NOT EXISTS idx_auth_identities_verified_updated
@@ -50,7 +50,7 @@ CREATE INDEX IF NOT EXISTS idx_auth_identities_verified_updated
 CREATE TABLE IF NOT EXISTS auth_verification_events (
   id UUID PRIMARY KEY,
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  firebase_uid VARCHAR(128),
+  supa_id VARCHAR(128),
   email CITEXT,
   event_type VARCHAR(40) NOT NULL,
   event_status VARCHAR(20) NOT NULL,
@@ -78,7 +78,7 @@ CREATE INDEX IF NOT EXISTS idx_auth_verif_events_status_occurred
 CREATE TABLE IF NOT EXISTS auth_login_events (
   id UUID PRIMARY KEY,
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  firebase_uid VARCHAR(128),
+  supa_id VARCHAR(128),
   email CITEXT,
   login_method VARCHAR(30) NOT NULL DEFAULT 'email_link',
   result VARCHAR(20) NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS user_sessions (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   session_ref VARCHAR(128) NOT NULL UNIQUE,
-  auth_provider VARCHAR(30) NOT NULL DEFAULT 'firebase',
+  auth_provider VARCHAR(30) NOT NULL DEFAULT 'supabase',
   started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   ended_at TIMESTAMPTZ,

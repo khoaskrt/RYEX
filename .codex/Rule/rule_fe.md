@@ -65,6 +65,22 @@ After editing:
 - Confirmation that header/footer consistency is preserved.
 - Confirmation that token icons follow `24x24`, circular, transparent-wrapper rules.
 
+## 5) Collaboration + Documentation Governance (Mandatory)
+1. Quyền phản biện/làm rõ:
+- Khi yêu cầu chưa rõ, FE có quyền phản biện hoặc hỏi thêm để tham vấn với bạn.
+- Chỉ hỏi ở mức rõ scope, mục tiêu UX, expected behavior, acceptance; tránh sa vào câu hỏi quá sâu kỹ thuật khi chưa cần thiết.
+
+2. Kỷ luật cây thư mục tài liệu:
+- Khi ghi chép hệ thống, FE bắt buộc tuân theo cây thư mục docs đã được dựng sẵn (phiên bản tối ưu hiện tại).
+- Chỉ được thêm file tài liệu vào đúng folder chức năng tương ứng.
+- Nếu phát sinh tài liệu nằm ngoài phạm vi folder hiện có: chỉ được đề xuất tạo folder mới và phải có chấp thuận của bạn trước khi tạo.
+
+3. Nghĩa vụ cập nhật tài liệu sau mỗi task/feature/epic:
+- Sau khi hoàn thành task/feature/epic, FE bắt buộc cập nhật tài liệu.
+- Bắt buộc đọc/đối chiếu toàn bộ docs liên quan trước khi ghi.
+- Luôn ưu tiên bổ sung vào tài liệu sẵn có và update version theo nguyên tắc đã thống nhất.
+- Chỉ tạo file `.md` mới khi thực sự không có tài liệu liên quan.
+
 ---
 
 ## Changelog
@@ -75,3 +91,8 @@ After editing:
   - OAuth buttons must use `supabase.auth.signInWithOAuth()` method
   - Callback handler must process session via `supabase.auth.getSession()`
 - **Security note**: OAuth redirect URLs must match Supabase dashboard whitelist
+
+### v1.2 - 2026-04-01
+- Added mandatory collaboration clarification rule for unclear requests (non-deep-technical consultation).
+- Added strict docs tree governance (only existing folders; new folder requires explicit user approval).
+- Added mandatory post-task documentation update rule (review existing docs first; prefer updating existing docs/version before creating new file).

@@ -17,7 +17,7 @@
   - `P0`:
     - `GET /api/v1/user/profile`.
     - `PATCH /api/v1/user/profile`.
-    - Bearer token verification qua Firebase Admin.
+    - Bearer token verification qua Supabase Auth.
     - Read/update dữ liệu từ bảng `users` (và read `auth_identities` cho emailVerified ở GET).
   - `P1`:
     - Chuẩn hóa error envelope + `error.code` theo `docs/contracts/api-v1.md`.
@@ -91,7 +91,7 @@
   - Hiển thị lỗi đúng theo contract (sau khi chuẩn hóa error code).
 - BE impact:
   - Route `src/app/api/v1/user/profile/route.js`.
-  - Firebase token verify (`getFirebaseAuth().verifyIdToken`).
+  - Supabase access token verify (`supabaseAdmin.auth.getUser(accessToken)`).
   - Supabase service-role query/update bảng `users`, join `auth_identities` (GET).
 - QA impact:
   - Test matrix bắt buộc:

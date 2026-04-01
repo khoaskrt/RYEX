@@ -13,10 +13,10 @@ Append new cases after each bugfix, feature, or production incident.
 |---|---|---|
 | AUTH-01 | `POST /api/v1/auth/signup` with empty body | `400 AUTH_INVALID_INPUT` |
 | AUTH-02 | `POST /api/v1/auth/signup` with weak password | `422 AUTH_PASSWORD_POLICY_FAILED` |
-| AUTH-03 | `GET /api/v1/auth/verify-email/callback` without `oobCode` | `400 AUTH_INVALID_INPUT` |
-| AUTH-04 | `GET /api/v1/auth/verify-email/callback?oobCode=INVALID` | `400 AUTH_VERIFICATION_LINK_INVALID` |
+| AUTH-03 | `GET /api/v1/auth/verify-email/callback` without `token_hash` or `type` | `400 AUTH_INVALID_INPUT` |
+| AUTH-04 | `GET /api/v1/auth/verify-email/callback?token_hash=INVALID&type=signup` | `400 AUTH_VERIFICATION_LINK_INVALID` |
 | AUTH-05 | `GET /api/v1/auth/verify-email/callback` with expired code | `410 AUTH_VERIFICATION_LINK_EXPIRED` |
-| AUTH-06 | `POST /api/v1/auth/session/sync` without `idToken` | `400 AUTH_INVALID_INPUT` |
+| AUTH-06 | `POST /api/v1/auth/session/sync` without `accessToken` | `400 AUTH_INVALID_INPUT` |
 | AUTH-07 | `POST /api/v1/auth/session/sync` with invalid token | `401 AUTH_INVALID_TOKEN` |
 | AUTH-08 | `POST /api/v1/auth/session/sync` with unverified email | `403 AUTH_EMAIL_NOT_VERIFIED` |
 | AUTH-09 | `POST /api/v1/auth/logout` after active session | `204` and cleared auth cookies |

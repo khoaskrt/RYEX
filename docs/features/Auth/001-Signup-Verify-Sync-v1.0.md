@@ -68,27 +68,27 @@
   - Then trả `422` với `error.code = AUTH_PASSWORD_POLICY_FAILED`.
 
 - AC-04 (Verify success):
-  - Given `oobCode` hợp lệ
-  - When gọi `GET /api/v1/auth/verify-email/callback?oobCode=...`
+  - Given `token_hash` + `type` hợp lệ
+  - When gọi `GET /api/v1/auth/verify-email/callback?token_hash=...&type=...`
   - Then trả `200` với `verified=true`, `autoLoginReady=true`, `next=/app/market`.
 
 - AC-05 (Verify invalid/expired link):
-  - Given `oobCode` invalid hoặc expired
+  - Given `token_hash` hoặc `type` invalid/expired
   - When gọi verify callback
   - Then trả lần lượt `400 AUTH_VERIFICATION_LINK_INVALID` hoặc `410 AUTH_VERIFICATION_LINK_EXPIRED`.
 
 - AC-06 (Session sync success):
-  - Given Firebase `idToken` hợp lệ và email đã verified
+  - Given Supabase Auth `accessToken` hợp lệ và email đã verified
   - When gọi `POST /api/v1/auth/session/sync`
   - Then trả `200` với `sessionRef`, `emailVerified=true`, và set cookie `ryex_session_ref`.
 
 - AC-07 (Session sync invalid token):
-  - Given `idToken` thiếu hoặc không hợp lệ
+  - Given `accessToken` thiếu hoặc không hợp lệ
   - When gọi session sync
   - Then trả `400 AUTH_INVALID_INPUT` (thiếu token) hoặc `401 AUTH_INVALID_TOKEN` (token sai).
 
 - AC-08 (Session sync unverified email):
-  - Given `idToken` hợp lệ nhưng email chưa verified
+  - Given `accessToken` hợp lệ nhưng email chưa verified
   - When gọi session sync
   - Then trả `403` với `error.code = AUTH_EMAIL_NOT_VERIFIED`.
 
@@ -114,7 +114,7 @@
 ## 7. Risks + decisions
 - Risks:
   - R-01: FE auth dual pattern có thể gây lệch trải nghiệm onboarding.
-  - R-02: Nếu provider Firebase lỗi tạm thời, signup/verify/sync bị gián đoạn.
+  - R-02: Nếu provider Supabase Auth lỗi tạm thời, signup/verify/sync bị gián đoạn.
   - R-03: Nếu contract success/error thay đổi thiếu kế hoạch, dễ vỡ FE mapping.
 - Decisions cần PO chốt:
   - D-01: Ưu tiên chốt auth journey FE thống nhất ở sprint nào.

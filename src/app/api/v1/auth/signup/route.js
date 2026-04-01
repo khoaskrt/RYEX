@@ -1,11 +1,11 @@
-import { getFirebaseAuth } from '@/server/auth/firebaseAdmin';
+import { createAnonClient } from '@/shared/lib/supabase/server';
 import { AUTH_ERROR, AuthApiError, jsonError } from '@/server/auth/errors';
 import { validatePasswordPolicy } from '@/server/auth/passwordPolicy';
 import { withTransaction } from '@/server/db/postgres';
 import { enforceRateLimit } from '@/server/auth/rateLimit';
 import { getRequestMeta } from '@/server/auth/http';
 import { insertAuditEvent, insertVerificationEvent, upsertAuthIdentity, upsertUser } from '@/server/auth/repository';
-import { mapFirebaseSignupError, mapPostgresSignupError } from '@/server/auth/signupErrorMapping';
+import { mapAuthProviderSignupError, mapPostgresSignupError } from '@/server/auth/signupErrorMapping';
 
 export const runtime = 'nodejs';
 
@@ -29,42 +29,50 @@ export async function POST(request) {
       );
     }
 
-    const auth = getFirebaseAuth();
-    let firebaseUser;
+    const supabase = await createAnonClient();
+    let supaUser;
 
     try {
-      firebaseUser = await auth.createUser({ email, password, displayName });
-      const verificationLink = await auth.generateEmailVerificationLink(email);
-
-      // TODO: Send actual email via SendGrid/Mailgun in production
-      // For local testing, log the link to console
-      console.log('\n🔗 VERIFICATION LINK FOR:', email);
-      console.log('Copy this link to browser:', verificationLink);
-      console.log('Or extract oobCode from URL and use: http://localhost:3000/app/auth/verify-email/callback?oobCode=YOUR_CODE\n');
+      const appBaseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: displayName || '',
+          },
+          emailRedirectTo: `${appBaseUrl}/app/auth/verify-email/callback?flow=signup_verify&email=${encodeURIComponent(email)}`,
+        },
+      });
+      if (error) throw error;
+      supaUser = data?.user;
+      if (!supaUser?.id) {
+        throw new AuthApiError(AUTH_ERROR.PROVIDER_TEMPORARY_FAILURE, 'Auth provider temporary failure', 503);
+      }
     } catch (error) {
-      throw mapFirebaseSignupError(error);
+      throw mapAuthProviderSignupError(error);
     }
 
     let user;
     try {
       user = await withTransaction(async (client) => {
         const savedUser = await upsertUser(client, {
-          firebaseUid: firebaseUser.uid,
-          email: firebaseUser.email || email,
-          displayName: firebaseUser.displayName || displayName || null,
+          supaUid: supaUser.id,
+          email: supaUser.email || email,
+          displayName: supaUser.user_metadata?.display_name || displayName || null,
         });
 
         await upsertAuthIdentity(client, {
           userId: savedUser.id,
-          firebaseUid: firebaseUser.uid,
-          email: firebaseUser.email || email,
-          emailVerified: !!firebaseUser.emailVerified,
+          supaUid: supaUser.id,
+          email: supaUser.email || email,
+          emailVerified: Boolean(supaUser.email_confirmed_at),
         });
 
         await insertVerificationEvent(client, {
           userId: savedUser.id,
-          firebaseUid: firebaseUser.uid,
-          email: firebaseUser.email || email,
+          supaUid: supaUser.id,
+          email: supaUser.email || email,
           eventType: 'verification_email_sent',
           eventStatus: 'success',
           requestId,

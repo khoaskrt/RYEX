@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '@/supabaseClient';
+import { supabase } from '@/shared/lib/supabase/client';
 import { LoginHistoryCard } from './components/LoginHistoryCard';
 import { ProfileSidebar } from './components/ProfileSidebar';
 import { ProfileSummaryCard } from './components/ProfileSummaryCard';
@@ -12,25 +12,15 @@ import { SupportColumn } from './components/SupportColumn';
 const FALLBACK_PROFILE = {
   id: '',
   email: '',
-  emailMasked: 'kho***@gmail.com',
-  displayName: 'Người dùng RYEX',
-  status: 'pending_email_verification',
-  kycStatus: 'not_started',
-  emailVerified: false,
-  uid: '217012742',
-  memberSince: '12/05/2023',
+  emailMasked: '--',
+  uid: '--',
+  memberSince: '--',
 };
 
 const DEFAULT_PROFILE_VISUAL = {
   avatarUrl: '',
   initial: 'U',
 };
-
-const FALLBACK_LOGIN_ROWS = [
-  { time: '20/10/2023 14:22:10', ip: '113.161.x.xxx', device: 'Chrome / MacOS', location: 'Hồ Chí Minh, VN', isSuspicious: false },
-  { time: '19/10/2023 09:15:44', ip: '14.226.x.xxx', device: 'App / iOS', location: 'Hà Nội, VN', isSuspicious: true },
-  { time: '18/10/2023 22:05:12', ip: '113.161.x.xxx', device: 'Chrome / MacOS', location: 'Hồ Chí Minh, VN', isSuspicious: false },
-];
 
 const SECTION_ID_BY_SIDEBAR_KEY = {
   dashboard: 'profile-dashboard',
@@ -79,16 +69,6 @@ function extractLocation(metadata) {
   return 'N/A';
 }
 
-function deriveDisplayName(user) {
-  const userMeta = user?.user_metadata || {};
-  const fromMeta = String(userMeta.full_name || userMeta.name || userMeta.display_name || '').trim();
-  if (fromMeta) return fromMeta;
-
-  const email = String(user?.email || '').trim();
-  if (!email.includes('@')) return FALLBACK_PROFILE.displayName;
-  return email.split('@')[0];
-}
-
 function mapProfileFromSession(session) {
   if (!session?.user) return FALLBACK_PROFILE;
   const user = session.user;
@@ -96,10 +76,6 @@ function mapProfileFromSession(session) {
     id: String(user.id || ''),
     email: String(user.email || ''),
     emailMasked: maskEmail(user.email),
-    displayName: deriveDisplayName(user),
-    status: FALLBACK_PROFILE.status,
-    kycStatus: FALLBACK_PROFILE.kycStatus,
-    emailVerified: Boolean(user.email_confirmed_at),
     uid: String(user.id || FALLBACK_PROFILE.uid).slice(0, 12),
     memberSince: formatMemberSince(user.created_at),
   };
@@ -154,11 +130,7 @@ export function ProfileModulePage() {
   const [profileVisual, setProfileVisual] = useState(DEFAULT_PROFILE_VISUAL);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState('');
-  const [displayNameDraft, setDisplayNameDraft] = useState(FALLBACK_PROFILE.displayName);
-  const [displayNameError, setDisplayNameError] = useState('');
-  const [displayNameSuccess, setDisplayNameSuccess] = useState('');
-  const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
-  const [loginRows, setLoginRows] = useState(FALLBACK_LOGIN_ROWS);
+  const [loginRows, setLoginRows] = useState([]);
   const [loginLoading, setLoginLoading] = useState(true);
   const [loginError, setLoginError] = useState('');
   const [activeSidebarKey, setActiveSidebarKey] = useState('dashboard');
@@ -172,47 +144,31 @@ export function ProfileModulePage() {
       if (!accessToken) {
         const fallbackProfile = mapProfileFromSession(session);
         setProfile(fallbackProfile);
-        setDisplayNameDraft(fallbackProfile.displayName);
         return;
       }
 
-      const response = await fetch('/api/v1/user/profile', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('users_id, supa_id, email, created_at')
+        .eq('supa_id', session?.user?.id)
+        .single();
 
-      if (!response.ok) {
-        throw new Error(`Profile API failed with status ${response.status}`);
-      }
+      if (error) throw error;
 
-      const payload = await response.json();
-      const user = payload?.user || {};
       const fallbackFromSession = mapProfileFromSession(session);
-      const email = String(user.email || session?.user?.email || fallbackFromSession.email);
-      const displayName = String(user.displayName || fallbackFromSession.displayName || '').trim() || fallbackFromSession.displayName;
+      const email = String(user?.email || session?.user?.email || fallbackFromSession.email);
 
       setProfile({
-        id: String(user.id || fallbackFromSession.id),
+        id: String(user?.users_id || user?.supa_id || fallbackFromSession.id),
         email,
         emailMasked: maskEmail(email),
-        displayName,
-        status: String(user.status || fallbackFromSession.status || FALLBACK_PROFILE.status),
-        kycStatus: String(user.kycStatus || fallbackFromSession.kycStatus || FALLBACK_PROFILE.kycStatus),
-        emailVerified: Boolean(
-          typeof user.emailVerified === 'boolean' ? user.emailVerified : fallbackFromSession.emailVerified
-        ),
-        uid: String(user.id || fallbackFromSession.uid).slice(0, 12),
-        memberSince: formatMemberSince(user.createdAt || session?.user?.created_at),
+        uid: String(user?.users_id || user?.supa_id || fallbackFromSession.uid).slice(0, 12),
+        memberSince: formatMemberSince(user?.created_at || session?.user?.created_at),
       });
-      setDisplayNameDraft(displayName);
-      setDisplayNameError('');
-      setDisplayNameSuccess('');
     } catch {
-      setProfileError('Không thể đồng bộ hồ sơ từ API. Đang hiển thị dữ liệu phiên đăng nhập.');
+      setProfileError('Không thể đồng bộ hồ sơ từ Supabase. Đang hiển thị dữ liệu phiên đăng nhập.');
       const fallbackProfile = mapProfileFromSession(session);
       setProfile(fallbackProfile);
-      setDisplayNameDraft(fallbackProfile.displayName);
     } finally {
       setProfileLoading(false);
     }
@@ -247,79 +203,12 @@ export function ProfileModulePage() {
 
       setLoginRows(mapLoginRows(data));
     } catch {
-      setLoginError('Không thể tải lịch sử đăng nhập từ API. Đang hiển thị dữ liệu mẫu.');
-      setLoginRows(FALLBACK_LOGIN_ROWS);
+      setLoginError('Không thể tải lịch sử đăng nhập từ Supabase.');
+      setLoginRows([]);
     } finally {
       setLoginLoading(false);
     }
   }, []);
-
-  const handleSaveDisplayName = useCallback(async () => {
-    const trimmedName = String(displayNameDraft || '').trim();
-    setDisplayNameSuccess('');
-
-    if (!trimmedName) {
-      setDisplayNameError('Tên hiển thị không được để trống.');
-      return;
-    }
-    if (trimmedName.length < 2) {
-      setDisplayNameError('Tên hiển thị cần ít nhất 2 ký tự.');
-      return;
-    }
-    if (trimmedName.length > 60) {
-      setDisplayNameError('Tên hiển thị tối đa 60 ký tự.');
-      return;
-    }
-
-    const accessToken = currentSession?.access_token;
-    if (!accessToken) {
-      setDisplayNameError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
-      return;
-    }
-
-    setDisplayNameError('');
-    setIsSavingDisplayName(true);
-
-    const previousDisplayName = profile.displayName;
-    setProfile((prev) => ({
-      ...prev,
-      displayName: trimmedName,
-    }));
-
-    try {
-      const response = await fetch('/api/v1/user/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ displayName: trimmedName }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload?.error || `Update failed (${response.status})`);
-      }
-
-      const updatedName = String(payload?.user?.displayName || trimmedName).trim() || trimmedName;
-      setProfile((prev) => ({
-        ...prev,
-        displayName: updatedName,
-        status: String(payload?.user?.status || prev.status),
-        kycStatus: String(payload?.user?.kycStatus || prev.kycStatus),
-      }));
-      setDisplayNameDraft(updatedName);
-      setDisplayNameSuccess('Đã cập nhật tên hiển thị.');
-    } catch (error) {
-      setProfile((prev) => ({
-        ...prev,
-        displayName: previousDisplayName,
-      }));
-      setDisplayNameError(error instanceof Error ? error.message : 'Không thể cập nhật tên hiển thị.');
-    } finally {
-      setIsSavingDisplayName(false);
-    }
-  }, [currentSession?.access_token, displayNameDraft, profile.displayName]);
 
   const handleSidebarNavigate = useCallback((key) => {
     const sectionId = SECTION_ID_BY_SIDEBAR_KEY[key];
@@ -474,21 +363,7 @@ export function ProfileModulePage() {
 
           <div className="space-y-8">
             <section id={SECTION_ID_BY_SIDEBAR_KEY.dashboard}>
-              <ProfileSummaryCard
-                displayNameDraft={displayNameDraft}
-                displayNameError={displayNameError}
-                displayNameSuccess={displayNameSuccess}
-                isSavingDisplayName={isSavingDisplayName}
-                loading={profileLoading}
-                onDisplayNameChange={(value) => {
-                  setDisplayNameDraft(value);
-                  setDisplayNameError('');
-                  setDisplayNameSuccess('');
-                }}
-                onSaveDisplayName={handleSaveDisplayName}
-                profile={profile}
-                profileVisual={profileVisual}
-              />
+              <ProfileSummaryCard loading={profileLoading} profile={profile} profileVisual={profileVisual} />
             </section>
 
             <section className="grid grid-cols-1 gap-8 xl:grid-cols-3">

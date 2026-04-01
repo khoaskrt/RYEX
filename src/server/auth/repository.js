@@ -1,8 +1,8 @@
-export async function upsertUser(client, { firebaseUid, email, displayName = null, status = 'pending_email_verification' }) {
+export async function upsertUser(client, { supaUid, email, displayName = null, status = 'pending_email_verification' }) {
   const query = `
-    INSERT INTO users (id, firebase_uid, email, display_name, status)
+    INSERT INTO users (id, supa_id, email, display_name, status)
     VALUES (gen_random_uuid(), $1, $2, $3, $4)
-    ON CONFLICT (firebase_uid)
+    ON CONFLICT (supa_id)
     DO UPDATE SET
       email = EXCLUDED.email,
       display_name = COALESCE(EXCLUDED.display_name, users.display_name),
@@ -10,17 +10,17 @@ export async function upsertUser(client, { firebaseUid, email, displayName = nul
       updated_at = NOW()
     RETURNING id, email, status;
   `;
-  const { rows } = await client.query(query, [firebaseUid, email, displayName, status]);
+  const { rows } = await client.query(query, [supaUid, email, displayName, status]);
   return rows[0];
 }
 
-export async function upsertAuthIdentity(client, { userId, firebaseUid, email, emailVerified }) {
+export async function upsertAuthIdentity(client, { userId, supaUid, email, emailVerified }) {
   const query = `
-    INSERT INTO auth_identities (id, user_id, firebase_uid, provider, email, email_verified, email_verified_at)
+    INSERT INTO auth_identities (id, user_id, supa_id, provider, email, email_verified, email_verified_at)
     VALUES (gen_random_uuid(), $1, $2, 'password', $3, $4, CASE WHEN $4 THEN NOW() ELSE NULL END)
     ON CONFLICT (user_id, provider)
     DO UPDATE SET
-      firebase_uid = EXCLUDED.firebase_uid,
+      supa_id = EXCLUDED.supa_id,
       email = EXCLUDED.email,
       email_verified = EXCLUDED.email_verified,
       email_verified_at = CASE WHEN EXCLUDED.email_verified THEN NOW() ELSE auth_identities.email_verified_at END,
@@ -28,20 +28,20 @@ export async function upsertAuthIdentity(client, { userId, firebaseUid, email, e
       updated_at = NOW()
     RETURNING id;
   `;
-  await client.query(query, [userId, firebaseUid, email, emailVerified]);
+  await client.query(query, [userId, supaUid, email, emailVerified]);
 }
 
 export async function insertVerificationEvent(client, payload) {
   const query = `
     INSERT INTO auth_verification_events (
-      id, user_id, firebase_uid, email, event_type, event_status, failure_reason_code, request_id, ip, user_agent, metadata
+      id, user_id, supa_id, email, event_type, event_status, failure_reason_code, request_id, ip, user_agent, metadata
     ) VALUES (
       gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8::inet, $9, $10::jsonb
     );
   `;
   await client.query(query, [
     payload.userId || null,
-    payload.firebaseUid || null,
+    payload.supaUid || null,
     payload.email || null,
     payload.eventType,
     payload.eventStatus,
@@ -56,14 +56,14 @@ export async function insertVerificationEvent(client, payload) {
 export async function insertLoginEvent(client, payload) {
   const query = `
     INSERT INTO auth_login_events (
-      id, user_id, firebase_uid, email, login_method, result, failure_reason_code, request_id, ip, user_agent, device_id, metadata
+      id, user_id, supa_id, email, login_method, result, failure_reason_code, request_id, ip, user_agent, device_id, metadata
     ) VALUES (
       gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8::inet, $9, $10, $11::jsonb
     );
   `;
   await client.query(query, [
     payload.userId || null,
-    payload.firebaseUid || null,
+    payload.supaUid || null,
     payload.email || null,
     payload.loginMethod || 'email_link',
     payload.result,
@@ -102,7 +102,7 @@ export async function createUserSession(client, payload) {
     INSERT INTO user_sessions (
       id, user_id, session_ref, auth_provider, ip, user_agent, device_id, risk_level
     ) VALUES (
-      gen_random_uuid(), $1, $2, 'firebase', $3::inet, $4, $5, 'low'
+      gen_random_uuid(), $1, $2, 'supabase', $3::inet, $4, $5, 'low'
     )
     RETURNING session_ref;
   `;
@@ -193,7 +193,7 @@ export async function revokeTrustedDevicesForUser(client, userId) {
 
 export async function getVerifiedAuthUserByEmail(client, email) {
   const query = `
-    SELECT u.id AS user_id, u.email, ai.firebase_uid, ai.email_verified
+    SELECT u.id AS user_id, u.email, u.supa_id AS supa_uid, ai.email_verified
     FROM users u
     INNER JOIN auth_identities ai ON ai.user_id = u.id AND ai.provider = 'password'
     WHERE u.email = $1

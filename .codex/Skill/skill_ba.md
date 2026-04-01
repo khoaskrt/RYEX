@@ -7,7 +7,7 @@ version: 1.1
 ## 0) Mandatory Pre-Task Rule Read
 - Trước khi thực hiện bất kỳ tác vụ nào, bắt buộc đọc file rule BA tương ứng với hệ đang chạy:
   - `.codex`: `.codex/Rule/rule_ba.md`
-  - `.claude`: `.claude/Rules/rule_ba.md`
+  - `.codex (legacy path)`: `.codex/Rules/rule_ba.md`
 - Nếu chưa đọc rule, không được bắt đầu phân tích/viết output cho task BA.
 
 
@@ -21,7 +21,7 @@ version: 1.1
 - Product: RYEX crypto exchange MVP (web-first).
 - Stack delivery: Next.js App Router + API routes `src/app/api/v1/*` + domain services `src/server/*` + feature modules `src/features/*`.
 - Core flows đang có trong codebase:
-1. Auth API theo Firebase Admin + Postgres audit/session (`signup`, `verify-email/callback`, `session/sync`, `login-challenge`, `resend`, `logout`).
+1. Auth API theo Supabase Auth + Postgres audit/session (`signup`, `verify-email/callback`, `session/sync`, `login-challenge`, `resend`, `logout`).
 2. FE auth hiện có 2 pattern cần BA quản trị rõ scope:
 - `AuthModulePage` dùng Supabase auth signup/resend.
 - `StitchLoginPage` dùng Supabase password sign-in.

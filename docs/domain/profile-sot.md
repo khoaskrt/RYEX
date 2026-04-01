@@ -13,7 +13,7 @@
 ## 2) Problem Framing
 - Business goal:
   - Cho phép hệ thống đọc/cập nhật thông tin profile cơ bản của user đã xác thực.
-  - Giữ profile data đồng bộ với identity Firebase và dữ liệu nội bộ.
+  - Giữ profile data đồng bộ với identity Supabase Auth và dữ liệu nội bộ.
 - User pain đang giải quyết:
   - Cần xem thông tin tài khoản và cập nhật hiển thị tên trong app.
   - Cần đảm bảo chỉ user hợp lệ mới truy cập profile API.
@@ -27,7 +27,7 @@
 - `P0`:
   - `GET /api/v1/user/profile`.
   - `PATCH /api/v1/user/profile` (update `displayName`).
-  - Firebase bearer token verification cho profile access.
+  - Supabase Auth bearer token verification cho profile access.
 - `P1`:
   - Chuẩn hóa error envelope theo chuẩn API v1.
   - Bổ sung input validation rõ ràng cho PATCH payload.
@@ -43,8 +43,8 @@
 - API route:
   - `src/app/api/v1/user/profile/route.js` xử lý cả `GET` và `PATCH`.
 - Auth guard:
-  - Bắt buộc `Authorization: Bearer <firebase_id_token>`.
-  - Verify token qua `getFirebaseAuth().verifyIdToken(...)`.
+  - Bắt buộc `Authorization: Bearer <supabase_access_token>`.
+  - Verify token qua `supabaseAdmin.auth.getUser(accessToken)`.
 - Data access:
   - Dùng `supabaseAdmin` (service role) query/update bảng `users`.
   - Query join `auth_identities` để trả `emailVerified`.
@@ -65,14 +65,14 @@ Ghi chú contract:
 ### 6.1 Read Profile (GET)
 1. Client gửi request kèm bearer token.
 2. API validate header `Bearer`.
-3. API verify Firebase token và lấy `firebaseUid`.
-4. Query bảng `users` + `auth_identities` theo `firebase_uid`.
+3. API verify Supabase access token và lấy `supaUid`.
+4. Query bảng `users` + `auth_identities` theo `supa_id`.
 5. Trả normalized object cho UI.
 6. Nếu không tìm thấy user -> `404`.
 
 ### 6.2 Update Profile (PATCH)
 1. Client gửi bearer token + payload update.
-2. API verify token và lấy `firebaseUid`.
+2. API verify token và lấy `supaUid`.
 3. API update `users.display_name`, `updated_at`.
 4. Trả profile rút gọn sau cập nhật.
 5. Nếu lỗi hệ thống -> `500`.
@@ -98,7 +98,7 @@ RLS note:
 ### BE impact
 - Route profile đang implement trực tiếp trong 1 file route handler.
 - Phụ thuộc 2 hệ xác thực:
-  - Firebase token verification (identity).
+  - Supabase access token verification (identity).
   - Supabase service role (data access).
 
 ### QA impact

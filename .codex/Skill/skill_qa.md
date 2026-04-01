@@ -6,7 +6,7 @@ description: QA execution skill for RYEX. Run fast, risk-first checks for auth, 
 ## 0) Mandatory Pre-Task Rule Read
 - Trước khi thực hiện bất kỳ tác vụ nào, bắt buộc đọc file rule QA tương ứng với hệ đang chạy:
   - `.codex`: `.codex/Rule/rule_qa.md`
-  - `.claude`: `.claude/Rules/rule_qa.md`
+  - `.codex (legacy path)`: `.codex/Rules/rule_qa.md`
 - Nếu chưa đọc rule, không được bắt đầu run test/verify/report cho task QA.
 
 
@@ -52,12 +52,12 @@ description: QA execution skill for RYEX. Run fast, risk-first checks for auth, 
 - Weak password -> `422 AUTH_PASSWORD_POLICY_FAILED`.
 
 2. `GET /api/v1/auth/verify-email/callback`
-- Missing `oobCode` -> `400 AUTH_INVALID_INPUT`.
+- Missing `token_hash` or `type` -> `400 AUTH_INVALID_INPUT`.
 - Invalid code -> `400 AUTH_VERIFICATION_LINK_INVALID`.
 - Expired code -> `410 AUTH_VERIFICATION_LINK_EXPIRED`.
 
 3. `POST /api/v1/auth/session/sync`
-- Missing `idToken` -> `400 AUTH_INVALID_INPUT`.
+- Missing `accessToken` -> `400 AUTH_INVALID_INPUT`.
 - Invalid token -> `401 AUTH_INVALID_TOKEN`.
 - Unverified email -> `403 AUTH_EMAIL_NOT_VERIFIED`.
 - Valid flow -> `200` + session cookie `ryex_session_ref`.

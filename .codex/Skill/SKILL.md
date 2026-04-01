@@ -1,6 +1,6 @@
 ---
 name: ryex-qa-guardrails
-description: Run simple, high-signal QA for RYEX auth and market flows with reproducible evidence. Use when changing `src/app/api/v1/*`, `src/server/auth/*`, `src/features/auth/*`, `src/features/market/*`, Supabase/Firebase integration, or before FE/BE handoff and release checks.
+description: Run simple, high-signal QA for RYEX auth and market flows with reproducible evidence. Use when changing `src/app/api/v1/*`, `src/server/auth/*`, `src/features/auth/*`, `src/features/market/*`, Supabase integration, or before FE/BE handoff and release checks.
 ---
 
 # RYEX QA Guardrails
@@ -31,8 +31,8 @@ Prioritize auth session integrity, error-code contract stability, and market rea
 
 Run in this order:
 1. `npm run build`
-2. If DB/Supabase touched: `npm run db:verify` then `npm run db:test`
-3. If signup/session touched: `npm run db:debug`
+2. If DB/Supabase touched: `npm run db:verify`
+3. If cần xác nhận target DB environment: `npm run db:location`
 
 Mark each item as `PASS | FAIL | BLOCKED`.
 
@@ -46,11 +46,11 @@ Run this pack whenever auth/login/signup/callback/session code changes.
 
 2. Verify callback contract:
 - `GET /api/v1/auth/verify-email/callback`
-- Validate: missing `oobCode` -> `AUTH_INVALID_INPUT`; invalid code -> `AUTH_VERIFICATION_LINK_INVALID`; expired -> `AUTH_VERIFICATION_LINK_EXPIRED`.
+- Validate: missing `token_hash` or `type` -> `AUTH_INVALID_INPUT`; invalid code -> `AUTH_VERIFICATION_LINK_INVALID`; expired -> `AUTH_VERIFICATION_LINK_EXPIRED`.
 
 3. Session sync contract:
 - `POST /api/v1/auth/session/sync`
-- Validate: missing token -> `AUTH_INVALID_INPUT`; invalid token -> `AUTH_INVALID_TOKEN`; unverified email -> `AUTH_EMAIL_NOT_VERIFIED`; valid flow -> `200`.
+- Validate: missing `accessToken` -> `AUTH_INVALID_INPUT`; invalid token -> `AUTH_INVALID_TOKEN`; unverified email -> `AUTH_EMAIL_NOT_VERIFIED`; valid flow -> `200`.
 - Confirm response sets `ryex_session_ref` cookie and `HttpOnly`, `SameSite=Lax`, `Secure` by env.
 
 4. Logout contract:
@@ -84,7 +84,7 @@ Run this pack whenever market API, ticker normalization, pagination, or icon map
 ## Gate C - Security and Contract Guardrails
 
 1. Never expose secrets in client code:
-- `SUPABASE_SERVICE_ROLE_KEY`, private Firebase keys, raw tokens.
+- `SUPABASE_SERVICE_ROLE_KEY`, private third-party auth keys, raw tokens.
 
 2. Keep FE/BE error contract consistent:
 - Prefer `error.code` mapping over HTTP text parsing.

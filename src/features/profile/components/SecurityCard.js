@@ -13,26 +13,26 @@ const securityItems = [
     icon: 'smartphone',
     title: 'Số điện thoại',
     description: 'Xác thực OTP qua tin nhắn SMS.',
-    status: 'Đã liên kết',
-    action: 'Thay đổi',
-    active: true,
+    status: 'Chưa hỗ trợ',
+    action: 'Chưa hỗ trợ',
+    active: false,
   },
   {
     key: 'google-auth',
     icon: 'verified_user',
     title: 'Google Authenticator (2FA)',
     description: 'Lớp bảo mật mạnh mẽ nhất từ Google.',
-    status: 'Đã bật',
-    action: 'Quản lý',
-    active: true,
+    status: 'Chưa hỗ trợ',
+    action: 'Chưa hỗ trợ',
+    active: false,
   },
   {
     key: 'trade-password',
     icon: 'lock',
     title: 'Mật khẩu giao dịch',
-    description: 'Chưa thiết lập',
-    status: '',
-    action: 'Thiết lập',
+    description: 'Sẽ mở sau',
+    status: 'Chưa hỗ trợ',
+    action: 'Chưa hỗ trợ',
     active: false,
   },
 ];
@@ -46,8 +46,8 @@ export function SecurityCard() {
           <p className="mt-1 text-sm font-medium text-on-surface-variant">Tăng cường bảo mật để bảo vệ tài sản của bạn.</p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-black text-primary">3/4</p>
-          <p className="text-xs font-bold text-primary">Mạnh</p>
+          <p className="text-sm font-black text-primary">1/4</p>
+          <p className="text-xs font-bold text-primary">Cơ bản</p>
         </div>
       </div>
 
@@ -83,9 +83,7 @@ export function SecurityCard() {
                 </button>
               </div>
             ) : (
-              <button className="rounded-lg bg-on-surface px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-black" type="button">
-                {item.action}
-              </button>
+              <span className="rounded-lg bg-surface-container-high px-4 py-2 text-xs font-bold text-on-surface-variant">{item.action}</span>
             )}
           </div>
         ))}

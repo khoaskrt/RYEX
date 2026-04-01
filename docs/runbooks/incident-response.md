@@ -42,8 +42,8 @@
 
 ### Auth Service Down
 ```bash
-# Check Firebase status
-npm run db:test
+# Check DB/Supabase connectivity baseline
+npm run db:verify
 
 # Verify session service
 curl https://api.ryex.com/v1/auth/health
@@ -52,7 +52,7 @@ curl https://api.ryex.com/v1/auth/health
 ### Market Data Stale
 ```bash
 # Check upstream API
-npm run scripts/db/check-location.mjs
+npm run db:location
 
 # Verify cache
 # [Add cache check command]

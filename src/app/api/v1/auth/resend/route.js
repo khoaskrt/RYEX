@@ -1,9 +1,9 @@
 import { AUTH_ERROR, AuthApiError, jsonError } from '@/server/auth/errors';
+import { createAnonClient } from '@/shared/lib/supabase/server';
 import { withTransaction } from '@/server/db/postgres';
 import { enforceRateLimit } from '@/server/auth/rateLimit';
 import { getRequestMeta } from '@/server/auth/http';
 import { getRecentResendStats, insertAuditEvent, insertVerificationEvent } from '@/server/auth/repository';
-import { sendSignInLinkEmail, sendVerificationEmail } from '@/server/auth/firebaseAdmin';
 
 export const runtime = 'nodejs';
 
@@ -47,10 +47,24 @@ export async function POST(request) {
     }
 
     try {
+      const supabase = await createAnonClient();
+      const appBaseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
       if (flowType === 'login_challenge') {
-        await sendSignInLinkEmail(normalizedEmail);
+        const redirectTo = `${appBaseUrl}/app/auth/verify-email/callback?flow=login_challenge&email=${encodeURIComponent(normalizedEmail)}`;
+        const { error: otpError } = await supabase.auth.signInWithOtp({
+          email: normalizedEmail,
+          options: {
+            emailRedirectTo: redirectTo,
+            shouldCreateUser: false,
+          },
+        });
+        if (otpError) throw otpError;
       } else {
-        await sendVerificationEmail(normalizedEmail);
+        const { error: resendError } = await supabase.auth.resend({
+          type: 'signup',
+          email: normalizedEmail,
+        });
+        if (resendError) throw resendError;
       }
     } catch {
       throw new AuthApiError(AUTH_ERROR.PROVIDER_TEMPORARY_FAILURE, 'Auth provider temporary failure', 503);

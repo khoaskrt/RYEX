@@ -1,4 +1,4 @@
-import { getFirebaseAuth, applyEmailVerificationCode } from '@/server/auth/firebaseAdmin';
+import { createAnonClient } from '@/shared/lib/supabase/server';
 import { AUTH_ERROR, AuthApiError, jsonError } from '@/server/auth/errors';
 import { withTransaction } from '@/server/db/postgres';
 import { enforceRateLimit } from '@/server/auth/rateLimit';
@@ -8,10 +8,11 @@ import { insertAuditEvent, insertVerificationEvent, upsertAuthIdentity, upsertUs
 export const runtime = 'nodejs';
 
 function mapVerificationError(message) {
-  if (String(message).includes('EXPIRED_OOB_CODE')) {
+  const normalized = String(message || '').toLowerCase();
+  if (normalized.includes('expired')) {
     return new AuthApiError(AUTH_ERROR.VERIFICATION_LINK_EXPIRED, 'Verification link expired', 410);
   }
-  if (String(message).includes('INVALID_OOB_CODE')) {
+  if (normalized.includes('invalid') || normalized.includes('token')) {
     return new AuthApiError(AUTH_ERROR.VERIFICATION_LINK_INVALID, 'Verification link invalid', 400);
   }
   return new AuthApiError(AUTH_ERROR.PROVIDER_TEMPORARY_FAILURE, 'Auth provider temporary failure', 503);
@@ -23,40 +24,50 @@ export async function GET(request) {
   try {
     enforceRateLimit(`verify:${ip}`, 20, 15 * 60 * 1000);
 
-    const oobCode = new URL(request.url).searchParams.get('oobCode');
-    if (!oobCode) {
-      throw new AuthApiError(AUTH_ERROR.INVALID_INPUT, 'Missing oobCode', 400);
+    const params = new URL(request.url).searchParams;
+    const tokenHash = params.get('token_hash');
+    const type = params.get('type');
+
+    if (!tokenHash || !type) {
+      throw new AuthApiError(AUTH_ERROR.INVALID_INPUT, 'Missing token_hash or type', 400);
     }
 
-    let verifyResult;
+    let supaUser;
     try {
-      verifyResult = await applyEmailVerificationCode(oobCode);
+      const supabase = await createAnonClient();
+      const { data, error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type,
+      });
+      if (error) throw error;
+      supaUser = data?.user;
+      if (!supaUser?.id || !supaUser?.email) {
+        throw new Error('Invalid verified user payload');
+      }
     } catch (error) {
       throw mapVerificationError(error?.message);
     }
 
-    const email = verifyResult.email;
-    const auth = getFirebaseAuth();
-    const firebaseUser = await auth.getUserByEmail(email);
+    const email = supaUser.email;
 
     await withTransaction(async (client) => {
       const user = await upsertUser(client, {
-        firebaseUid: firebaseUser.uid,
+        supaUid: supaUser.id,
         email,
-        displayName: firebaseUser.displayName || null,
+        displayName: supaUser.user_metadata?.display_name || supaUser.user_metadata?.name || null,
         status: 'active',
       });
 
       await upsertAuthIdentity(client, {
         userId: user.id,
-        firebaseUid: firebaseUser.uid,
+        supaUid: supaUser.id,
         email,
         emailVerified: true,
       });
 
       await insertVerificationEvent(client, {
         userId: user.id,
-        firebaseUid: firebaseUser.uid,
+        supaUid: supaUser.id,
         email,
         eventType: 'verification_succeeded',
         eventStatus: 'success',

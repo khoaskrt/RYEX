@@ -24,7 +24,7 @@
 - API Route Handlers tại `src/app/api/v1/*`.
 - Domain services tại `src/server/*` cho auth/market/data access.
 - Market data proxy từ Binance + CoinGecko.
-- Auth theo Firebase Admin, kết hợp lưu dấu vết trên Postgres/Supabase.
+- Auth theo Supabase Auth, kết hợp lưu dấu vết trên Postgres/Supabase.
 - User profile API: đọc/cập nhật profile cơ bản.
 
 ### Out-of-scope (MVP)
@@ -40,7 +40,7 @@ flowchart LR
   UI --> API[API v1 Route Handlers<br/>src/app/api/v1/*]
   API --> SVC[Domain Services<br/>src/server/auth<br/>src/server/market<br/>src/server/db]
   SVC --> DB[(Postgres/Supabase)]
-  SVC --> FB[Firebase Admin]
+  SVC --> FB[Supabase Auth]
   SVC --> BZ[Binance API]
   SVC --> CG[CoinGecko API]
 ```
@@ -48,16 +48,16 @@ flowchart LR
 - UI layer: route groups `(marketing)` và `(webapp)` + feature modules (`auth`, `market`, `landing-page`).
 - API layer: controller mỏng, điều phối request/response và status code.
 - Service layer: business logic, validation, auth/session handling, upstream fetch.
-- Data/External layer: Postgres/Supabase cho persistence; Firebase/Binance/CoinGecko cho năng lực ngoài hệ thống.
+- Data/External layer: Postgres/Supabase cho persistence; Supabase Auth/Binance/CoinGecko cho năng lực ngoài hệ thống.
 
 ## 5) Core Runtime Flows
 ### 5.1 Auth Flow (signup -> verify -> session sync -> market redirect)
 1. User gửi `POST /api/v1/auth/signup` (email/password/displayName).
-2. API validate input + password policy + rate limit, tạo user qua Firebase Admin.
+2. API validate input + password policy + rate limit, tạo user qua Supabase Auth.
 3. Hệ thống upsert user/auth identity + ghi verification/audit event vào Postgres.
-4. User mở callback `GET /api/v1/auth/verify-email/callback` với `oobCode`.
+4. User mở callback `GET /api/v1/auth/verify-email/callback` với `token_hash` và `type`.
 5. Hệ thống xác minh email, cập nhật trạng thái verified.
-6. Client gọi `POST /api/v1/auth/session/sync` với `idToken` để sync session cookie.
+6. Client gọi `POST /api/v1/auth/session/sync` với `accessToken` để sync session cookie.
 7. Thành công thì điều hướng vào `/app/market`.
 
 ### 5.2 Market Flow (polling -> tickers -> stale fallback)
@@ -71,11 +71,11 @@ flowchart LR
 
 ### 5.3 Profile Flow (bearer token verify -> profile GET/PATCH)
 1. Client gửi bearer token trong `Authorization`.
-2. API verify Firebase ID token để lấy `firebaseUid`.
+2. API verify Supabase access token để lấy `supaUid`.
 3. `GET /api/v1/user/profile`: đọc user + trạng thái email verified từ Supabase.
 4. API trả normalized `user` object cho UI.
 5. `PATCH /api/v1/user/profile`: nhận payload update (ví dụ `displayName`).
-6. API update bản ghi user theo `firebaseUid`.
+6. API update bản ghi user theo `supaUid`.
 7. Trả profile mới sau cập nhật.
 
 ## 6) Domain Ownership Map
@@ -83,7 +83,7 @@ flowchart LR
 |---|---|---|---|---|---|
 | Auth | Đảm bảo onboarding và session hợp lệ | `AuthModulePage`, `StitchLoginPage`, verify callback page | `/api/v1/auth/signup`, `/verify-email/callback`, `/session/sync`, `/login-challenge`, `/resend`, `/logout` | `src/server/auth/*`, `src/server/db/postgres` | Signup validation, verify callback, session sync, logout cookie clear |
 | Market | Cung cấp dữ liệu thị trường realtime ổn định | `MarketModulePage`, `PriceChart`, `price` detail page | `/api/v1/market/tickers`, `/price/[symbol]`, `/kline` | `src/server/market/binanceSpotMarket.js` | Ticker contract, stale fallback, polling interval, search + pagination |
-| Profile | Cho phép đọc/cập nhật hồ sơ user | Profile consumer flows trong webapp | `/api/v1/user/profile` (GET/PATCH) | Firebase token verify + Supabase query/update | Unauthorized path, happy path GET/PATCH, response shape consistency |
+| Profile | Cho phép đọc/cập nhật hồ sơ user | Profile consumer flows trong webapp | `/api/v1/user/profile` (GET/PATCH) | Supabase access token verify + Supabase query/update | Unauthorized path, happy path GET/PATCH, response shape consistency |
 | Data/DB | Bảo toàn dữ liệu identity/audit/session theo migration | N/A (gián tiếp qua API) | N/A (supporting layer) | `src/server/db/*`, `db/migrations/*` | Migration integrity, RLS impact, schema drift risk |
 
 ## 7) Known Gaps / Architectural Risks
@@ -118,4 +118,3 @@ Nguyên tắc áp dụng:
 - `docs/domain/profile-sot.md` (placeholder)
 - `docs/domain/data-sot.md` (placeholder)
 - `docs/contracts/api-v1.md` (placeholder)
-

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/shared/lib/supabaseClient';
+import { supabase } from '@/shared/lib/supabase/client';
 
 const DEFAULT_PROFILE_VISUAL = {
   avatarUrl: '',
@@ -35,14 +35,14 @@ function getProfileVisual(session) {
 
 /**
  * Fetch user assets from API
- * @param {string} idToken - Firebase ID token
+ * @param {string} accessToken - Supabase access token
  * @returns {Promise<Object>} Assets payload
  */
-async function fetchUserAssets(idToken) {
+async function fetchUserAssets(accessToken) {
   const response = await fetch('/api/v1/user/assets', {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${idToken}`,
+      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
   });
@@ -125,13 +125,15 @@ export default function AssetsPage() {
         setAssetsError('');
 
         const { data } = await supabase.auth.getSession();
-        const idToken = data.session?.access_token;
+        const accessToken = data.session?.access_token;
 
-        if (!idToken) {
+        if (!accessToken) {
           throw new Error('No authentication token');
         }
 
-        const payload = await fetchUserAssets(idToken);
+        console.log('[Assets] Token exists:', Boolean(accessToken), 'Length:', accessToken?.length);
+
+        const payload = await fetchUserAssets(accessToken);
         if (!isMounted) return;
 
         setAssetsData(payload);

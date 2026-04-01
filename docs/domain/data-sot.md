@@ -28,8 +28,8 @@
 - Primary data store: PostgreSQL (Supabase-hosted).
 - Data access paths hiện tại:
   - Path A (PG direct): `src/server/db/postgres.js` + repository SQL (`src/server/auth/repository.js`).
-  - Path B (Supabase service role): `src/shared/lib/supabase/server.js` (và một số nơi dùng `src/utils/supabase/server.js`).
-  - Path C (Supabase client): `src/supabaseClient.js`, `src/shared/lib/supabaseClient.js` (client-side).
+  - Path B (Supabase service role): `src/shared/lib/supabase/server.js`.
+  - Path C (Supabase client): `src/shared/lib/supabase/client.js` (client-side).
 - Security model:
   - Có RLS policy cho các bảng chính.
   - Tuy nhiên backend route dùng service role key sẽ bypass RLS (theo thiết kế admin/backend).
@@ -37,8 +37,8 @@
 ## 4) Schema Map (Auth-centric MVP)
 | Table | Purpose | Keys/Constraints chính | Consumed by |
 |---|---|---|---|
-| `users` | User projection nội bộ | `id` PK, `firebase_uid` UNIQUE, `email` UNIQUE, `status`, `kyc_status` | Auth signup/session sync, profile GET/PATCH, users debug page |
-| `auth_identities` | Mapping user <-> identity provider | UNIQUE `(user_id, provider)`, UNIQUE `(firebase_uid, provider)` | Auth verify/session sync, profile emailVerified lookup |
+| `users` | User projection nội bộ | `id` PK, `supa_id` UNIQUE, `email` UNIQUE, `status`, `kyc_status` | Auth signup/session sync, profile GET/PATCH, users debug page |
+| `auth_identities` | Mapping user <-> identity provider | UNIQUE `(user_id, provider)`, UNIQUE `(supa_id, provider)` | Auth verify/session sync, profile emailVerified lookup |
 | `auth_verification_events` | Event log cho verify/resend/challenge | Check `event_type`, `event_status` | Auth verify/resend/challenge flows |
 | `auth_login_events` | Login audit (success/failure) | `result` check (`success/failed`) | Login challenge, session flows |
 | `user_sessions` | Session lifecycle trace | `session_ref` UNIQUE, `ended_at`, `termination_reason` | Session sync, logout |
@@ -57,6 +57,7 @@ Supporting extensions:
 | `003` | `db/migrations/003_auth_trusted_devices.sql` | Additive | Bổ sung bảng trusted device và index | `trusted_devices` |
 | `004` | `db/migrations/004_auth_verification_event_types.sql` | Contract update | Cập nhật check constraint `auth_verification_events.event_type` để thêm `challenge_email_sent`, `resend_email_sent` | `auth_verification_events` |
 | `005` | `db/migrations/005_enable_rls_policies.sql` | Security | Enable RLS + tạo policies + helper function | RLS trên 7 bảng + `get_current_user_id()` |
+| `006` | `db/migrations/006_create_user_assets.sql` | Additive | Tạo bảng `user_assets` + index + comments + RLS policy cho luồng tài sản người dùng | `user_assets` |
 
 Migration source notes:
 - Có file `supabase-rls-policies.sql` ở root với nội dung gần tương đương migration `005` (dùng cho SQL Editor manual apply).
@@ -75,7 +76,7 @@ Migration source notes:
 ### 6.2 Policy matrix
 | Table | Own-data policy (authenticated context) | Service role policy |
 |---|---|---|
-| `users` | `users_select_own`, `users_update_own` theo JWT `sub` = `firebase_uid` | `users_service_role_all` |
+| `users` | `users_select_own`, `users_update_own` theo JWT `sub` = `supa_id` | `users_service_role_all` |
 | `auth_identities` | `auth_identities_select_own` | `auth_identities_service_role_all` |
 | `user_sessions` | `user_sessions_select_own` qua join `users` | `user_sessions_service_role_all` |
 | `trusted_devices` | `trusted_devices_select_own` qua join `users` | `trusted_devices_service_role_all` |
@@ -135,7 +136,7 @@ Helper function:
 ## 10) Risks + Open Decisions
 | Risk | Type | Mô tả | Mitigation ngắn hạn |
 |---|---|---|---|
-| R-DATA-01 | Operational | Apply sai thứ tự migration gây lệch schema | Bắt buộc checklist apply order 001->005 |
+| R-DATA-01 | Operational | Apply sai thứ tự migration gây lệch schema | Bắt buộc checklist apply order 001->006 |
 | R-DATA-02 | Security | Hiểu sai về RLS khi backend dùng service role | Document rõ service-role bypass trong review checklist |
 | R-DATA-03 | Technical | Dual data-access path tăng độ phức tạp bảo trì | Chuẩn hóa convention theo từng use-case |
 

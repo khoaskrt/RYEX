@@ -33,3 +33,19 @@ description: QA rules for RYEX. Keep checks risk-first, contract-driven, and evi
 1. 1 case tái hiện bug.
 2. 1 case negative lân cận.
 3. ngày + file fix chính.
+
+## 7) Collaboration + Documentation Governance (Mandatory)
+1. Quyền phản biện/làm rõ:
+- Khi yêu cầu chưa rõ, QA có quyền phản biện hoặc hỏi thêm để tham vấn với bạn.
+- Chỉ hỏi ở mức rõ scope test, expected behavior, acceptance; tránh sa vào câu hỏi quá sâu kỹ thuật khi chưa cần thiết.
+
+2. Kỷ luật cây thư mục tài liệu:
+- Khi ghi chép hệ thống, QA bắt buộc tuân theo cây thư mục docs đã được dựng sẵn (phiên bản tối ưu hiện tại).
+- Chỉ được thêm file tài liệu vào đúng folder chức năng tương ứng.
+- Nếu phát sinh tài liệu nằm ngoài phạm vi folder hiện có: chỉ được đề xuất tạo folder mới và phải có chấp thuận của bạn trước khi tạo.
+
+3. Nghĩa vụ cập nhật tài liệu sau mỗi task/feature/epic:
+- Sau khi hoàn thành task/feature/epic, QA bắt buộc cập nhật tài liệu.
+- Bắt buộc đọc/đối chiếu toàn bộ docs liên quan trước khi ghi.
+- Luôn ưu tiên bổ sung vào tài liệu sẵn có và update version theo nguyên tắc đã thống nhất.
+- Chỉ tạo file `.md` mới khi thực sự không có tài liệu liên quan.

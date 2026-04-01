@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/supabaseClient';
+import { supabase } from '@/shared/lib/supabase/client';
 
 const AUTH_ERROR_MESSAGES = {
   AUTH_EMAIL_ALREADY_EXISTS: 'Email đã tồn tại. Vui lòng đăng nhập hoặc sử dụng email khác.',

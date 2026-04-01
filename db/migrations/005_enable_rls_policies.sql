@@ -1,6 +1,6 @@
 -- Enable Row Level Security cho các bảng chính
 -- Migration: 005_enable_rls_policies.sql
--- Description: Setup RLS policies để bảo mật database với Firebase Auth
+-- Description: Setup RLS policies để bảo mật database với Supabase Auth
 
 -- Enable RLS trên các bảng
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -19,17 +19,17 @@ ALTER TABLE audit_events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "users_select_own"
 ON users FOR SELECT
 USING (
-  firebase_uid = current_setting('request.jwt.claims', true)::json->>'sub'
+  supa_id = current_setting('request.jwt.claims', true)::json->>'sub'
 );
 
 -- Policy: Users có thể update thông tin của chính họ (chỉ một số field)
 CREATE POLICY "users_update_own"
 ON users FOR UPDATE
 USING (
-  firebase_uid = current_setting('request.jwt.claims', true)::json->>'sub'
+  supa_id = current_setting('request.jwt.claims', true)::json->>'sub'
 )
 WITH CHECK (
-  firebase_uid = current_setting('request.jwt.claims', true)::json->>'sub'
+  supa_id = current_setting('request.jwt.claims', true)::json->>'sub'
 );
 
 -- Policy: Service role có thể làm mọi thứ (cho backend API)
@@ -46,7 +46,9 @@ USING (
 CREATE POLICY "auth_identities_select_own"
 ON auth_identities FOR SELECT
 USING (
-  firebase_uid = current_setting('request.jwt.claims', true)::json->>'sub'
+  user_id IN (
+    SELECT id FROM users WHERE supa_id = current_setting('request.jwt.claims', true)::json->>'sub'
+  )
 );
 
 CREATE POLICY "auth_identities_service_role_all"
@@ -63,7 +65,7 @@ CREATE POLICY "user_sessions_select_own"
 ON user_sessions FOR SELECT
 USING (
   user_id IN (
-    SELECT id FROM users WHERE firebase_uid = current_setting('request.jwt.claims', true)::json->>'sub'
+    SELECT id FROM users WHERE supa_id = current_setting('request.jwt.claims', true)::json->>'sub'
   )
 );
 
@@ -81,7 +83,7 @@ CREATE POLICY "trusted_devices_select_own"
 ON trusted_devices FOR SELECT
 USING (
   user_id IN (
-    SELECT id FROM users WHERE firebase_uid = current_setting('request.jwt.claims', true)::json->>'sub'
+    SELECT id FROM users WHERE supa_id = current_setting('request.jwt.claims', true)::json->>'sub'
   )
 );
 
@@ -98,7 +100,9 @@ USING (
 CREATE POLICY "auth_verification_events_select_own"
 ON auth_verification_events FOR SELECT
 USING (
-  firebase_uid = current_setting('request.jwt.claims', true)::json->>'sub'
+  user_id IN (
+    SELECT id FROM users WHERE supa_id = current_setting('request.jwt.claims', true)::json->>'sub'
+  )
 );
 
 CREATE POLICY "auth_verification_events_service_role_all"
@@ -110,7 +114,9 @@ USING (
 CREATE POLICY "auth_login_events_select_own"
 ON auth_login_events FOR SELECT
 USING (
-  firebase_uid = current_setting('request.jwt.claims', true)::json->>'sub'
+  user_id IN (
+    SELECT id FROM users WHERE supa_id = current_setting('request.jwt.claims', true)::json->>'sub'
+  )
 );
 
 CREATE POLICY "auth_login_events_service_role_all"
@@ -127,7 +133,7 @@ CREATE POLICY "audit_events_select_own"
 ON audit_events FOR SELECT
 USING (
   actor_user_id IN (
-    SELECT id FROM users WHERE firebase_uid = current_setting('request.jwt.claims', true)::json->>'sub'
+    SELECT id FROM users WHERE supa_id = current_setting('request.jwt.claims', true)::json->>'sub'
   )
 );
 
@@ -141,11 +147,11 @@ USING (
 -- HELPER FUNCTIONS
 -- ============================================
 
--- Function để get current user_id từ Firebase UID
+-- Function để get current user_id từ Supabase Auth UID
 CREATE OR REPLACE FUNCTION get_current_user_id()
 RETURNS uuid AS $$
   SELECT id FROM users
-  WHERE firebase_uid = current_setting('request.jwt.claims', true)::json->>'sub'
+  WHERE supa_id = current_setting('request.jwt.claims', true)::json->>'sub'
   LIMIT 1;
 $$ LANGUAGE SQL SECURITY DEFINER;
 

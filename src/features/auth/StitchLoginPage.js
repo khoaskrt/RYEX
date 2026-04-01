@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/supabaseClient';
+import { supabase } from '@/shared/lib/supabase/client';
 
 const DASHBOARD_ROUTE = '/app/market';
 const AUTH_ERROR_MESSAGES = {

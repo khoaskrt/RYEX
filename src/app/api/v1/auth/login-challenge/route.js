@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { createAnonClient } from '@/shared/lib/supabase/server';
 import { AUTH_ERROR, AuthApiError, jsonError } from '@/server/auth/errors';
 import { pgPool, withTransaction } from '@/server/db/postgres';
 import { enforceRateLimit } from '@/server/auth/rateLimit';
@@ -14,7 +15,6 @@ import {
   insertLoginEvent,
   insertVerificationEvent,
 } from '@/server/auth/repository';
-import { sendSignInLinkEmail } from '@/server/auth/firebaseAdmin';
 import { attachSessionToResponse } from '@/server/auth/sessionCookies';
 import { getTrustedCookieName, hashTrustToken, parseTrustedToken } from '@/server/auth/trustedDevice';
 
@@ -78,7 +78,7 @@ export async function POST(request) {
 
           await insertLoginEvent(client, {
             userId: authUser.user_id,
-            firebaseUid: authUser.firebase_uid,
+            supaUid: authUser.supa_uid,
             email: normalizedEmail,
             loginMethod: 'trusted_device',
             result: 'success',
@@ -134,7 +134,17 @@ export async function POST(request) {
     }
 
     try {
-      await sendSignInLinkEmail(normalizedEmail);
+      const supabase = await createAnonClient();
+      const appBaseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+      const redirectTo = `${appBaseUrl}/app/auth/verify-email/callback?flow=login_challenge&email=${encodeURIComponent(normalizedEmail)}`;
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: {
+          emailRedirectTo: redirectTo,
+          shouldCreateUser: false,
+        },
+      });
+      if (otpError) throw otpError;
     } catch {
       throw new AuthApiError(AUTH_ERROR.PROVIDER_TEMPORARY_FAILURE, 'Auth provider temporary failure', 503);
     }

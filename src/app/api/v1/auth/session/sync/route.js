@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { getFirebaseAuth } from '@/server/auth/firebaseAdmin';
+import { createClient } from '@/shared/lib/supabase/server';
 import { AUTH_ERROR, AuthApiError, jsonError } from '@/server/auth/errors';
 import { withTransaction } from '@/server/db/postgres';
 import { enforceRateLimit } from '@/server/auth/rateLimit';
@@ -29,21 +29,19 @@ export async function POST(request) {
   try {
     enforceRateLimit(`session-sync:${ip}`, 60, 15 * 60 * 1000);
 
-    const { idToken, deviceId: bodyDeviceId, rememberDevice = false } = await request.json();
-    if (!idToken) {
-      throw new AuthApiError(AUTH_ERROR.INVALID_INPUT, 'idToken is required', 400);
+    const { accessToken, deviceId: bodyDeviceId, rememberDevice = false } = await request.json();
+    if (!accessToken) {
+      throw new AuthApiError(AUTH_ERROR.INVALID_INPUT, 'accessToken is required', 400);
     }
 
-    const auth = getFirebaseAuth();
-    let decodedToken;
-    try {
-      decodedToken = await auth.verifyIdToken(idToken);
-    } catch {
+    const supabaseAdmin = await createClient();
+    const { data: authUserData, error: authUserError } = await supabaseAdmin.auth.getUser(accessToken);
+    if (authUserError || !authUserData?.user) {
       throw new AuthApiError(AUTH_ERROR.INVALID_TOKEN, 'Invalid token', 401);
     }
 
-    const firebaseUser = await auth.getUser(decodedToken.uid);
-    if (!firebaseUser.emailVerified) {
+    const supaUser = authUserData.user;
+    if (!supaUser.email_confirmed_at) {
       throw new AuthApiError(AUTH_ERROR.EMAIL_NOT_VERIFIED, 'Email is not verified', 403);
     }
 
@@ -52,16 +50,16 @@ export async function POST(request) {
 
     const result = await withTransaction(async (client) => {
       const user = await upsertUser(client, {
-        firebaseUid: firebaseUser.uid,
-        email: firebaseUser.email || '',
-        displayName: firebaseUser.displayName || null,
+        supaUid: supaUser.id,
+        email: supaUser.email || '',
+        displayName: supaUser.user_metadata?.display_name || supaUser.user_metadata?.name || null,
         status: 'active',
       });
 
       await upsertAuthIdentity(client, {
         userId: user.id,
-        firebaseUid: firebaseUser.uid,
-        email: firebaseUser.email || '',
+        supaUid: supaUser.id,
+        email: supaUser.email || '',
         emailVerified: true,
       });
 
@@ -77,8 +75,8 @@ export async function POST(request) {
 
       await insertLoginEvent(client, {
         userId: user.id,
-        firebaseUid: firebaseUser.uid,
-        email: firebaseUser.email || '',
+        supaUid: supaUser.id,
+        email: supaUser.email || '',
         result: 'success',
         requestId,
         ip,
@@ -104,14 +102,14 @@ export async function POST(request) {
       if (rememberDevice) {
         trustedExpiresAtMs = getTrustedExpiryMs();
         trustedToken = createTrustedTokenPayload({
-          email: firebaseUser.email || '',
+          email: supaUser.email || '',
           deviceId: normalizedDeviceId,
           expiresAt: trustedExpiresAtMs,
         });
 
         await insertTrustedDevice(client, {
           userId: user.id,
-          email: firebaseUser.email || '',
+          email: supaUser.email || '',
           deviceId: normalizedDeviceId,
           trustTokenHash: hashTrustToken(trustedToken),
           expiresAt: new Date(trustedExpiresAtMs).toISOString(),

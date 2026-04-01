@@ -3,34 +3,17 @@ import { getMarketTickers } from '../market/binanceSpotMarket.js';
 
 /**
  * Fetch user's asset balances from database
- * @param {string} firebaseUid - User's Firebase UID
+ * @param {string} userId - User's Supabase UUID
  * @returns {Promise<Array>} Array of user assets with balance and account type
  */
-export async function getUserAssetBalances(firebaseUid) {
+export async function getUserAssetBalances(userId) {
   const supabaseAdmin = await createClient();
-
-  // First get user_id from firebase_uid
-  const { data: user, error: userError } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('firebase_uid', firebaseUid)
-    .single();
-
-  if (userError) {
-    if (userError.code === 'PGRST116') {
-      const notFoundError = new Error('User not found');
-      notFoundError.code = 'ASSET_USER_NOT_FOUND';
-      notFoundError.statusCode = 404;
-      throw notFoundError;
-    }
-    throw userError;
-  }
 
   // Fetch all user assets
   const { data: assets, error: assetsError } = await supabaseAdmin
     .from('user_assets')
     .select('symbol, balance, account_type')
-    .eq('user_id', user.id);
+    .eq('user_id', userId);
 
   if (assetsError) {
     const fetchError = new Error('Failed to fetch user assets');
@@ -86,11 +69,11 @@ function calculateValueUSDT(balance, price) {
 
 /**
  * Aggregate user assets and enrich with market data
- * @param {string} firebaseUid - User's Firebase UID
+ * @param {string} userId - User's Supabase UUID
  * @returns {Promise<Object>} Complete user assets payload
  */
-export async function getUserAssetsPayload(firebaseUid) {
-  const userAssets = await getUserAssetBalances(firebaseUid);
+export async function getUserAssetsPayload(userId) {
+  const userAssets = await getUserAssetBalances(userId);
 
   // Get unique symbols
   const symbols = [...new Set(userAssets.map((asset) => asset.symbol))];
