@@ -56,10 +56,39 @@ function getPaginationItems(totalPages, currentPage, windowSize = PAGINATION_WIN
   return items;
 }
 
+const DEFAULT_PROFILE_VISUAL = {
+  avatarUrl: '',
+  initial: 'U',
+};
+
+function getProfileVisual(session) {
+  const user = session?.user;
+  if (!user) return DEFAULT_PROFILE_VISUAL;
+
+  const email = (user.email || '').trim();
+  const initial = email ? email.charAt(0).toUpperCase() : 'U';
+  const provider = (user.app_metadata?.provider || '').toLowerCase();
+  const userMeta = user.user_metadata || {};
+  const avatarCandidate = userMeta.avatar_url || userMeta.picture || userMeta.photoURL || '';
+
+  if (provider === 'google' && avatarCandidate) {
+    return {
+      avatarUrl: avatarCandidate,
+      initial,
+    };
+  }
+
+  return {
+    avatarUrl: '',
+    initial,
+  };
+}
+
 export function MarketModulePage() {
   const router = useRouter();
   const [isAuthResolved, setIsAuthResolved] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [profileVisual, setProfileVisual] = useState(DEFAULT_PROFILE_VISUAL);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -77,7 +106,9 @@ export function MarketModulePage() {
     async function bootstrapSession() {
       const { data } = await supabase.auth.getSession();
       if (!isMounted) return;
-      setIsAuthenticated(Boolean(data.session));
+      const hasSession = Boolean(data.session);
+      setIsAuthenticated(hasSession);
+      setProfileVisual(hasSession ? getProfileVisual(data.session) : DEFAULT_PROFILE_VISUAL);
       setIsAuthResolved(true);
     }
 
@@ -86,7 +117,9 @@ export function MarketModulePage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(Boolean(session));
+      const hasSession = Boolean(session);
+      setIsAuthenticated(hasSession);
+      setProfileVisual(hasSession ? getProfileVisual(session) : DEFAULT_PROFILE_VISUAL);
       setIsAuthResolved(true);
     });
 
@@ -263,11 +296,20 @@ export function MarketModulePage() {
                 </button>
                 <Link
                   aria-label="Hồ sơ người dùng"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-[#3c4a43] transition-colors hover:bg-surface-container-high"
+                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#bbcac1]/30 bg-surface-container-low text-[#3c4a43] transition-colors hover:bg-surface-container-high"
                   href="/app/users"
                   title="Hồ sơ"
                 >
-                  <span className="material-symbols-outlined text-[20px]">person</span>
+                  {profileVisual.avatarUrl ? (
+                    <img
+                      alt="Avatar người dùng"
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                      src={profileVisual.avatarUrl}
+                    />
+                  ) : (
+                    <span className="text-xs font-bold uppercase">{profileVisual.initial}</span>
+                  )}
                 </Link>
               </>
             ) : (

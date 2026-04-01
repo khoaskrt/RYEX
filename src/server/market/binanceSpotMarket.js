@@ -53,6 +53,7 @@ const DEFAULT_SYMBOLS = [
 const DEFAULT_BASE_URL = 'https://data-api.binance.vision';
 const DEFAULT_COINGECKO_BASE_URL = 'https://api.coingecko.com/api/v3';
 const DEFAULT_CACHE_TTL_MS = 5000;
+const DEFAULT_COINGECKO_CACHE_TTL_MS = 120000;
 const DEFAULT_TIMEOUT_MS = 4500;
 
 const SYMBOL_NAME_MAP = {
@@ -164,6 +165,10 @@ const SYMBOL_COINGECKO_ID_MAP = {
 let marketCache = {
   cachedAt: 0,
   payload: null,
+};
+let coinGeckoSupplementalCache = {
+  cachedAt: 0,
+  payload: {},
 };
 const marketPriceDetailCache = new Map();
 
@@ -282,6 +287,14 @@ function getCoinGeckoHeaders() {
   return null;
 }
 
+function logCoinGeckoFailure(context, details = {}) {
+  const suffix = Object.entries(details)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => `${key}=${Array.isArray(value) ? value.join(',') : String(value)}`)
+    .join(' ');
+  console.warn(`[market][coingecko] ${context}${suffix ? ` ${suffix}` : ''}`);
+}
+
 async function fetchCoinGeckoPriceDetail(symbol) {
   const coinId = SYMBOL_COINGECKO_ID_MAP[symbol];
   if (!coinId) return null;
@@ -308,7 +321,15 @@ async function fetchCoinGeckoPriceDetail(symbol) {
       signal: controller.signal,
       headers: headers || undefined,
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      logCoinGeckoFailure('price-detail non-ok response', {
+        symbol,
+        coinId,
+        status: response.status,
+        url: url.toString(),
+      });
+      return null;
+    }
 
     const body = await response.json();
     const coin = Array.isArray(body) ? body[0] : null;
@@ -321,7 +342,13 @@ async function fetchCoinGeckoPriceDetail(symbol) {
       rankDisplay: coin.market_cap_rank ? `#${coin.market_cap_rank}` : '--',
       iconUrl: coin.image || '',
     };
-  } catch {
+  } catch (error) {
+    logCoinGeckoFailure('price-detail request failed', {
+      symbol,
+      coinId,
+      reason: error?.name === 'AbortError' ? 'timeout' : 'exception',
+      error: error?.message || 'unknown',
+    });
     return null;
   } finally {
     clearTimeout(timeout);
@@ -344,13 +371,23 @@ async function fetchBtcDominanceDisplay() {
       signal: controller.signal,
       headers: headers || undefined,
     });
-    if (!response.ok) return '--';
+    if (!response.ok) {
+      logCoinGeckoFailure('global non-ok response', {
+        status: response.status,
+        url: url.toString(),
+      });
+      return '--';
+    }
 
     const body = await response.json();
     const dominance = toNumber(body?.data?.market_cap_percentage?.btc, NaN);
     if (!Number.isFinite(dominance)) return '--';
     return `${dominance.toFixed(2)}%`;
-  } catch {
+  } catch (error) {
+    logCoinGeckoFailure('global request failed', {
+      reason: error?.name === 'AbortError' ? 'timeout' : 'exception',
+      error: error?.message || 'unknown',
+    });
     return '--';
   } finally {
     clearTimeout(timeout);
@@ -361,6 +398,25 @@ async function fetchCoinGeckoSupplementalData(symbols) {
   const demoApiKey = process.env.COINGECKO_API_KEY || '';
   const proApiKey = process.env.COINGECKO_PRO_API_KEY || '';
   const baseUrl = process.env.COINGECKO_BASE_URL || DEFAULT_COINGECKO_BASE_URL;
+  const now = Date.now();
+
+  const cacheTtlRaw = Number.parseInt(process.env.MARKET_COINGECKO_CACHE_TTL_MS || '', 10);
+  const cacheTtlMs = Number.isFinite(cacheTtlRaw) && cacheTtlRaw > 0 ? cacheTtlRaw : DEFAULT_COINGECKO_CACHE_TTL_MS;
+  const getCachedBySymbols = () => {
+    if (!coinGeckoSupplementalCache.payload || typeof coinGeckoSupplementalCache.payload !== 'object') {
+      return {};
+    }
+    return symbols.reduce((acc, symbol) => {
+      const cached = coinGeckoSupplementalCache.payload[symbol];
+      if (cached) acc[symbol] = cached;
+      return acc;
+    }, {});
+  };
+
+  if (now - coinGeckoSupplementalCache.cachedAt < cacheTtlMs) {
+    const cachedData = getCachedBySymbols();
+    if (Object.keys(cachedData).length > 0) return cachedData;
+  }
 
   const ids = symbols.map((symbol) => SYMBOL_COINGECKO_ID_MAP[symbol]).filter(Boolean);
   if (ids.length === 0) {
@@ -386,11 +442,17 @@ async function fetchCoinGeckoSupplementalData(symbols) {
     });
 
     if (!response.ok) {
-      return {};
+      logCoinGeckoFailure('markets non-ok response', {
+        status: response.status,
+        symbols,
+        ids,
+      });
+      return getCachedBySymbols();
     }
 
     const body = await response.json();
     const dataBySymbol = {};
+    const cachedBySymbol = getCachedBySymbols();
     const coinById = new Map(
       (Array.isArray(body) ? body : [])
         .filter((item) => item && typeof item.id === 'string')
@@ -400,15 +462,30 @@ async function fetchCoinGeckoSupplementalData(symbols) {
     for (const symbol of symbols) {
       const coinId = SYMBOL_COINGECKO_ID_MAP[symbol];
       const coinData = coinId ? coinById.get(coinId) : null;
+      const formattedMarketCap = formatUsdCompact(coinData?.market_cap);
       dataBySymbol[symbol] = {
-        marketCapDisplay: formatUsdCompact(coinData?.market_cap),
-        iconUrl: coinData?.image || '',
+        marketCapDisplay: formattedMarketCap !== '--' ? formattedMarketCap : cachedBySymbol[symbol]?.marketCapDisplay || '--',
+        iconUrl: coinData?.image || cachedBySymbol[symbol]?.iconUrl || '',
       };
     }
 
+    coinGeckoSupplementalCache = {
+      cachedAt: now,
+      payload: {
+        ...coinGeckoSupplementalCache.payload,
+        ...dataBySymbol,
+      },
+    };
+
     return dataBySymbol;
-  } catch {
-    return {};
+  } catch (error) {
+    logCoinGeckoFailure('markets request failed', {
+      reason: error?.name === 'AbortError' ? 'timeout' : 'exception',
+      error: error?.message || 'unknown',
+      symbols,
+      ids,
+    });
+    return getCachedBySymbols();
   } finally {
     clearTimeout(timeout);
   }
@@ -529,6 +606,7 @@ async function fetchMarketPriceDetail(symbolInput) {
 
     const ticker = await response.json();
     const cgDetail = await fetchCoinGeckoPriceDetail(symbol);
+    const cgFallback = coinGeckoSupplementalCache.payload?.[symbol] || null;
     const btcDominance = symbol === 'BTCUSDT' ? await fetchBtcDominanceDisplay() : '--';
 
     return {
@@ -542,12 +620,12 @@ async function fetchMarketPriceDetail(symbolInput) {
       low24hDisplay: formatUsdPrice(ticker?.lowPrice),
       volumeTokenDisplay: formatTokenVolume(ticker?.volume, symbolShort),
       volumeUsdDisplay: formatUsdCompact(ticker?.quoteVolume),
-      marketCapDisplay: cgDetail?.marketCapDisplay || '--',
+      marketCapDisplay: cgDetail?.marketCapDisplay || cgFallback?.marketCapDisplay || '--',
       circulatingSupplyDisplay: cgDetail?.circulatingSupplyDisplay || `-- ${symbolShort}`,
       totalSupplyDisplay: cgDetail?.totalSupplyDisplay || `-- ${symbolShort}`,
       rankDisplay: cgDetail?.rankDisplay || '--',
       dominanceDisplay: btcDominance,
-      iconUrl: cgDetail?.iconUrl || '',
+      iconUrl: cgDetail?.iconUrl || cgFallback?.iconUrl || '',
       updatedAt: toIsoTime(ticker?.closeTime, fetchedAtIso),
       fetchedAt: fetchedAtIso,
       stale: false,
