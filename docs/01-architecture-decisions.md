@@ -1,9 +1,9 @@
 # RYEX Architecture Decisions (ADR Lite)
 
 ## 1) Document Control
-- Version: `v1.0`
+- Version: `v1.1`
 - Owner: `BA + Tech Lead`
-- Last updated: `2026-03-31`
+- Last updated: `2026-04-02`
 - Status: `Active`
 - Related map: `docs/00-system-map.md`
 - Purpose: Ghi lại các quyết định kiến trúc có ảnh hưởng cross-domain để giảm conflict khi mở rộng team.
@@ -25,6 +25,7 @@
 | ADR-003 | Market data strategy: Backend proxy + stale fallback | Accepted | 2026-03-31 | BE |
 | ADR-004 | API contract normalization (`error` vs `error.code`) | Proposed | 2026-03-31 | BA + BE + QA |
 | ADR-005 | FE auth unification (2 pattern -> 1 journey chuẩn) | Proposed | 2026-03-31 | PO + BA + FE |
+| ADR-006 | Web shell consistency: App uses Landing Footer, Landing uses App Header | Accepted | 2026-04-02 | BA + FE |
 
 ## 4) ADR Details
 ### ADR-001: Layered architecture: App Router -> API v1 -> Domain Services
@@ -93,6 +94,18 @@
   - Chọn journey chuẩn cuối cùng.
   - Lộ trình deprecate pattern còn lại.
 
+### ADR-006: Web shell consistency: App uses Landing Footer, Landing uses App Header
+- Status: `Accepted`
+- Context:
+  - Landing page và các app page đang có header/footer khác nhau, gây lệch nhận diện và tăng scope regression khi đổi UI shell.
+  - Product yêu cầu đồng bộ chéo: footer app theo landing, header landing theo app baseline.
+- Decision:
+  - Chuẩn hóa footer toàn bộ app pages theo landing footer component dùng chung.
+  - Landing page dùng header theo app shell baseline (market-style top nav).
+- Consequences:
+  - Giảm sai lệch giao diện giữa marketing và app shell.
+  - Tăng tính tái sử dụng component và giảm duplicate footer code khi có thay đổi nội dung pháp lý/branding.
+
 ## 5) Decision Intake Template (Copy/Paste)
 ```md
 ### ADR-XXX: [Title]
@@ -120,3 +133,6 @@
 - `v1.0` (2026-03-31):
   - Created tài liệu ADR lite ban đầu.
   - Seed 5 ADR theo runtime hiện tại của MVP.
+- `v1.1` (2026-04-02):
+  - Added ADR-006 cho quyết định đồng bộ shell UI giữa landing và app.
+  - Updated document control version/date.

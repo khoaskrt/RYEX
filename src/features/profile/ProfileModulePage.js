@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import LandingFooter from '@/shared/components/LandingFooter';
 import { supabase } from '@/shared/lib/supabase/client';
 import { LoginHistoryCard } from './components/LoginHistoryCard';
 import { ProfileSidebar } from './components/ProfileSidebar';
@@ -388,31 +389,7 @@ export function ProfileModulePage() {
         </div>
       </main>
 
-      <footer className="mt-auto w-full bg-[#f2f4f6] px-8 py-12">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 md:grid-cols-2">
-          <div className="space-y-4">
-            <span className="text-lg font-bold text-[#3c4a43]">RYEX Markets</span>
-            <p className="text-sm leading-relaxed text-[#3c4a43]">
-              © 2024 RYEX Markets. Được cấp phép và điều hành bởi Cơ quan Quản lý Tài chính Việt Nam. Sàn giao dịch tài sản số uy tín
-              và bảo mật hàng đầu cho các nhà đầu tư tổ chức và cá nhân.
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-start gap-6 md:justify-end">
-            {['Điều khoản', 'Bảo mật', 'Cấp phép', 'Rủi ro', 'Hỗ trợ'].map((item) => (
-              <a className="text-sm text-[#3c4a43] transition-colors duration-200 hover:text-[#01bc8d]" href="#" key={item}>
-                {item}
-              </a>
-            ))}
-          </div>
-        </div>
-        <div className="mx-auto mt-8 max-w-7xl border-t border-[#e6e8ea] pt-8">
-          <p className="max-w-4xl text-[10px] leading-normal text-on-surface-variant/60">
-            Cảnh báo rủi ro: Đầu tư vào tài sản số mang lại rủi ro đáng kể và có thể dẫn đến việc mất toàn bộ vốn đầu tư. Bạn nên cân
-            nhắc tình hình tài chính, kinh nghiệm đầu tư và khẩu vị rủi ro trước khi bắt đầu giao dịch. Hiệu suất trong quá khứ không
-            đảm bảo cho kết quả trong tương lai. RYEX không cung cấp lời khuyên đầu tư.
-          </p>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import LandingFooter from '@/shared/components/LandingFooter';
 import { supabase } from '@/shared/lib/supabase/client';
 
 const DASHBOARD_ROUTE = '/app/market';
@@ -325,31 +326,7 @@ export function StitchLoginPage({ prefillEmail = '' }) {
         </section>
       </main>
 
-      <footer className="w-full border-t border-[#bbcac1]/15 bg-[#f2f4f6]">
-        <div className="mx-auto flex w-full max-w-[1440px] flex-col items-center justify-between space-y-4 px-8 py-12 text-sm leading-relaxed md:flex-row md:space-y-0">
-          <div className="flex flex-col items-center gap-8 md:flex-row">
-            <span className="text-lg font-bold text-[#3c4a43]">RYEX</span>
-            <span className="text-[#3c4a43]">© 2024 RYEX Institutional Exchange. All rights reserved.</span>
-          </div>
-          <div className="flex flex-wrap justify-center gap-6">
-            <a className="text-[#3c4a43] transition-colors hover:text-[#01bc8d]" href="#">
-              Privacy Policy
-            </a>
-            <a className="text-[#3c4a43] transition-colors hover:text-[#01bc8d]" href="#">
-              Terms of Service
-            </a>
-            <a className="text-[#3c4a43] transition-colors hover:text-[#01bc8d]" href="#">
-              Cookie Settings
-            </a>
-            <a className="text-[#3c4a43] transition-colors hover:text-[#01bc8d]" href="#">
-              Security
-            </a>
-            <a className="text-[#3c4a43] transition-colors hover:text-[#01bc8d]" href="#">
-              Help Center
-            </a>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

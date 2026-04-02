@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import LandingFooter from '@/shared/components/LandingFooter';
 import { supabase } from '@/shared/lib/supabase/client';
 
 const AUTH_ERROR_MESSAGES = {
@@ -610,28 +611,7 @@ export function AuthModulePage({ mode = 'login', prefillEmail = '' }) {
         </section>
       </main>
 
-      <footer className="w-full bg-surface-container-low py-12 md:bg-surface">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-8 md:flex-row">
-          <div className="flex flex-col items-center gap-4 text-sm text-on-surface-variant md:flex-row">
-            <span className="mr-2 font-bold text-primary">RYEX VIETNAM</span>
-            <p>© 2024 RYEX Vietnam. Licensed Crypto Exchange.</p>
-          </div>
-          <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2">
-            <a className="text-sm font-medium text-on-surface-variant transition-colors hover:text-primary" href="#">
-              Điều khoản dịch vụ
-            </a>
-            <a className="text-sm font-medium text-on-surface-variant transition-colors hover:text-primary" href="#">
-              Chính sách bảo mật
-            </a>
-            <a className="text-sm font-medium text-on-surface-variant transition-colors hover:text-primary" href="#">
-              Cảnh báo rủi ro
-            </a>
-            <a className="text-sm font-medium text-on-surface-variant transition-colors hover:text-primary" href="#">
-              Cookie Policy
-            </a>
-          </nav>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }
