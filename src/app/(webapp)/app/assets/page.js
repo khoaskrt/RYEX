@@ -179,6 +179,10 @@ export default function AssetsPage() {
     }
   }
 
+  function handleGoToDeposit() {
+    router.push('/app/deposit');
+  }
+
   // Filter assets based on search term
   const filteredAssets = (assetsData?.assets || []).filter((asset) => {
     const searchLower = searchTerm.toLowerCase();
@@ -324,7 +328,11 @@ export default function AssetsPage() {
                   </p>
                 </div>
                 <div className="flex gap-3 mb-1">
-                  <button className="bg-gradient-to-br from-[#006c4f] to-[#01bc8d] text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-md transition-all hover:opacity-90 active:scale-95">
+                  <button
+                    className="bg-gradient-to-br from-[#006c4f] to-[#01bc8d] text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-md transition-all hover:opacity-90 active:scale-95"
+                    onClick={handleGoToDeposit}
+                    type="button"
+                  >
                     Nạp tiền
                   </button>
                   <button className="bg-surface-container-highest text-on-surface px-6 py-2.5 rounded-lg font-bold text-sm transition-all hover:bg-surface-container-high active:scale-95">
@@ -458,7 +466,9 @@ export default function AssetsPage() {
                           <td className="px-8 py-5 text-right">
                             <div className="flex justify-end gap-4">
                               <button className="text-primary font-bold text-sm hover:underline">Giao dịch</button>
-                              <button className="text-primary font-bold text-sm hover:underline">Nạp</button>
+                              <button className="text-primary font-bold text-sm hover:underline" onClick={handleGoToDeposit} type="button">
+                                Nạp
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -472,7 +482,11 @@ export default function AssetsPage() {
                               <p className="text-lg font-semibold text-on-surface mb-1">{emptyStateTitle}</p>
                               <p className="text-sm text-on-surface-variant">{emptyStateDescription}</p>
                             </div>
-                            <button className="bg-gradient-to-br from-[#006c4f] to-[#01bc8d] text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-md transition-all hover:opacity-90 active:scale-95">
+                            <button
+                              className="bg-gradient-to-br from-[#006c4f] to-[#01bc8d] text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-md transition-all hover:opacity-90 active:scale-95"
+                              onClick={handleGoToDeposit}
+                              type="button"
+                            >
                               Nạp tiền ngay
                             </button>
                           </div>

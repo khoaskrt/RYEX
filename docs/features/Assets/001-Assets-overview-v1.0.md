@@ -1,4 +1,4 @@
-# [Assets] - BA Brief (v1.0)
+# [Assets] - BA Brief (v1.1)
 
 ## 1. Problem framing
 - Business goal: Kích hoạt luồng xem tài sản trên `/app/assets` bằng dữ liệu thật, ổn định và testable.
@@ -18,6 +18,25 @@
   - Nạp/rút/chuyển tiền thật.
   - Trading engine/settlement.
   - Backoffice reconciliation.
+
+## 2.1 Business Definitions SoT (Funding vs Trading)
+- Mục tiêu: thống nhất một định nghĩa nghiệp vụ duy nhất để FE/BE/QA dùng chung khi mô tả UI, API và test case.
+- `Funding account`:
+  - Là tài khoản phục vụ nạp/rút/chuyển tài sản ở lớp ví.
+  - Không phải tài khoản chính để đặt lệnh giao dịch.
+  - Khi user muốn rút tài sản ra ví ngoài, tài sản cần nằm ở `funding account`.
+- `Trading account`:
+  - Là tài khoản phục vụ hoạt động đặt lệnh và khớp lệnh giao dịch.
+  - Số dư ở tài khoản này được dùng cho luồng trade (ví dụ mua BTC bằng USDT).
+  - Không dùng trực tiếp làm điểm rút ra ví ngoài trong business flow chuẩn.
+- Ví dụ nghiệp vụ chuẩn:
+  - User nạp USDT vào `Funding account`.
+  - User chuyển USDT từ `Funding account` sang `Trading account` để trade BTC.
+  - Khi muốn rút ra ví ngoài, user chuyển tài sản ngược từ `Trading account` về `Funding account` rồi thực hiện rút.
+- Quy ước áp dụng:
+  - FE copy/tooltip phải bám đúng định nghĩa trên.
+  - BE/API naming `fundingAccount` và `tradingAccount` giữ semantic như định nghĩa này.
+  - QA test case phải bao gồm kiểm tra đúng bucket account theo semantic này, không chỉ kiểm tra presence field.
 
 ## 3. Runtime Gap
 - Expected behavior:
@@ -79,6 +98,10 @@
   - Mức ưu tiên chuẩn hóa success envelope (`P1`) ngay sprint này hay để sprint kế tiếp.
 
 ## 7. Delta
-- Changed: Promote draft `v0.1` -> refinal `v1.0` và chuẩn hóa wording để handoff.
-- Reason: Chuẩn bị phân công task theo owner FE/BE/QA/BA.
-- Impact: Có thể dùng ngay làm input cho task breakdown và sprint assignment.
+- Changed:
+  - Bump phiên bản tài liệu `v1.0 -> v1.1`.
+  - Thêm mục `2.1 Business Definitions SoT (Funding vs Trading)` để chuẩn hóa định nghĩa nghiệp vụ và ví dụ luồng nạp/chuyển/trade/rút.
+- Reason:
+  - Tránh lệch cách hiểu giữa FE/BE/QA khi sử dụng 2 bucket tài sản `funding` và `trading`.
+- Impact:
+  - Có một nguồn SoT rõ ràng để viết UI copy, giữ contract semantic và thiết kế test case nhất quán.

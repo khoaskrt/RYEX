@@ -113,3 +113,9 @@ When a bug/incident happens:
 1. Add 1 minimal repro case to `.codex/Rule/qa-living-matrix.md`.
 2. Add 1 nearby negative case for the same area.
 3. Record date and changed files touched by fix.
+
+## Feature Sync Rule (Mandatory)
+- Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
+  - `/Users/mac/Desktop/RYEX/docs/features`
+  - `/Users/mac/Desktop/RYEX/src/features`
+- Khi nhận prompt hỏi về một tính năng cụ thể, bắt buộc review cả hai thư mục trên cho feature liên quan trước khi phân tích/kết luận để đảm bảo đủ bối cảnh và dữ liệu ra quyết định.

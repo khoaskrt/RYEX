@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/shared/lib/supabase/client';
 
@@ -207,9 +208,12 @@ export default function AssetsDropdown() {
 
               {/* Quick Actions */}
               <div className="mt-6 flex gap-2">
-                <button className="flex-1 rounded-lg bg-gradient-to-br from-[#006c4f] to-[#01bc8d] px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95">
+                <Link
+                  href="/app/deposit"
+                  className="flex-1 rounded-lg bg-gradient-to-br from-[#006c4f] to-[#01bc8d] px-4 py-2.5 text-center text-xs font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95"
+                >
                   Nạp tiền
-                </button>
+                </Link>
                 <button className="flex-1 rounded-lg bg-[#f2f4f6] px-4 py-2.5 text-xs font-bold text-[#3c4a43] transition-all hover:bg-[#e6e8ea] active:scale-95">
                   Rút tiền
                 </button>

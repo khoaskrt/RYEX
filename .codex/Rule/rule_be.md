@@ -76,3 +76,9 @@ description: Backend engineering rules for RYEX. Keep API contracts stable, secu
 - Added mandatory collaboration clarification rule for unclear requests (non-deep-technical consultation).
 - Added strict docs tree governance (only existing folders; new folder requires explicit user approval).
 - Added mandatory post-task documentation update rule (review existing docs first; prefer updating existing docs/version before creating new file).
+
+## Feature Sync Rule (Mandatory)
+- Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
+  - `/Users/mac/Desktop/RYEX/docs/features`
+  - `/Users/mac/Desktop/RYEX/src/features`
+- Khi nhận prompt hỏi về một tính năng cụ thể, bắt buộc review cả hai thư mục trên cho feature liên quan trước khi phân tích/kết luận để đảm bảo đủ bối cảnh và dữ liệu ra quyết định.
