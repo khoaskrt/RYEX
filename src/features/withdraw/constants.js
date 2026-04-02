@@ -3,7 +3,7 @@
 export const MOCK_COINS = [
   { symbol: 'BTC', name: 'Bitcoin', iconUrl: '/images/tokens/btc.png', balance: '0.5234' },
   { symbol: 'ETH', name: 'Ethereum', iconUrl: '/images/tokens/eth.png', balance: '2.5000' },
-  { symbol: 'USDT', name: 'Tether', iconUrl: '/images/tokens/usdt.png', balance: '10000.00' },
+  { symbol: 'USDT', name: 'Tether', iconUrl: '/images/tokens/usdt.svg', balance: '10000.00' },
   { symbol: 'SOL', name: 'Solana', iconUrl: '/images/tokens/sol.png', balance: '15.0000' },
 ];
 

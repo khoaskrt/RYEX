@@ -1,5 +1,5 @@
 import { createClient } from '../../shared/lib/supabase/server.js';
-import { getMarketTickers } from '../market/binanceSpotMarket.js';
+import { getMarketTickers } from '../market/SpotMarket.js';
 
 /**
  * Fetch user's asset balances from database

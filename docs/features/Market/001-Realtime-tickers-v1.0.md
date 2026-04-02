@@ -101,7 +101,7 @@
   - Search/pagination và điều hướng detail.
 - BE impact:
   - `src/app/api/v1/market/tickers/route.js`.
-  - `src/server/market/binanceSpotMarket.js`:
+  - `src/server/market/SpotMarket.js`:
     - fetch Binance batch ticker.
     - enrich CoinGecko market cap/icon.
     - cache TTL + stale fallback.

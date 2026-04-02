@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMarketPriceDetail } from '@/server/market/binanceSpotMarket';
+import { getMarketPriceDetail } from '@/server/market/SpotMarket';
 
 export const dynamic = 'force-dynamic';
 

@@ -99,7 +99,7 @@
   - Token visual/detail fallback logic và render section chỉ số.
 - BE impact:
   - `src/app/api/v1/market/price/[symbol]/route.js`.
-  - `src/server/market/binanceSpotMarket.js` (`getMarketPriceDetail`).
+  - `src/server/market/SpotMarket.js` (`getMarketPriceDetail`).
   - CoinGecko enrichment cho market cap/supply/rank/icon + BTC dominance (khi BTC).
 - QA impact:
   - API tests:

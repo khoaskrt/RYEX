@@ -9,6 +9,7 @@ import AssetsDropdown from '@/shared/components/AssetsDropdown';
 import LandingFooter from '@/shared/components/LandingFooter';
 import FundingNavigationSidebar from '@/shared/components/FundingNavigationSidebar';
 import FundingNavigationTabBar from '@/shared/components/FundingNavigationTabBar';
+import { getTokenIconUrl } from '@/shared/lib/ui/tokenIcons';
 
 const DEFAULT_PROFILE_VISUAL = {
   avatarUrl: '',
@@ -458,13 +459,15 @@ export default function AssetsPage() {
                   </thead>
                   <tbody className="divide-y divide-outline-variant/5">
                     {filteredAssets.length > 0 ? (
-                      filteredAssets.map((asset, idx) => (
+                      filteredAssets.map((asset, idx) => {
+                        const resolvedIconUrl = getTokenIconUrl(asset.symbol, asset.iconUrl);
+                        return (
                         <tr key={idx} className="hover:bg-surface-container-low transition-colors group">
                           <td className="px-8 py-5">
                             <div className="flex items-center gap-3">
                               <div className="h-6 w-6 rounded-full flex items-center justify-center bg-transparent">
-                                {asset.iconUrl ? (
-                                  <img alt={asset.symbol} className="h-6 w-6 rounded-full object-contain" src={asset.iconUrl} />
+                                {resolvedIconUrl ? (
+                                  <img alt={asset.symbol} className="h-6 w-6 rounded-full object-contain" src={resolvedIconUrl} />
                                 ) : (
                                   <div className="h-6 w-6 rounded-full bg-primary-container/20 flex items-center justify-center text-xs font-bold text-primary">
                                     {asset.symbol.charAt(0)}
@@ -486,10 +489,14 @@ export default function AssetsPage() {
                               <button className="text-primary font-bold text-sm hover:underline" onClick={handleGoToDeposit} type="button">
                                 Nạp
                               </button>
+                              <button className="text-primary font-bold text-sm hover:underline" onClick={handleGoToWithdraw} type="button">
+                                Rút
+                              </button>
                             </div>
                           </td>
                         </tr>
-                      ))
+                      );
+                      })
                     ) : (
                       <tr>
                         <td colSpan={5} className="px-8 py-12 text-center">

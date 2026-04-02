@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getTokenIconUrl } from '@/shared/lib/ui/tokenIcons';
 
 export function CoinSelector({ coins, selectedCoin, onSelect, disabled = false }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,7 +42,7 @@ export function CoinSelector({ coins, selectedCoin, onSelect, disabled = false }
       >
         {selectedCoin ? (
           <div className="flex items-center gap-3">
-            <img src={selectedCoin.iconUrl} alt="" className="h-6 w-6 rounded-full" />
+            <img src={getTokenIconUrl(selectedCoin.symbol, selectedCoin.iconUrl)} alt="" className="h-6 w-6 rounded-full" />
             <div className="text-left">
               <p className="font-bold text-on-surface">{selectedCoin.symbol}</p>
               <p className="text-xs text-on-surface-variant">{selectedCoin.name}</p>
@@ -86,7 +87,7 @@ export function CoinSelector({ coins, selectedCoin, onSelect, disabled = false }
                 onClick={() => handleSelect(coin)}
               >
                 <div className="flex items-center gap-3">
-                  <img src={coin.iconUrl} alt="" className="h-6 w-6 rounded-full" />
+                  <img src={getTokenIconUrl(coin.symbol, coin.iconUrl)} alt="" className="h-6 w-6 rounded-full" />
                   <div>
                     <p className="font-bold text-on-surface text-sm">{coin.symbol}</p>
                     <p className="text-xs text-on-surface-variant">{coin.name}</p>

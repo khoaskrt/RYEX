@@ -51,7 +51,7 @@
   - `GET /api/v1/market/price/[symbol]`
   - `GET /api/v1/market/kline`
 - Service layer:
-  - `src/server/market/binanceSpotMarket.js` là service chính cho tickers/price/kline.
+  - `src/server/market/SpotMarket.js` là service chính cho tickers/price/kline.
   - Upstream chính: Binance (`ticker`, `klines`), supplemental: CoinGecko (`market cap`, `icon`, supply, rank, BTC dominance).
 - Cache strategy:
   - TTL mặc định `5s` cho tickers/price/kline.
@@ -120,7 +120,7 @@ Ghi chú:
   - Interval switch + chart polling.
 
 ### BE impact
-- `binanceSpotMarket` là single service point cho market read APIs.
+- `SpotMarket` là single service point cho market read APIs.
 - In-memory cache hiện theo process, không shared giữa instance.
 - CoinGecko enrich có thể thiếu dữ liệu; service fallback về `--` để tránh vỡ contract UI.
 

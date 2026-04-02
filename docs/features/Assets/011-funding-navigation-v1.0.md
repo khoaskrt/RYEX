@@ -78,3 +78,11 @@ import FundingNavigationTabBar from '@/shared/components/FundingNavigationTabBar
 - [ ] Hamburger menu toggle cho tablet landscape
 - [ ] Badge notification count cho "Lịch sử"
 - [ ] Collapse sidebar button cho desktop
+
+## 10. Patch Notes (2026-04-02)
+- Added withdraw quick action in Assets table action column (`Nạp`, `Rút`) with direct route navigation.
+- Withdraw page now mounts shared funding navigation components (`FundingNavigationSidebar`, `FundingNavigationTabBar`) to align with Assets/Deposit behavior.
+- Assets dropdown hover interaction now consistently reveals portfolio overview plus `Nạp tiền` / `Rút tiền` actions with clickable redirects.
+- Added FE token icon fallback for missing market icon URLs, including explicit USDT local icon mapping.
+- Refined assets-button interaction: click on `Tài sản` now redirects directly to `/app/assets`; hover remains for quick mini-card preview.
+- Fixed mini-card dismiss issue while moving pointer from trigger to popup by removing hover gap and adding a short close-delay.

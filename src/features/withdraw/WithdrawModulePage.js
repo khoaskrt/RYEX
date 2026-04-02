@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/shared/lib/supabase/client';
 import AssetsDropdown from '@/shared/components/AssetsDropdown';
+import FundingNavigationSidebar from '@/shared/components/FundingNavigationSidebar';
+import FundingNavigationTabBar from '@/shared/components/FundingNavigationTabBar';
 import LandingFooter from '@/shared/components/LandingFooter';
 import { CoinSelector } from './components/CoinSelector';
 import { NetworkSelector } from './components/NetworkSelector';
@@ -310,8 +312,11 @@ export function WithdrawModulePage() {
         </div>
       </nav>
 
+      <FundingNavigationSidebar />
+      <FundingNavigationTabBar />
+
       {/* Main Content */}
-      <main className="min-h-screen pt-24 px-4 md:px-8 pb-12 max-w-[1440px] mx-auto">
+      <main className="min-h-screen pt-24 px-4 pb-12 md:px-8 max-w-[1440px] mx-auto lg:ml-60">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">

@@ -92,7 +92,7 @@ flowchart LR
 | Domain | Goal | FE touchpoints | API endpoints | BE services | QA regression scope |
 |---|---|---|---|---|---|
 | Auth | Đảm bảo onboarding và session hợp lệ | `AuthModulePage`, `StitchLoginPage`, verify callback page | `/api/v1/auth/signup`, `/verify-email/callback`, `/session/sync`, `/login-challenge`, `/resend`, `/logout` | `src/server/auth/*`, `src/server/db/postgres` | Signup validation, verify callback, session sync, logout cookie clear |
-| Market | Cung cấp dữ liệu thị trường realtime ổn định | `MarketModulePage`, `PriceChart`, `price` detail page | `/api/v1/market/tickers`, `/price/[symbol]`, `/kline` | `src/server/market/binanceSpotMarket.js` | Ticker contract, stale fallback, polling interval, search + pagination |
+| Market | Cung cấp dữ liệu thị trường realtime ổn định | `MarketModulePage`, `PriceChart`, `price` detail page | `/api/v1/market/tickers`, `/price/[symbol]`, `/kline` | `src/server/market/SpotMarket.js` | Ticker contract, stale fallback, polling interval, search + pagination |
 | Profile | Cho phép đọc/cập nhật hồ sơ user | Profile consumer flows trong webapp | `/api/v1/user/profile` (GET/PATCH) | Supabase access token verify + Supabase query/update | Unauthorized path, happy path GET/PATCH, response shape consistency |
 | Assets | Cho phép xem tổng tài sản và danh sách coin của user | `/app/assets` | `/api/v1/user/assets` (GET) | `src/server/user/assetsRepository.js` + market enrich service | Happy path, unauthorized, empty portfolio, shape stability |
 | Data/DB | Bảo toàn dữ liệu theo migration current-truth | N/A (gián tiếp qua API) | N/A (supporting layer) | `src/server/db/*`, `db/migrations/*` | Migration integrity, RLS impact, schema drift risk |

@@ -1,4 +1,4 @@
-import { getMarketKline } from '@/server/market/binanceSpotMarket';
+import { getMarketKline } from '@/server/market/SpotMarket';
 
 export const runtime = 'nodejs';
 

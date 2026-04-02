@@ -102,7 +102,7 @@
   - Chart render lifecycle + resize behavior.
 - BE impact:
   - `src/app/api/v1/market/kline/route.js`.
-  - `src/server/market/binanceSpotMarket.js` (`getMarketKline`).
+  - `src/server/market/SpotMarket.js` (`getMarketKline`).
   - Kline cache key theo `symbol_interval_limit`.
 - QA impact:
   - API tests:

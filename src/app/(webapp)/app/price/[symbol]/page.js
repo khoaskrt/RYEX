@@ -1,5 +1,5 @@
 import PricePage from '@/app/price/page';
-import { getMarketPriceDetail } from '@/server/market/binanceSpotMarket';
+import { getMarketPriceDetail } from '@/server/market/SpotMarket';
 
 const SYMBOL_TO_PAIR = {
   BTC: 'BTCUSDT',
