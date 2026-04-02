@@ -1,7 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { ROUTES } from '@/shared/config/routes';
+import { goToWithdraw } from '@/shared/lib/navigation/fundingNavigation';
 import { supabase } from '@/shared/lib/supabase/client';
 
 /**
@@ -42,6 +45,7 @@ async function fetchUserAssets(accessToken) {
 }
 
 export default function AssetsDropdown() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [assetsData, setAssetsData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -129,7 +133,7 @@ export default function AssetsDropdown() {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-[#3c4a43]">Tài sản</h3>
               <a
-                href="/app/assets"
+                href={ROUTES.assets}
                 className="text-xs font-semibold text-[#01bc8d] transition-colors hover:text-[#006c4f]"
               >
                 Xem tất cả
@@ -209,12 +213,16 @@ export default function AssetsDropdown() {
               {/* Quick Actions */}
               <div className="mt-6 flex gap-2">
                 <Link
-                  href="/app/deposit"
+                  href={ROUTES.deposit}
                   className="flex-1 rounded-lg bg-gradient-to-br from-[#006c4f] to-[#01bc8d] px-4 py-2.5 text-center text-xs font-bold text-white shadow-md transition-all hover:opacity-90 active:scale-95"
                 >
                   Nạp tiền
                 </Link>
-                <button className="flex-1 rounded-lg bg-[#f2f4f6] px-4 py-2.5 text-xs font-bold text-[#3c4a43] transition-all hover:bg-[#e6e8ea] active:scale-95">
+                <button
+                  className="flex-1 rounded-lg bg-[#f2f4f6] px-4 py-2.5 text-xs font-bold text-[#3c4a43] transition-all hover:bg-[#e6e8ea] active:scale-95"
+                  onClick={() => goToWithdraw(router)}
+                  type="button"
+                >
                   Rút tiền
                 </button>
               </div>

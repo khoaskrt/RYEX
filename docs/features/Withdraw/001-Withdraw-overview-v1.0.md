@@ -5,7 +5,7 @@
 - **User pain**: User cần một flow rõ ràng, an toàn để withdraw crypto, với transparency về fees và processing time.
 - **Design scope**:
   - P0: Withdraw form với đầy đủ states (loading, error, success, empty)
-  - P0: Tab layout: "Rút tiền" + "Lịch sử rút tiền"
+  - P0: **Single-page layout**: Form rút tiền + Lịch sử rút tiền nằm dưới (no tabs) → Tăng UX bằng cách giảm friction
   - P0: Account selection modal (Funding vs Trading)
   - P1: Address book integration (future enhancement)
   - P1: 2FA/OTP verification (future security layer)

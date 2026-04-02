@@ -4,8 +4,7 @@
 
 ### Hero Section (Above the fold - Must see immediately)
 1. **Page Title**: "Rút tiền" - Headline Large (`text-3xl font-bold`)
-2. **Tab Navigation**: "Rút tiền" (active) | "Lịch sử rút tiền"
-3. **Primary Form Elements**:
+2. **Primary Form Elements**:
    - Coin selector (Step 1)
    - Network selector (Step 2)
    - Address input (Step 3)

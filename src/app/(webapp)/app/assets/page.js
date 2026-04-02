@@ -4,8 +4,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/shared/lib/supabase/client';
+import { goToDeposit, goToWithdraw } from '@/shared/lib/navigation/fundingNavigation';
 import AssetsDropdown from '@/shared/components/AssetsDropdown';
 import LandingFooter from '@/shared/components/LandingFooter';
+import FundingNavigationSidebar from '@/shared/components/FundingNavigationSidebar';
+import FundingNavigationTabBar from '@/shared/components/FundingNavigationTabBar';
 
 const DEFAULT_PROFILE_VISUAL = {
   avatarUrl: '',
@@ -180,7 +183,11 @@ export default function AssetsPage() {
   }
 
   function handleGoToDeposit() {
-    router.push('/app/deposit');
+    goToDeposit(router);
+  }
+
+  function handleGoToWithdraw() {
+    goToWithdraw(router);
   }
 
   // Filter assets based on search term
@@ -285,8 +292,14 @@ export default function AssetsPage() {
         </div>
       </nav>
 
+      {/* Funding Navigation Sidebar (Desktop) */}
+      <FundingNavigationSidebar />
+
+      {/* Funding Navigation Tab Bar (Mobile) */}
+      <FundingNavigationTabBar />
+
       {/* Main Content */}
-      <main className="min-h-screen pt-24 px-8 pb-12 max-w-[1440px] mx-auto">
+      <main className="min-h-screen pt-24 px-8 pb-12 max-w-[1440px] mx-auto lg:ml-60">
         {/* Loading State */}
         {isLoadingAssets && (
           <div className="flex items-center justify-center py-20">
@@ -335,7 +348,11 @@ export default function AssetsPage() {
                   >
                     Nạp tiền
                   </button>
-                  <button className="bg-surface-container-highest text-on-surface px-6 py-2.5 rounded-lg font-bold text-sm transition-all hover:bg-surface-container-high active:scale-95">
+                  <button
+                    className="bg-surface-container-highest text-on-surface px-6 py-2.5 rounded-lg font-bold text-sm transition-all hover:bg-surface-container-high active:scale-95"
+                    onClick={handleGoToWithdraw}
+                    type="button"
+                  >
                     Rút tiền
                   </button>
                   <button className="bg-surface-container-highest text-on-surface px-6 py-2.5 rounded-lg font-bold text-sm transition-all hover:bg-surface-container-high active:scale-95">
