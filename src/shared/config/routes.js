@@ -5,6 +5,8 @@ export const ROUTES = {
   signup: '/app/auth/signup',
   market: '/app/market',
   assets: '/app/assets',
+  funding: '/app/funding',
+  tradingAccount: '/app/trading-account',
   profile: '/app/profile',
   deposit: '/app/deposit',
   withdraw: '/app/withdraw',

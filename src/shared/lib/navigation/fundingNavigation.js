@@ -7,3 +7,11 @@ export function goToDeposit(router) {
 export function goToWithdraw(router) {
   router.push(ROUTES.withdraw);
 }
+
+export function goToFunding(router) {
+  router.push(ROUTES.funding);
+}
+
+export function goToTradingAccount(router) {
+  router.push(ROUTES.tradingAccount);
+}

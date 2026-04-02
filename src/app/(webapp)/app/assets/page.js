@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AppTopNav from '@/shared/components/AppTopNav';
 import { supabase } from '@/shared/lib/supabase/client';
-import { goToDeposit, goToWithdraw } from '@/shared/lib/navigation/fundingNavigation';
+import { goToDeposit, goToFunding, goToTradingAccount, goToWithdraw } from '@/shared/lib/navigation/fundingNavigation';
 import LandingFooter from '@/shared/components/LandingFooter';
 import FundingNavigationSidebar from '@/shared/components/FundingNavigationSidebar';
 import FundingNavigationTabBar from '@/shared/components/FundingNavigationTabBar';
@@ -190,6 +190,14 @@ export default function AssetsPage() {
     goToWithdraw(router);
   }
 
+  function handleGoToFunding() {
+    goToFunding(router);
+  }
+
+  function handleGoToTrading() {
+    goToTradingAccount(router);
+  }
+
   // Filter assets based on search term
   const filteredAssets = (assetsData?.assets || []).filter((asset) => {
     const searchLower = searchTerm.toLowerCase();
@@ -289,8 +297,12 @@ export default function AssetsPage() {
                   >
                     Rút tiền
                   </button>
-                  <button className="bg-surface-container-highest text-on-surface px-6 py-2.5 rounded-lg font-bold text-sm transition-all hover:bg-surface-container-high active:scale-95">
-                    Chuyển tiền
+                  <button
+                    className="bg-surface-container-highest text-on-surface px-6 py-2.5 rounded-lg font-bold text-sm transition-all hover:bg-surface-container-high active:scale-95"
+                    onClick={handleGoToFunding}
+                    type="button"
+                  >
+                    Tài trợ
                   </button>
                 </div>
               </div>
@@ -314,12 +326,12 @@ export default function AssetsPage() {
                   <p className="text-on-surface-variant font-medium">≈ {formatNumber(assetsData.fundingAccount.balanceUSDT)} USDT</p>
                 </div>
                 <div className="pt-6 border-t border-outline-variant/10 flex justify-between">
-                  <a className="text-primary text-sm font-bold hover:underline" href="#">
+                  <button className="text-primary text-sm font-bold hover:underline" onClick={handleGoToFunding} type="button">
                     Chi tiết
-                  </a>
-                  <a className="text-primary text-sm font-bold hover:underline" href="#">
+                  </button>
+                  <button className="text-primary text-sm font-bold hover:underline" onClick={handleGoToFunding} type="button">
                     Nạp/Rút
-                  </a>
+                  </button>
                 </div>
               </div>
 
@@ -339,12 +351,12 @@ export default function AssetsPage() {
                   <p className="text-on-surface-variant font-medium">≈ {formatNumber(assetsData.tradingAccount.balanceUSDT)} USDT</p>
                 </div>
                 <div className="pt-6 border-t border-outline-variant/10 flex justify-between">
-                  <a className="text-primary text-sm font-bold hover:underline" href="#">
+                  <button className="text-primary text-sm font-bold hover:underline" onClick={handleGoToTrading} type="button">
                     Chi tiết
-                  </a>
-                  <a className="text-primary text-sm font-bold hover:underline" href="#">
+                  </button>
+                  <button className="text-primary text-sm font-bold hover:underline" onClick={handleGoToTrading} type="button">
                     Giao dịch ngay
-                  </a>
+                  </button>
                 </div>
               </div>
             </section>
@@ -418,7 +430,9 @@ export default function AssetsPage() {
                           <td className="px-8 py-5 text-right font-bold text-primary">{formatNumber(asset.valueUSDT)}</td>
                           <td className="px-8 py-5 text-right">
                             <div className="flex justify-end gap-4">
-                              <button className="text-primary font-bold text-sm hover:underline">Giao dịch</button>
+                              <button className="text-primary font-bold text-sm hover:underline" onClick={handleGoToTrading} type="button">
+                                Giao dịch
+                              </button>
                               <button className="text-primary font-bold text-sm hover:underline" onClick={handleGoToDeposit} type="button">
                                 Nạp
                               </button>

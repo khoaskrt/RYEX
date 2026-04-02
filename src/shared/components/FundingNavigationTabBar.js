@@ -12,12 +12,12 @@ const NAV_ITEMS = [
   },
   {
     label: 'Tài trợ',
-    href: '/app/funding',
+    href: ROUTES.funding,
     icon: 'account_balance_wallet',
   },
   {
     label: 'Giao dịch',
-    href: ROUTES.market,
+    href: ROUTES.tradingAccount,
     icon: 'candlestick_chart',
   },
   {
