@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import PriceChart from '@/features/market/PriceChart';
+import AppTopNav from '@/shared/components/AppTopNav';
 import LandingFooter from '@/shared/components/LandingFooter';
 
 const TOKEN_VISUAL_MAP = {
@@ -97,67 +97,7 @@ export default function PricePage({ searchParams, data }) {
       />
 
       <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-surface font-body text-on-surface antialiased">
-        <nav className="fixed top-0 z-50 w-full border-b border-[#bbcac1]/15 bg-[#f7f9fb]/80 shadow-[0_12px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
-          <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between px-8">
-            <div className="flex items-center gap-10">
-              <Link className="text-2xl font-black tracking-tighter text-[#006c4f]" href="/">
-                RYEX
-              </Link>
-              <div className="hidden h-full items-center gap-8 md:flex">
-                <Link className="flex h-full items-center border-b-2 border-[#01bc8d] pb-1 font-bold text-[#006c4f]" href="/app/market">
-                  Thị trường
-                </Link>
-                <div className="group relative flex h-full items-center">
-                  <button className="flex h-full items-center gap-1 text-[#3c4a43] transition-colors group-hover:text-[#01bc8d]" type="button">
-                    Giao dịch
-                    <span className="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-180">expand_more</span>
-                  </button>
-                  <div className="absolute left-0 top-16 hidden w-[380px] overflow-hidden rounded-2xl border border-[#bbcac1]/20 bg-surface-container-lowest py-2 shadow-[0_24px_48px_rgba(0,0,0,0.1)] group-hover:block">
-                    <a className="flex items-start gap-4 p-4 transition-colors hover:bg-surface-container-low" href="#">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-container/10 text-primary">
-                        <span className="material-symbols-outlined">sync</span>
-                      </div>
-                      <div>
-                        <div className="font-bold text-on-surface">Chuyển đổi</div>
-                        <div className="text-sm leading-tight text-on-surface-variant">Cách đơn giản nhất để giao dịch</div>
-                      </div>
-                    </a>
-                    <a className="flex items-start gap-4 p-4 transition-colors hover:bg-surface-container-low" href="#">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-container/10 text-primary">
-                        <span className="material-symbols-outlined">analytics</span>
-                      </div>
-                      <div>
-                        <div className="font-bold text-on-surface">Giao dịch giao ngay</div>
-                        <div className="text-sm leading-tight text-on-surface-variant">
-                          Giao dịch tiền điện tử với các công cụ toàn diện
-                        </div>
-                      </div>
-                    </a>
-                    <a className="flex items-start gap-4 p-4 transition-colors hover:bg-surface-container-low" href="#">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-container/10 text-primary">
-                        <span className="material-symbols-outlined">group</span>
-                      </div>
-                      <div>
-                        <div className="font-bold text-on-surface">Giao dịch P2P</div>
-                        <div className="text-sm leading-tight text-on-surface-variant">
-                          Từ các thương gia đã được xác minh, sử dụng nhiều phương thức thanh toán nội địa
-                        </div>
-                      </div>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link
-                className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
-                href="/app/auth/login"
-              >
-                Đăng xuất
-              </Link>
-            </div>
-          </div>
-        </nav>
+        <AppTopNav activeSection="market" />
 
         <main className="mx-auto min-h-screen max-w-7xl px-8 pb-20 pt-24">
           <section className="mb-12">

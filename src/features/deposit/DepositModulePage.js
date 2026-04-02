@@ -11,7 +11,7 @@ import { DepositHeroBanner } from './components/DepositHeroBanner';
 import { DepositEntryPanel } from './components/DepositEntryPanel';
 import { DepositSidebarPanel } from './components/DepositSidebarPanel';
 import { DepositTopNav } from './components/DepositTopNav';
-import { DEPOSIT_STATES, DEPOSIT_TOKENS } from './constants';
+import { DEPOSIT_HISTORY_RECORDS, DEPOSIT_STATES, DEPOSIT_TOKENS } from './constants';
 
 const DEFAULT_PROFILE_VISUAL = {
   avatarUrl: '',
@@ -113,7 +113,7 @@ export function DepositModulePage() {
 
         <section className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12">
           <DepositEntryPanel tokens={DEPOSIT_TOKENS} selectedToken={selectedToken} onSelectToken={setSelectedToken} />
-          <DepositSidebarPanel selectedToken={selectedToken} states={DEPOSIT_STATES} />
+          <DepositSidebarPanel depositHistory={DEPOSIT_HISTORY_RECORDS} selectedToken={selectedToken} states={DEPOSIT_STATES} />
         </section>
       </main>
 

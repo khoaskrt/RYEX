@@ -112,7 +112,10 @@
 ## 8. Delta (optional)
 - Changed:
   - Khởi tạo brief cho feature `004-logout-session-revoke`.
+  - Bổ sung yêu cầu FE: navbar landing page phải đọc auth-state tương tự webapp; khi đã đăng nhập thì hiển thị controls authenticated (đăng xuất/tài sản/avatar), không quay về cặp nút đăng nhập/đăng ký mặc định.
 - Reason:
   - Cần chuẩn hóa luồng logout an toàn và testable cho auth foundation.
+  - Đồng bộ trải nghiệm điều hướng trước/sau đăng nhập giữa marketing (`/`) và webapp (`/app/*`).
 - Impact:
   - Hoàn tất bộ brief Auth core (`001`-`004`) cho handoff FE/BE/QA.
+  - Giảm nhầm lẫn trạng thái phiên khi user điều hướng qua lại giữa landing và webapp.

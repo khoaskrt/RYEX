@@ -25,10 +25,10 @@
   - Responsibility: Token select, wallet address block, CTA actions.
 - `DepositSidebarPanel`
   - File: `src/features/deposit/components/DepositSidebarPanel.js`
-  - Responsibility: Summary, state preview, empty history block.
+  - Responsibility: Summary, state preview, recent deposit history block (filter theo coin đang chọn).
 - `constants`
   - File: `src/features/deposit/constants.js`
-  - Responsibility: Mock token list + interaction preview states.
+  - Responsibility: Mock token list + interaction preview states + `DEPOSIT_HISTORY_RECORDS`.
 
 ## 2. Redirect Helper (Funding)
 - `src/shared/lib/navigation/fundingNavigation.js`
@@ -54,6 +54,7 @@
   - Props:
     - `selectedToken`
     - `states: Array<{key,icon,title,description,badgeClass}>`
+    - `depositHistory: Array<{orderId,coin,amount,network,status,timestamp}>`
 
 ## 4. Tailwind Token Mapping
 - Primary CTA:

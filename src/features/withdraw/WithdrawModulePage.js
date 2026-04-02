@@ -1,10 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import AppTopNav from '@/shared/components/AppTopNav';
 import { supabase } from '@/shared/lib/supabase/client';
-import AssetsDropdown from '@/shared/components/AssetsDropdown';
 import FundingNavigationSidebar from '@/shared/components/FundingNavigationSidebar';
 import FundingNavigationTabBar from '@/shared/components/FundingNavigationTabBar';
 import LandingFooter from '@/shared/components/LandingFooter';
@@ -241,76 +240,12 @@ export function WithdrawModulePage() {
 
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-surface text-on-surface antialiased">
-      {/* TopAppBar - Reuse from Assets page */}
-      <nav className="fixed top-0 z-50 w-full border-b border-[#bbcac1]/15 bg-[#f7f9fb]/80 shadow-[0_12px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between px-8">
-          <div className="flex items-center gap-10">
-            <Link className="text-2xl font-black tracking-tighter text-[#006c4f]" href="/">
-              RYEX
-            </Link>
-            <div className="hidden h-full items-center gap-8 md:flex">
-              <Link className="flex h-full items-center text-[#3c4a43] transition-colors hover:text-[#01bc8d]" href="/app/market">
-                Thị trường
-              </Link>
-              <div className="group relative flex h-full items-center">
-                <button className="flex h-full items-center gap-1 text-[#3c4a43] transition-colors group-hover:text-[#01bc8d]">
-                  Giao dịch
-                  <span className="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-180">expand_more</span>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {isAuthenticated ? (
-              <>
-                <button
-                  className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
-                  disabled={isLoggingOut}
-                  onClick={handleLogout}
-                  type="button"
-                >
-                  {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
-                </button>
-                <AssetsDropdown />
-                <Link
-                  aria-label="Hồ sơ người dùng"
-                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#bbcac1]/30 bg-surface-container-low text-[#3c4a43] transition-colors hover:bg-surface-container-high"
-                  href="/app/users"
-                  title="Hồ sơ"
-                >
-                  {profileVisual.avatarUrl ? (
-                    <img
-                      alt="Avatar người dùng"
-                      className="h-full w-full object-cover"
-                      referrerPolicy="no-referrer"
-                      src={profileVisual.avatarUrl}
-                    />
-                  ) : (
-                    <span className="text-xs font-bold uppercase">{profileVisual.initial}</span>
-                  )}
-                </Link>
-              </>
-            ) : (
-              <>
-                <button
-                  className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
-                  onClick={() => router.push('/app/auth/login')}
-                  type="button"
-                >
-                  Đăng nhập
-                </button>
-                <button
-                  className="rounded-xl bg-gradient-to-br from-[#006c4f] to-[#01bc8d] px-6 py-2.5 text-sm font-bold text-white shadow-lg transition-transform duration-200 active:scale-95"
-                  onClick={() => router.push('/app/auth/signup')}
-                  type="button"
-                >
-                  Đăng ký
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+      <AppTopNav
+        isAuthenticated={isAuthenticated}
+        isLoggingOut={isLoggingOut}
+        onLogout={handleLogout}
+        profileVisual={profileVisual}
+      />
 
       <FundingNavigationSidebar />
       <FundingNavigationTabBar />

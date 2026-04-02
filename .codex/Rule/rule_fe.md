@@ -45,6 +45,11 @@ version: 1.1
 - Khi đổi nền toàn app, chỉnh ở token màu (`tailwind.config.js`) + `body`/layout global, không override rải rác từng component.
 - Sau khi đổi `tailwind.config.js`, phải restart dev server và xoá `.next` nếu màu không cập nhật.
 
+8. Navigation bar consistency (must):
+- Navigation bar phải đồng bộ 100% trên toàn bộ trang landing + webapp.
+- Không được tạo biến thể nav riêng theo từng page nếu chưa được phê duyệt rõ ràng.
+- Mọi thay đổi nav phải thực hiện qua shared component để tránh lệch hành vi (menu `Giao dịch`, auth actions, profile/avatar).
+
 ## 3) Optimized Working Flow
 Before editing:
 1. Locate exact entrypoint chain from route -> feature.

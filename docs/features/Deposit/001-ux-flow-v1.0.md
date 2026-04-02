@@ -67,7 +67,7 @@ flowchart TD
 - AC-03 Deposit UX skeleton:
   - Given user vào `/app/deposit`
   - When trang render
-  - Then thấy đủ các block: Header, chọn token, địa chỉ nạp, lưu ý mạng, state preview, empty history.
+  - Then thấy đủ các block: Header, chọn token, địa chỉ nạp, lưu ý mạng, state preview, lịch sử nạp gần nhất (có data hoặc empty theo coin filter).
 
 ## 7. Impact Map
 - FE impact:

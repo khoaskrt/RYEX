@@ -50,6 +50,11 @@ description: QA rules for RYEX. Keep checks risk-first, contract-driven, and evi
 - Luôn ưu tiên bổ sung vào tài liệu sẵn có và update version theo nguyên tắc đã thống nhất.
 - Chỉ tạo file `.md` mới khi thực sự không có tài liệu liên quan.
 - Update vào /Users/mac/Desktop/RYEX/.codex/Rule/qa-living-matrix.md to grow QA coverage over time.
+
+## 8) Navigation Bar Consistency Check (Mandatory)
+- Với mọi thay đổi FE/auth ảnh hưởng navigation, QA bắt buộc verify cùng một behavior nav trên toàn bộ landing + webapp pages.
+- Tối thiểu phải check: menu `Giao dịch` hiển thị nhất quán, auth actions đúng trạng thái đăng nhập, profile/avatar/AssetsDropdown không lệch giữa các trang.
+- Nếu bất kỳ page nào lệch, kết luận phải là `FAIL` (không được `PASS` cục bộ).
 ## Feature Sync Rule (Mandatory)
 - Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
   - `/Users/mac/Desktop/RYEX/docs/features`

@@ -35,3 +35,38 @@ export const DEPOSIT_STATES = [
     badgeClass: 'bg-surface-container-low text-on-surface-variant',
   },
 ];
+
+export const DEPOSIT_HISTORY_RECORDS = [
+  {
+    orderId: 'DP-20260402-0001',
+    coin: 'USDT',
+    amount: '1250.00',
+    network: 'TRC20',
+    status: 'completed',
+    timestamp: '2026-04-02T09:30:00+07:00',
+  },
+  {
+    orderId: 'DP-20260326-0004',
+    coin: 'BTC',
+    amount: '0.11000000',
+    network: 'Bitcoin',
+    status: 'completed',
+    timestamp: '2026-03-26T14:22:00+07:00',
+  },
+  {
+    orderId: 'DP-20260320-0005',
+    coin: 'SOL',
+    amount: '18.50000000',
+    network: 'SOL',
+    status: 'pending',
+    timestamp: '2026-03-20T19:42:00+07:00',
+  },
+  {
+    orderId: 'DP-20260305-0007',
+    coin: 'ETH',
+    amount: '2.84000000',
+    network: 'ERC20',
+    status: 'completed',
+    timestamp: '2026-03-05T12:36:00+07:00',
+  },
+];

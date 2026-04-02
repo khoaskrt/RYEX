@@ -78,6 +78,11 @@ version: 1.0
 
 **If conflicts appear:** Align to Market conventions, not invent new pattern.
 
+## 7.1) Navigation Bar Global Consistency (Mandatory)
+- Navigation bar phải đồng bộ trên toàn bộ landing + webapp pages.
+- Không được thiết kế biến thể nav riêng theo page nếu không có phê duyệt sản phẩm rõ ràng.
+- Các thành phần tối thiểu phải nhất quán: link chính, menu `Giao dịch`, auth actions, profile/avatar và behavior hover/dropdown.
+
 ## 8) No Scope Creep in Design
 - Design chỉ scope được request.
 - Không tự ý redesign unrelated pages "cho đẹp hơn".

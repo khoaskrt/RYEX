@@ -61,6 +61,10 @@ description: Backend engineering rules for RYEX. Keep API contracts stable, secu
 - Luôn ưu tiên bổ sung vào tài liệu sẵn có và update version theo nguyên tắc đã thống nhất.
 - Chỉ tạo file `.md` mới khi thực sự không có tài liệu liên quan.
 
+## 10) Navigation Consistency Guardrail (Cross-role, Mandatory)
+- Khi requirement chạm navigation/auth/session ở UI, BE phải tôn trọng nguyên tắc: navigation bar đồng bộ toàn bộ landing + webapp, không chấp nhận biến thể hành vi trái ngược giữa các trang.
+- Nếu API/auth thay đổi có thể làm nav lệch trạng thái đăng nhập, phải highlight risk và chặn merge cho đến khi FE/QA xác nhận đồng bộ.
+
 ---
 
 ## Changelog

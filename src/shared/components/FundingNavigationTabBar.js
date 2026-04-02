@@ -32,7 +32,7 @@ const NAV_ITEMS = [
   },
   {
     label: 'Lịch sử',
-    href: '/app/history',
+    href: ROUTES.history,
     icon: 'history',
   },
 ];

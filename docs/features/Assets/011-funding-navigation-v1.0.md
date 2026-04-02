@@ -86,3 +86,6 @@ import FundingNavigationTabBar from '@/shared/components/FundingNavigationTabBar
 - Added FE token icon fallback for missing market icon URLs, including explicit USDT local icon mapping.
 - Refined assets-button interaction: click on `Tài sản` now redirects directly to `/app/assets`; hover remains for quick mini-card preview.
 - Fixed mini-card dismiss issue while moving pointer from trigger to popup by removing hover gap and adding a short close-delay.
+- Added first-class route `/app/history` so `Lịch sử` item no longer leads to 404.
+- Fixed missing trading dropdown in Assets top navigation: hover on `Giao dịch` now shows the same submenu panel as Market top bar.
+- Enforced global navbar consistency: landing + all webapp pages now mount a shared `AppTopNav` component to keep identical nav structure and auth behavior.

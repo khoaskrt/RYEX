@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import AppTopNav from '@/shared/components/AppTopNav';
 import LandingFooter from '@/shared/components/LandingFooter';
 import { supabase } from '@/shared/lib/supabase/client';
-import AssetsDropdown from '@/shared/components/AssetsDropdown';
 import {
   fetchMarketTickers,
   formatPercentChange,
@@ -232,110 +232,13 @@ export function MarketModulePage() {
 
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen bg-surface text-on-surface antialiased">
-      <nav className="fixed top-0 z-50 w-full border-b border-[#bbcac1]/15 bg-[#f7f9fb]/80 shadow-[0_12px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between px-8">
-          <div className="flex items-center gap-10">
-            <Link className="text-2xl font-black tracking-tighter text-[#006c4f]" href="/">
-              RYEX
-            </Link>
-            <div className="hidden h-full items-center gap-8 md:flex">
-              <a className="flex h-full items-center border-b-2 border-[#01bc8d] pb-1 font-bold text-[#006c4f]" href="#">
-                Thị trường
-              </a>
-              <div className="group relative flex h-full items-center">
-                <button className="flex h-full items-center gap-1 text-[#3c4a43] transition-colors group-hover:text-[#01bc8d]">
-                  Giao dịch
-                  <span className="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-180">
-                    expand_more
-                  </span>
-                </button>
-                <div className="absolute left-0 top-16 hidden w-[380px] overflow-hidden rounded-2xl border border-[#bbcac1]/20 bg-surface-container-lowest py-2 shadow-[0_24px_48px_rgba(0,0,0,0.1)] group-hover:block">
-                  <a className="flex items-start gap-4 p-4 transition-colors hover:bg-surface-container-low" href="#">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-container/10 text-primary">
-                      <span className="material-symbols-outlined">sync</span>
-                    </div>
-                    <div>
-                      <div className="font-bold text-on-surface">Chuyển đổi</div>
-                      <div className="text-sm leading-tight text-on-surface-variant">Cách đơn giản nhất để giao dịch</div>
-                    </div>
-                  </a>
-                  <a className="flex items-start gap-4 p-4 transition-colors hover:bg-surface-container-low" href="#">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-container/10 text-primary">
-                      <span className="material-symbols-outlined">analytics</span>
-                    </div>
-                    <div>
-                      <div className="font-bold text-on-surface">Giao dịch giao ngay</div>
-                      <div className="text-sm leading-tight text-on-surface-variant">
-                        Giao dịch tiền điện tử với các công cụ toàn diện
-                      </div>
-                    </div>
-                  </a>
-                  <a className="flex items-start gap-4 p-4 transition-colors hover:bg-surface-container-low" href="#">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-container/10 text-primary">
-                      <span className="material-symbols-outlined">group</span>
-                    </div>
-                    <div>
-                      <div className="font-bold text-on-surface">Giao dịch P2P</div>
-                      <div className="text-sm leading-tight text-on-surface-variant">
-                        Từ các thương gia đã được xác minh, sử dụng nhiều phương thức thanh toán nội địa
-                      </div>
-                    </div>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {isAuthenticated ? (
-              <>
-                <button
-                  className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
-                  disabled={isLoggingOut}
-                  onClick={handleLogout}
-                  type="button"
-                >
-                  {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
-                </button>
-                <AssetsDropdown />
-                <Link
-                  aria-label="Hồ sơ người dùng"
-                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#bbcac1]/30 bg-surface-container-low text-[#3c4a43] transition-colors hover:bg-surface-container-high"
-                  href="/app/users"
-                  title="Hồ sơ"
-                >
-                  {profileVisual.avatarUrl ? (
-                    <img
-                      alt="Avatar người dùng"
-                      className="h-full w-full object-cover"
-                      referrerPolicy="no-referrer"
-                      src={profileVisual.avatarUrl}
-                    />
-                  ) : (
-                    <span className="text-xs font-bold uppercase">{profileVisual.initial}</span>
-                  )}
-                </Link>
-              </>
-            ) : (
-              <>
-                <button
-                  className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
-                  onClick={() => router.push('/app/auth/login')}
-                  type="button"
-                >
-                  Đăng nhập
-                </button>
-                <button
-                  className="rounded-xl px-6 py-2.5 text-sm font-bold text-white liquidity-gradient shadow-lg transition-transform duration-200 active:scale-95"
-                  onClick={() => router.push('/app/auth/signup')}
-                  type="button"
-                >
-                  Đăng ký
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+      <AppTopNav
+        activeSection="market"
+        isAuthenticated={isAuthenticated}
+        isLoggingOut={isLoggingOut}
+        onLogout={handleLogout}
+        profileVisual={profileVisual}
+      />
 
       <main className="min-h-screen pt-16">
         <section className="bg-surface px-8 pb-12 pt-16">

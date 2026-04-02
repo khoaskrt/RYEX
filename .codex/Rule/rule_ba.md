@@ -54,6 +54,10 @@ description: Business Analyst rules for RYEX. Keep requirements testable, tracea
 - Luôn ưu tiên bổ sung vào tài liệu sẵn có và update version theo nguyên tắc đã thống nhất.
 - Chỉ tạo file `.md` mới khi thực sự không có tài liệu liên quan.
 
+## 10) Navigation Bar Consistency Requirement (Mandatory)
+- Mọi yêu cầu liên quan điều hướng/top nav phải ghi rõ AC bắt buộc: navigation bar đồng bộ trên tất cả trang landing + webapp.
+- BA không được chốt requirement cho phép cùng một trạng thái đăng nhập nhưng nav hiển thị khác nhau giữa các trang, trừ khi có business exception đã phê duyệt.
+
 ## Feature Sync Rule (Mandatory)
 - Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
   - `/Users/mac/Desktop/RYEX/docs/features`

@@ -8,4 +8,5 @@ export const ROUTES = {
   profile: '/app/profile',
   deposit: '/app/deposit',
   withdraw: '/app/withdraw',
+  history: '/app/history',
 };
