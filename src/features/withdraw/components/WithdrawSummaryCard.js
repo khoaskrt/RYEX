@@ -8,11 +8,11 @@ export function WithdrawSummaryCard({
   withdrawAmount,
   amountError,
   networkFee,
+  networkFeeSymbol,
   receiveAmount,
   termsAgreed,
   onTermsChange,
   isSubmitting,
-  onSubmit,
   isFormValid,
 }) {
   return (
@@ -54,7 +54,7 @@ export function WithdrawSummaryCard({
             <div className="flex justify-between text-sm">
               <span className="text-on-surface-variant">Phí mạng</span>
               <span className="font-semibold text-on-surface">
-                {selectedNetwork ? `${networkFee} ${selectedCoin?.symbol}` : '---'}
+                {selectedNetwork ? `${networkFee} ${networkFeeSymbol || selectedCoin?.symbol || ''}` : '---'}
               </span>
             </div>
             <div className="flex justify-between">
@@ -87,7 +87,6 @@ export function WithdrawSummaryCard({
         {/* Submit Button */}
         <button
           type="submit"
-          onClick={onSubmit}
           disabled={!isFormValid || isSubmitting}
           className="
             w-full
@@ -114,8 +113,8 @@ export function WithdrawSummaryCard({
             <span className="material-symbols-outlined text-sm">info</span>
             Withdrawal Limits
           </p>
-          <p className="text-xs text-on-surface-variant">Min: 0.001 BTC</p>
-          <p className="text-xs text-on-surface-variant">Max: 10 BTC/day</p>
+          <p className="text-xs text-on-surface-variant">Min: 10 USDT</p>
+          <p className="text-xs text-on-surface-variant">Max: 10,000 USDT/day</p>
           <p className="text-xs text-on-surface-variant">Fee: Network dependent</p>
         </div>
       </div>

@@ -1,4 +1,24 @@
-export function DepositEntryPanel({ tokens, selectedToken, onSelectToken }) {
+export function DepositEntryPanel({
+  tokens,
+  selectedToken,
+  onSelectToken,
+  depositAddress,
+  isAddressLoading,
+  addressError,
+  onCreateAddress,
+  onRefreshAddress,
+}) {
+  const addressDisplay = depositAddress || 'Chua co dia chi nap. Bam \"Tao dia chi\" de khoi tao.';
+
+  async function handleCopyAddress() {
+    if (!depositAddress) return;
+    try {
+      await navigator.clipboard.writeText(depositAddress);
+    } catch (error) {
+      console.error('Failed to copy deposit address', error);
+    }
+  }
+
   return (
     <article className="rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-[0_12px_32px_rgba(0,0,0,0.04)] lg:col-span-7 lg:p-6">
       <div className="mb-5 flex items-center justify-between">
@@ -37,11 +57,16 @@ export function DepositEntryPanel({ tokens, selectedToken, onSelectToken }) {
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Địa chỉ ví nạp ({selectedToken.network})</p>
           <div className="rounded-xl border border-outline-variant/30 bg-surface-container-low px-3 py-3 text-sm font-semibold text-on-surface">
-            0xA9F2...7D3C...5E11
+            {isAddressLoading ? 'Dang tai dia chi...' : addressDisplay}
           </div>
+          {addressError ? (
+            <p className="mt-2 text-xs text-error">{addressError}</p>
+          ) : null}
           <div className="mt-2 flex items-center gap-2">
             <button
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-surface-container-high px-3 text-xs font-bold text-on-surface transition-colors hover:bg-surface-container active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container"
+              disabled={!depositAddress}
+              onClick={handleCopyAddress}
               type="button"
             >
               <span className="material-symbols-outlined text-[18px]">content_copy</span>
@@ -49,6 +74,7 @@ export function DepositEntryPanel({ tokens, selectedToken, onSelectToken }) {
             </button>
             <button
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-surface-container-high px-3 text-xs font-bold text-on-surface transition-colors hover:bg-surface-container active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container"
+              disabled={!depositAddress}
               type="button"
             >
               <span className="material-symbols-outlined text-[18px]">qr_code_scanner</span>
@@ -80,15 +106,30 @@ export function DepositEntryPanel({ tokens, selectedToken, onSelectToken }) {
         <button className="h-11 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 text-sm font-bold text-on-primary shadow-[0_12px_24px_rgba(0,108,79,0.2)] transition-all hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container">
           Tôi đã chuyển tiền
         </button>
-        <button className="h-11 rounded-xl bg-surface-container-high px-4 text-sm font-bold text-on-surface transition-colors hover:bg-surface-container active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container">
-          Làm mới trạng thái
-        </button>
         <button
-          className="h-11 rounded-xl border border-outline-variant/40 bg-surface px-4 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container-low active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container disabled:cursor-not-allowed disabled:opacity-40"
-          disabled
+          className="h-11 rounded-xl bg-surface-container-high px-4 text-sm font-bold text-on-surface transition-colors hover:bg-surface-container active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container"
+          onClick={onRefreshAddress}
+          type="button"
         >
-          Tạm khóa (Disabled)
+          Làm mới địa chỉ
         </button>
+        {!depositAddress ? (
+          <button
+            className="h-11 rounded-xl border border-outline-variant/40 bg-surface px-4 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container-low active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container"
+            onClick={onCreateAddress}
+            type="button"
+          >
+            Tạo địa chỉ
+          </button>
+        ) : (
+          <button
+            className="h-11 rounded-xl border border-outline-variant/40 bg-surface px-4 text-sm font-bold text-on-surface-variant transition-colors hover:bg-surface-container-low active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container disabled:cursor-not-allowed disabled:opacity-40"
+            disabled
+            type="button"
+          >
+            Địa chỉ đã sẵn sàng
+          </button>
+        )}
       </div>
     </article>
   );

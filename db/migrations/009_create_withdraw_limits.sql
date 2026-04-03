@@ -1,0 +1,13 @@
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS public.withdraw_limits (
+  user_id UUID PRIMARY KEY REFERENCES public.users(supa_id) ON DELETE CASCADE,
+  daily_limit_usdt NUMERIC(18, 2) NOT NULL DEFAULT 10000.00,
+  per_tx_min_usdt NUMERIC(18, 2) NOT NULL DEFAULT 10.00,
+  per_tx_max_usdt NUMERIC(18, 2) NOT NULL DEFAULT 5000.00,
+  hourly_tx_limit INTEGER NOT NULL DEFAULT 5,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMIT;

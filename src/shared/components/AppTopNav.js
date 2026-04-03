@@ -123,7 +123,8 @@ export default function AppTopNav({
                 Giao dịch
                 <span className="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-180">expand_more</span>
               </button>
-              <div className="absolute left-0 top-16 hidden w-[380px] overflow-hidden rounded-2xl border border-[#bbcac1]/20 bg-surface-container-lowest py-2 shadow-[0_24px_48px_rgba(0,0,0,0.1)] group-hover:block">
+              <div className="absolute left-0 top-full hidden w-[380px] pt-2 group-hover:block">
+                <div className="overflow-hidden rounded-2xl border border-[#bbcac1]/20 bg-surface-container-lowest py-2 shadow-[0_24px_48px_rgba(0,0,0,0.1)]">
                 <a className="flex items-start gap-4 p-4 transition-colors hover:bg-surface-container-low" href="#">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-container/10 text-primary">
                     <span className="material-symbols-outlined">sync</span>
@@ -133,7 +134,7 @@ export default function AppTopNav({
                     <div className="text-sm leading-tight text-on-surface-variant">Cách đơn giản nhất để giao dịch</div>
                   </div>
                 </a>
-                <a className="flex items-start gap-4 p-4 transition-colors hover:bg-surface-container-low" href="#">
+                <Link className="flex items-start gap-4 p-4 transition-colors hover:bg-surface-container-low" href={ROUTES.spotTrading}>
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-container/10 text-primary">
                     <span className="material-symbols-outlined">analytics</span>
                   </div>
@@ -141,7 +142,7 @@ export default function AppTopNav({
                     <div className="font-bold text-on-surface">Giao dịch giao ngay</div>
                     <div className="text-sm leading-tight text-on-surface-variant">Giao dịch tiền điện tử với các công cụ toàn diện</div>
                   </div>
-                </a>
+                </Link>
                 <a className="flex items-start gap-4 p-4 transition-colors hover:bg-surface-container-low" href="#">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-container/10 text-primary">
                     <span className="material-symbols-outlined">group</span>
@@ -153,6 +154,7 @@ export default function AppTopNav({
                     </div>
                   </div>
                 </a>
+                </div>
               </div>
             </div>
           </div>
@@ -167,11 +169,14 @@ export default function AppTopNav({
             </>
           ) : (
             <>
-              <Link className="rounded-lg px-5 py-2 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]" href={ROUTES.login}>
+              <Link
+                className="inline-flex h-10 items-center rounded-lg px-5 text-sm font-semibold text-[#3c4a43] transition-all hover:bg-[#f2f4f6]"
+                href={ROUTES.login}
+              >
                 Đăng nhập
               </Link>
               <Link
-                className="rounded-xl px-6 py-2.5 text-sm font-bold text-white liquidity-gradient shadow-lg transition-transform duration-200 active:scale-95"
+                className="inline-flex h-10 items-center rounded-xl px-6 text-sm font-bold text-white liquidity-gradient shadow-lg transition-transform duration-200 active:scale-95"
                 href={ROUTES.signup}
               >
                 Đăng ký

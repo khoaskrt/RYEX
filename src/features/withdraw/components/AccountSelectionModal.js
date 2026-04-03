@@ -79,7 +79,7 @@ export function AccountSelectionModal({
                       <p className="font-bold text-on-surface">{account.label}</p>
                       <p className="text-xs text-on-surface-variant">{account.sublabel}</p>
                       <p className="text-lg font-extrabold text-on-surface mt-2">
-                        {account.balanceBTC} BTC
+                        {account.balance} {account.unit}
                       </p>
                       <p className="text-xs text-on-surface-variant">
                         ≈ ${account.balanceUSDT}

@@ -97,6 +97,7 @@
 - FE impact:
   - `src/features/market/MarketModulePage.js`.
   - `src/features/market/realtime/marketClient.js`.
+  - `src/features/landing-page/LandingMarketPulseSection.js` (map dữ liệu ticker cho block `Nóng`/`Coin mới` trên landing page).
   - Render state: `loading/error/stale/lastUpdated`.
   - Search/pagination và điều hướng detail.
 - BE impact:

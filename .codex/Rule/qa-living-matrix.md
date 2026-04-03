@@ -72,6 +72,8 @@ Copy this block per run:
 | 2026-04-01 | DEP-02 | Dependency / Supabase | Medium | After downgrading to `@supabase/supabase-js@2.100.0`, run `npm run dev` and open `/app/profile`. | `@supabase/auth-js/dist/*/lib/fetch.js` exists, route compiles without module resolution error. | PASS: route compiles and `/app/profile` returns `200`; no `./lib/fetch` error in logs. | Local patch (uncommitted) | `package.json`, `package-lock.json` |
 | 2026-04-01 | AUTH-INC-01 | Auth Signup / Supabase Trigger | High | Submit signup from `/app/auth/signup` (or call `POST /auth/v1/signup` directly). | Signup creates auth user and returns success/expected validation errors. | Supabase returns `500 unexpected_failure: Database error saving new user`; app API returns `503 AUTH_PROVIDER_TEMPORARY_FAILURE`. | QA investigation 2026-04-01 | `.codex/Rule/qa-living-matrix.md` |
 | 2026-04-01 | AUTH-INC-02 | Auth Signup / DB Drift | High | Inspect `auth.users` trigger function `public.handle_new_user()`. | Trigger inserts into current `public.users` schema (`supa_id` / `users_id` mapping) without runtime DB errors. | Function still inserts into legacy column `user_id`, causing signup transaction failure on `auth.users` insert. | QA investigation 2026-04-01 | `.codex/Rule/qa-living-matrix.md` |
+| 2026-04-03 | WALLET-FE-01 | Withdraw FE Submit | High | Open `/app/withdraw`, fill valid form, click confirm once. | 1 click => 1 submit request to `POST /api/v1/wallet/withdraw`. | Button had both `type=\"submit\"` and `onClick`, risk duplicate submit path on single click. | FE integration fix 2026-04-03 | `src/features/withdraw/components/WithdrawSummaryCard.js`, `src/features/withdraw/WithdrawModulePage.js` |
+| 2026-04-03 | WALLET-FE-02 | Withdraw FE Idempotency Guard | Medium | Trigger submit repeatedly via keyboard Enter + mouse click sequence on same form state. | Form submit pipeline remains single-source (`onSubmit`) to avoid duplicate event entry. | Before fix, mixed submit paths could bypass intended single entrypoint logic. | FE integration fix 2026-04-03 | `src/features/withdraw/components/WithdrawSummaryCard.js`, `src/features/withdraw/WithdrawModulePage.js` |
 
 ### QA Run - 2026-04-02
 - Scope: Assets flow (`GET /api/v1/user/assets`) regression + release gate prep.
@@ -92,3 +94,13 @@ Copy this block per run:
 - Defects: None in scoped cases.
 - Risks: Keep non-prod guard for fault injection (`ASSET_QA_FAULT_INJECTION_ENABLED`).
 - Recommendation: GO
+
+### QA Run - 2026-04-03 (Wallet Contract Re-run)
+- Scope: Wallet APIs contract matrix `WALLET-CT-01..16` sau BE processor + contract-shape fix.
+- Build Gate: PASS
+- Auth Pack: PASS (wallet unauthorized + auth token flows)
+- Market Pack: N/A for this run
+- User Pack: N/A for this run
+- Defects: None tren matrix/shape assertions (`16/16 PASS`, numeric-string PASS).
+- Risks: E2E transfer on-chain that con BLOCKED do chua thuc hien tx testnet.
+- Recommendation: CONDITIONAL GO

@@ -23,7 +23,7 @@ function getStatusMeta(status) {
   return { label: 'Đang xử lý', className: 'bg-secondary-container/40 text-secondary' };
 }
 
-export function DepositSidebarPanel({ selectedToken, states, depositHistory }) {
+export function DepositSidebarPanel({ selectedToken, states, depositHistory, minDeposit = '1.00000000', currentStatus = 'Chờ xác nhận' }) {
   const filteredHistory = (depositHistory || []).filter((record) => record.coin === selectedToken.symbol);
 
   return (
@@ -41,11 +41,11 @@ export function DepositSidebarPanel({ selectedToken, states, depositHistory }) {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-on-surface-variant">Số tiền tối thiểu</span>
-            <span className="font-bold text-on-surface">10 {selectedToken.symbol}</span>
+            <span className="font-bold text-on-surface">{minDeposit} {selectedToken.symbol}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-on-surface-variant">Trạng thái hiện tại</span>
-            <span className="rounded-md bg-primary-container/20 px-2 py-1 text-xs font-bold text-primary">Chờ xác nhận</span>
+            <span className="rounded-md bg-primary-container/20 px-2 py-1 text-xs font-bold text-primary">{currentStatus}</span>
           </div>
         </div>
         <div className="mt-4 rounded-xl bg-surface-container-low p-3">

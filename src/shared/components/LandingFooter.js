@@ -5,7 +5,7 @@ export default function LandingFooter() {
         <div className="col-span-1 md:col-span-1">
           <span className="mb-6 block text-xl font-bold text-[#006c4f] font-headline">RYEX</span>
           <p className="mb-8 text-[#3c4a43] opacity-80">
-            RYEX - Sàn giao dịch Crypto được cấp phép tại Việt Nam, mang đến giải pháp đầu tư an toàn và hiệu quả.
+            RYEX - Sàn giao dịch Việt Nam được lập ra không phải mục đích thương mại mà được sử dụng để kiểm thử công nghệ.
           </p>
           <div className="flex gap-4">
             <div className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-surface-container text-primary transition-all hover:bg-primary hover:text-white">

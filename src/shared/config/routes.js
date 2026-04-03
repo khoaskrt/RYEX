@@ -11,4 +11,5 @@ export const ROUTES = {
   deposit: '/app/deposit',
   withdraw: '/app/withdraw',
   history: '/app/history',
+  spotTrading: '/app/spot-trading',
 };

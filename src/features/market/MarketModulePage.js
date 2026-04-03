@@ -13,6 +13,7 @@ import {
   formatUsdPrice,
   getMarketRefreshIntervalMs,
 } from './realtime/marketClient';
+import MiniLineChart from './components/MiniLineChart';
 
 const TOKEN_ROWS_PER_PAGE = 10;
 const PAGINATION_WINDOW = 2;
@@ -101,6 +102,12 @@ export function MarketModulePage() {
     stale: false,
     lastUpdated: '',
   });
+  const [chartData, setChartData] = useState({
+    gainer: [],
+    volume: [],
+    loser: [],
+  });
+  const [chartLoading, setChartLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -222,6 +229,39 @@ export function MarketModulePage() {
         )
       : null;
 
+  useEffect(() => {
+    async function fetchChartData() {
+      if (!topGainer || !topVolume || !topLoser) return;
+
+      setChartLoading(true);
+      try {
+        const [gainerRes, volumeRes, loserRes] = await Promise.all([
+          fetch(`/api/v1/market/kline?symbol=${topGainer.symbol}&interval=1h&limit=24`),
+          fetch(`/api/v1/market/kline?symbol=${topVolume.symbol}&interval=1h&limit=24`),
+          fetch(`/api/v1/market/kline?symbol=${topLoser.symbol}&interval=1h&limit=24`),
+        ]);
+
+        const [gainerData, volumeData, loserData] = await Promise.all([
+          gainerRes.json(),
+          volumeRes.json(),
+          loserRes.json(),
+        ]);
+
+        setChartData({
+          gainer: gainerData.data?.map((d) => ({ time: d.time, value: d.close })) || [],
+          volume: volumeData.data?.map((d) => ({ time: d.time, value: d.close })) || [],
+          loser: loserData.data?.map((d) => ({ time: d.time, value: d.close })) || [],
+        });
+      } catch (error) {
+        console.error('Failed to fetch chart data:', error);
+      } finally {
+        setChartLoading(false);
+      }
+    }
+
+    fetchChartData();
+  }, [topGainer?.symbol, topVolume?.symbol, topLoser?.symbol]);
+
   if (!isAuthResolved) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-surface text-on-surface">
@@ -276,14 +316,14 @@ export function MarketModulePage() {
                   {topGainer ? formatPercentChange(topGainer.change24hPercent) : '--'}
                 </span>
               </div>
-              <div className="flex h-16 w-full items-end gap-1">
-                <div className="h-[30%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[45%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[40%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[60%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[55%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[80%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[100%] flex-1 rounded-t-sm bg-primary-container/20" />
+              <div className="h-16 w-full">
+                {chartLoading || chartData.gainer.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-xs text-on-surface-variant">
+                    Đang tải...
+                  </div>
+                ) : (
+                  <MiniLineChart data={chartData.gainer} color="#01bc8d" />
+                )}
               </div>
             </div>
 
@@ -299,14 +339,14 @@ export function MarketModulePage() {
                   {topVolume ? formatUsdCompact(topVolume.volume24h) : '--'}
                 </span>
               </div>
-              <div className="flex h-16 w-full items-end gap-1">
-                <div className="h-[70%] flex-1 rounded-t-sm bg-outline-variant/20" />
-                <div className="h-[85%] flex-1 rounded-t-sm bg-outline-variant/20" />
-                <div className="h-[60%] flex-1 rounded-t-sm bg-outline-variant/20" />
-                <div className="h-[90%] flex-1 rounded-t-sm bg-outline-variant/20" />
-                <div className="h-[75%] flex-1 rounded-t-sm bg-outline-variant/20" />
-                <div className="h-[80%] flex-1 rounded-t-sm bg-outline-variant/20" />
-                <div className="h-[85%] flex-1 rounded-t-sm bg-outline-variant/20" />
+              <div className="h-16 w-full">
+                {chartLoading || chartData.volume.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-xs text-on-surface-variant">
+                    Đang tải...
+                  </div>
+                ) : (
+                  <MiniLineChart data={chartData.volume} color="#bbcac1" />
+                )}
               </div>
             </div>
 
@@ -325,14 +365,14 @@ export function MarketModulePage() {
                   {topLoser ? formatPercentChange(topLoser.change24hPercent) : '--'}
                 </span>
               </div>
-              <div className="flex h-16 w-full items-end gap-1">
-                <div className="h-[20%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[30%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[25%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[40%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[35%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[50%] flex-1 rounded-t-sm bg-primary-container/20" />
-                <div className="h-[55%] flex-1 rounded-t-sm bg-primary-container/20" />
+              <div className="h-16 w-full">
+                {chartLoading || chartData.loser.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-xs text-on-surface-variant">
+                    Đang tải...
+                  </div>
+                ) : (
+                  <MiniLineChart data={chartData.loser} color="#ba1a1a" />
+                )}
               </div>
             </div>
           </div>

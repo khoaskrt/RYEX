@@ -11,6 +11,10 @@ Thư mục `db/` lưu schema/migration đúng với database đang chạy thực
 ```text
 users
 user_assets
+user_wallets
+wallet_transactions
+deposit_monitor_state
+withdraw_limits
 ```
 
 ## Current Migration Order
@@ -18,6 +22,10 @@ Apply theo thứ tự tăng dần:
 1. `001_users_current_truth_baseline.sql`
 2. `002_fix_auth_handle_new_user_trigger.sql`
 3. `003_create_user_assets_current_truth.sql`
+4. `006_create_user_wallets.sql`
+5. `007_create_wallet_transactions.sql`
+6. `008_create_deposit_monitor_state.sql`
+7. `009_create_withdraw_limits.sql`
 
 ## Environment Variables
 ```bash

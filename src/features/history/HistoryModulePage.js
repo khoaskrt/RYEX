@@ -9,7 +9,7 @@ import FundingNavigationTabBar from '@/shared/components/FundingNavigationTabBar
 import LandingFooter from '@/shared/components/LandingFooter';
 import { ROUTES } from '@/shared/config/routes';
 import { supabase } from '@/shared/lib/supabase/client';
-import { HISTORY_PAGE_SIZE, HISTORY_RECORDS, HISTORY_STATUS_OPTIONS } from './constants';
+import { HISTORY_PAGE_SIZE, HISTORY_STATUS_OPTIONS } from './constants';
 
 const DEFAULT_PROFILE_VISUAL = {
   avatarUrl: '',
@@ -18,14 +18,14 @@ const DEFAULT_PROFILE_VISUAL = {
 
 const STATUS_CLASS_MAP = {
   completed: 'bg-primary-container/20 text-primary',
-  processing: 'bg-secondary-container/40 text-secondary',
+  confirming: 'bg-secondary-container/40 text-secondary',
   pending: 'bg-surface-container-high text-on-surface-variant',
   failed: 'bg-error-container text-error',
 };
 
 const STATUS_LABEL_MAP = {
   completed: 'Hoàn thành',
-  processing: 'Đang xử lý',
+  confirming: 'Đang xác nhận',
   pending: 'Chờ xử lý',
   failed: 'Thất bại',
 };
@@ -35,7 +35,12 @@ const TYPE_LABEL_MAP = {
   withdraw: 'Rút',
 };
 
-const COIN_OPTIONS = ['all', ...new Set(HISTORY_RECORDS.map((record) => record.coin))];
+const ERROR_COPY_MAP = {
+  WALLET_UNAUTHORIZED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+  WALLET_INVALID_FILTER: 'Bộ lọc không hợp lệ. Vui lòng kiểm tra lại.',
+  WALLET_INVALID_PAGINATION: 'Phân trang không hợp lệ.',
+  WALLET_TRANSACTIONS_FETCH_FAILED: 'Không thể tải lịch sử giao dịch. Vui lòng thử lại.',
+};
 
 function getProfileVisual(session) {
   const user = session?.user;
@@ -85,6 +90,19 @@ function sanitizeCsvValue(value) {
   return `"${escaped}"`;
 }
 
+function mapApiRecord(record) {
+  return {
+    orderId: record.transactionId || '--',
+    type: record.type || 'withdraw',
+    coin: record.symbol || 'USDT',
+    amount: record.amount || '0.00000000',
+    timestamp: record.createdAt || new Date().toISOString(),
+    blockchainRecord: record.txHash || record.toAddress || '--',
+    status: record.status || 'pending',
+    note: record.explorerUrl ? 'Đã đồng bộ với blockchain explorer' : 'Đang chờ đồng bộ blockchain',
+  };
+}
+
 export function HistoryModulePage() {
   const router = useRouter();
   const [isAuthResolved, setIsAuthResolved] = useState(false);
@@ -101,6 +119,9 @@ export function HistoryModulePage() {
   const [fromDate, setFromDate] = useState(toDateInputValue(defaultFrom));
   const [toDate, setToDate] = useState(toDateInputValue(now));
   const [currentPage, setCurrentPage] = useState(1);
+  const [historyRecords, setHistoryRecords] = useState([]);
+  const [isLoadingRecords, setIsLoadingRecords] = useState(false);
+  const [recordsError, setRecordsError] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -141,20 +162,73 @@ export function HistoryModulePage() {
     }
   }
 
+  async function fetchHistoryRecords() {
+    setIsLoadingRecords(true);
+    setRecordsError('');
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
+      if (!accessToken) {
+        setRecordsError(ERROR_COPY_MAP.WALLET_UNAUTHORIZED);
+        setHistoryRecords([]);
+        return;
+      }
+
+      const response = await fetch('/api/v1/wallet/transactions?type=all&status=all&limit=200&offset=0', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const code = payload?.error?.code || 'WALLET_TRANSACTIONS_FETCH_FAILED';
+        setRecordsError(ERROR_COPY_MAP[code] || payload?.error?.message || ERROR_COPY_MAP.WALLET_TRANSACTIONS_FETCH_FAILED);
+        setHistoryRecords([]);
+        return;
+      }
+
+      const mapped = Array.isArray(payload.transactions) ? payload.transactions.map(mapApiRecord) : [];
+      setHistoryRecords(mapped);
+    } catch (error) {
+      console.error('Failed to fetch wallet transactions', error);
+      setRecordsError(ERROR_COPY_MAP.WALLET_TRANSACTIONS_FETCH_FAILED);
+      setHistoryRecords([]);
+    } finally {
+      setIsLoadingRecords(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!isAuthResolved || !isAuthenticated) return;
+    fetchHistoryRecords();
+  }, [isAuthResolved, isAuthenticated]);
+
+  const coinOptions = useMemo(() => {
+    return ['all', ...new Set(historyRecords.map((record) => record.coin))];
+  }, [historyRecords]);
+
   const filteredRecords = useMemo(() => {
     const fromTime = fromDate ? new Date(`${fromDate}T00:00:00`).getTime() : Number.NEGATIVE_INFINITY;
     const toTime = toDate ? new Date(`${toDate}T23:59:59`).getTime() : Number.POSITIVE_INFINITY;
 
-    return HISTORY_RECORDS.filter((record) => {
-      const recordTime = new Date(record.timestamp).getTime();
-      if (Number.isNaN(recordTime)) return false;
-      if (record.type !== 'deposit' && record.type !== 'withdraw') return false;
-      if (coinFilter !== 'all' && record.coin !== coinFilter) return false;
-      if (statusFilter !== 'all' && record.status !== statusFilter) return false;
-      if (recordTime < fromTime || recordTime > toTime) return false;
-      return true;
-    }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [coinFilter, fromDate, statusFilter, toDate]);
+    return historyRecords
+      .filter((record) => {
+        const recordTime = new Date(record.timestamp).getTime();
+        if (Number.isNaN(recordTime)) return false;
+        if (record.type !== 'deposit' && record.type !== 'withdraw') return false;
+        if (coinFilter !== 'all' && record.coin !== coinFilter) return false;
+        if (statusFilter !== 'all' && record.status !== statusFilter) return false;
+        if (recordTime < fromTime || recordTime > toTime) return false;
+        return true;
+      })
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [coinFilter, fromDate, historyRecords, statusFilter, toDate]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRecords.length / HISTORY_PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
@@ -244,7 +318,7 @@ export function HistoryModulePage() {
                 value={coinFilter}
                 onChange={(event) => handleFilterChange(setCoinFilter, event.target.value)}
               >
-                {COIN_OPTIONS.map((option) => (
+                {coinOptions.map((option) => (
                   <option key={option} value={option}>
                     {option === 'all' ? 'Tất cả coin' : option}
                   </option>
@@ -290,7 +364,24 @@ export function HistoryModulePage() {
         </section>
 
         <section className="mt-6 rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-[0_12px_32px_rgba(0,0,0,0.04)]">
-          {paginatedRecords.length > 0 ? (
+          {recordsError ? (
+            <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+              <span className="material-symbols-outlined text-5xl text-error">error</span>
+              <h3 className="mt-4 text-lg font-bold text-on-surface">Không thể tải lịch sử giao dịch</h3>
+              <p className="mt-1 max-w-md text-sm text-on-surface-variant">{recordsError}</p>
+              <button
+                className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-surface-container-high px-4 text-sm font-bold text-on-surface transition-colors hover:bg-surface-container"
+                onClick={fetchHistoryRecords}
+                type="button"
+              >
+                Thử lại
+              </button>
+            </div>
+          ) : isLoadingRecords ? (
+            <div className="flex items-center justify-center px-6 py-16">
+              <p className="text-sm text-on-surface-variant">Đang tải lịch sử giao dịch...</p>
+            </div>
+          ) : paginatedRecords.length > 0 ? (
             <>
               <div className="hidden overflow-x-auto md:block">
                 <table className="w-full border-collapse text-left">

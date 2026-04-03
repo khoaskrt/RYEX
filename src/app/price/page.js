@@ -1,4 +1,5 @@
 import PriceChart from '@/features/market/PriceChart';
+import { TOKEN_PRICE_ABOUT_VI } from '@/features/market/tokenPriceAboutVi';
 import AppTopNav from '@/shared/components/AppTopNav';
 import LandingFooter from '@/shared/components/LandingFooter';
 
@@ -28,22 +29,28 @@ const TOKEN_DETAIL_MAP = {
     totalSupply: '21,000,000 BTC',
     rank: '#1',
     dominance: '52.8%',
-    aboutTitle: 'Về Bitcoin (BTC)',
-    aboutText1:
-      'Bitcoin là đồng tiền mã hóa đầu tiên trên thế giới, được xây dựng trên mạng lưới blockchain phi tập trung và hoạt động mà không cần bên trung gian.',
-    aboutText2:
-      'Bitcoin thường được xem là tài sản lưu trữ giá trị trong thị trường crypto, với nguồn cung tối đa cố định 21 triệu BTC và cơ chế bảo mật bằng Proof-of-Work.',
   },
 };
+
+function getAboutFallback(symbol) {
+  return {
+    aboutTitle: `Về ${symbol} (${symbol})`,
+    aboutText1: `${symbol} là một tài sản kỹ thuật số được niêm yết trên thị trường. Bạn có thể theo dõi giá, khối lượng và biến động 24 giờ trên trang này.`,
+    aboutText2:
+      'Thông tin mô tả chi tiết đang được bổ sung. Khi đầu tư, hãy đối chiếu nhiều nguồn dữ liệu và cân nhắc rủi ro thị trường.',
+  };
+}
 
 function getTokenPresentation(requestedSymbol) {
   const marketPair = requestedSymbol.endsWith('USDT') ? requestedSymbol : `${requestedSymbol}USDT`;
   const symbol = marketPair.replace(/USDT$/, '');
   const visual = TOKEN_VISUAL_MAP[marketPair] || DEFAULT_VISUAL;
+  const about = TOKEN_PRICE_ABOUT_VI[marketPair] || getAboutFallback(symbol);
 
   if (TOKEN_DETAIL_MAP[marketPair]) {
     return {
       ...TOKEN_DETAIL_MAP[marketPair],
+      ...about,
       iconUrl: visual.iconUrl,
       mark: visual.mark,
       markColor: visual.color,
@@ -56,7 +63,7 @@ function getTokenPresentation(requestedSymbol) {
     symbol,
     circulatingSupply: `-- ${symbol}`,
     totalSupply: `-- ${symbol}`,
-    aboutTitle: `Về ${symbol} (${symbol})`,
+    ...about,
     iconUrl: visual.iconUrl,
     mark: visual.mark,
     markColor: visual.color,

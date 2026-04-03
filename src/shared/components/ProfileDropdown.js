@@ -142,7 +142,7 @@ export default function ProfileDropdown() {
       {/* Profile Button */}
       <button
         aria-label="Hồ sơ người dùng"
-        className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[#bbcac1]/40 bg-surface-container-low text-[#3c4a43] transition-colors hover:bg-surface-container-high"
+        className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#bbcac1]/40 bg-surface-container-low text-[#3c4a43] transition-colors hover:bg-surface-container-high"
         onClick={handleGoToProfile}
         title="Hồ sơ"
         type="button"

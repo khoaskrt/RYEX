@@ -6,13 +6,15 @@ export function AmountInput({
   error,
   disabled = false,
   selectedCoin,
+  selectedNetwork,
   selectedAccount,
   networkFee,
   networkFeeUsd,
   receiveAmount,
   onPercentageClick,
 }) {
-  const availableBalance = selectedAccount?.balanceBTC || selectedCoin?.balance || '0.00000000';
+  const availableBalance = selectedAccount?.balance || selectedCoin?.balance || '0.00000000';
+  const feeSymbol = selectedNetwork?.feeSymbol || selectedCoin?.symbol || '';
 
   return (
     <div className="space-y-4">
@@ -78,7 +80,7 @@ export function AmountInput({
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-on-surface-variant">Phí mạng</span>
-          <span className="font-semibold text-on-surface">{networkFee} {selectedCoin?.symbol || ''} ≈ ${networkFeeUsd}</span>
+          <span className="font-semibold text-on-surface">{networkFee} {feeSymbol} ≈ ${networkFeeUsd}</span>
         </div>
         <div className="border-t border-outline-variant/20 pt-2 flex justify-between">
           <span className="text-sm font-bold text-on-surface-variant">Số tiền nhận</span>
