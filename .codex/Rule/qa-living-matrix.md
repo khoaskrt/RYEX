@@ -104,3 +104,46 @@ Copy this block per run:
 - Defects: None tren matrix/shape assertions (`16/16 PASS`, numeric-string PASS).
 - Risks: E2E transfer on-chain that con BLOCKED do chua thuc hien tx testnet.
 - Recommendation: CONDITIONAL GO
+
+### QA Run - 2026-04-03 (Wallet Local Env Audit)
+- Scope: Re-run matrix theo yeu cau ra soat do smooth/stable so voi plan wallet.
+- Build Gate: PASS
+- Auth Pack: N/A for this run
+- Market Pack: N/A for this run
+- User Pack: N/A for this run
+- Defects: Wallet contract matrix FAIL (`4 PASS / 12 FAIL`) do `500 WALLET_ENV_INVALID` tren wallet POST routes.
+- Risks: Env wallet keys thieu/sai format gay false-negative tren contract matrix va block release local.
+- Recommendation: NO-GO (local env) cho den khi env dat entry criteria va re-run PASS.
+
+### QA Run - 2026-04-03 (Wallet Stage 2 Contract Re-run)
+- Scope: Stage 2 re-run matrix sau khi Stage 1 env unblock.
+- Build Gate: PASS
+- Auth Pack: N/A for this run
+- Market Pack: N/A for this run
+- User Pack: N/A for this run
+- Defects: None in scoped matrix.
+- Risks: E2E on-chain real transfer van chua thuc hien (Stage 3 pending).
+- Recommendation: CONDITIONAL GO.
+
+### QA Run - 2026-04-03 (Wallet Stage 3 E2E Attempt)
+- Scope: Chay Stage 3 E2E testnet full flow theo runbook `007`.
+- Build Gate: PASS
+- Auth Pack: N/A for this run
+- Market Pack: N/A for this run
+- User Pack: N/A for this run
+- Defects: None (khong phat hien logic defect trong phan da chay).
+- Risks: BLOCKED tai Step 2 do thieu sender testnet funded + RPC evidence de tao tx hash that.
+- Recommendation: CONDITIONAL GO (giu nguyen), can unblock infra/data de re-run Stage 3.
+
+### QA Run - 2026-04-03 (Wallet Stage 3 E2E Re-run)
+- Scope: Re-run Stage 3 sau khi provision sender env + RPC access.
+- Build Gate: PASS
+- Auth Pack: N/A for this run
+- Market Pack: N/A for this run
+- User Pack: N/A for this run
+- Defects: None tren processor/internal flow (Step 1->7 PASS).
+- Risks: Sender chua funded (`BNB=0`, USDT testnet chua cap), Step 2 dung tuple synthetic mode thay vi transfer on-chain that.
+- Recommendation: CONDITIONAL GO (gate on-chain evidence van mo).
+
+| 2026-04-03 | WALLET-ENV-01 | Wallet API Env | High | Run `node --env-file=.env scripts/run-wallet-matrix.mjs` tren local env hien tai. | Wallet APIs tra contract code theo matrix (`401/400/200/409`). | Nhieu case tra `500 WALLET_ENV_INVALID` vi `WALLET_ENCRYPTION_KEY` missing/invalid. | QA audit 2026-04-03 | `src/server/wallet/config.js`, `src/app/api/v1/wallet/deposit-address/route.js`, `src/app/api/v1/wallet/withdraw/route.js` |
+| 2026-04-03 | WALLET-ENV-02 | Wallet Internal Processing Env | Medium | Kiem tra entry criteria E2E runbook wallet (`WALLET_INTERNAL_API_KEY`). | Co the goi internal processor route de verify monitor/processor flow. | Key internal missing trong local env, E2E testnet khong du entry criteria. | QA audit 2026-04-03 | `src/server/wallet/config.js`, `docs/features/Wallet/007-e2e-testnet-execution-checklist-v1.0.md` |

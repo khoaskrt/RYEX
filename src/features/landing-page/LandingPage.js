@@ -7,6 +7,8 @@ import LandingMarketPulseSection from './LandingMarketPulseSection';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MARKET_PULSE_START = '<!-- Market Pulse Bento Grid -->';
 const MARKET_PULSE_END = '<!-- Trust & Value Proposition -->';
+const LEGACY_LANDING_MAIN_OFFSET = '<main class="pt-20">';
+const SHARED_TOP_NAV_MAIN_OFFSET = '<main class="pt-16">';
 
 export default function HomePage() {
   const rootRef = useRef(null);
@@ -59,11 +61,17 @@ export default function HomePage() {
     'RYEX - Sàn giao dịch Crypto được cấp phép tại Việt Nam, mang đến giải pháp đầu tư an toàn và hiệu quả.',
     'RYEX - Sàn giao dịch Việt Nam được lập ra không phải mục đích thương mại mà được sử dụng để kiểm thử công nghệ.'
   );
+  const legacyMainIndex = normalizedContent.indexOf(LEGACY_LANDING_MAIN_OFFSET);
+  const contentWithoutLegacyNav =
+    legacyMainIndex >= 0
+      ? `${SHARED_TOP_NAV_MAIN_OFFSET}${normalizedContent.slice(legacyMainIndex + LEGACY_LANDING_MAIN_OFFSET.length)}`
+      : normalizedContent;
 
-  const marketPulseStartIndex = normalizedContent.indexOf(MARKET_PULSE_START);
-  const marketPulseEndIndex = normalizedContent.indexOf(MARKET_PULSE_END);
-  const staticBeforeMarket = marketPulseStartIndex >= 0 ? normalizedContent.slice(0, marketPulseStartIndex) : normalizedContent;
-  const staticAfterMarket = marketPulseEndIndex >= 0 ? normalizedContent.slice(marketPulseEndIndex) : '';
+  const marketPulseStartIndex = contentWithoutLegacyNav.indexOf(MARKET_PULSE_START);
+  const marketPulseEndIndex = contentWithoutLegacyNav.indexOf(MARKET_PULSE_END);
+  const staticBeforeMarket =
+    marketPulseStartIndex >= 0 ? contentWithoutLegacyNav.slice(0, marketPulseStartIndex) : contentWithoutLegacyNav;
+  const staticAfterMarket = marketPulseEndIndex >= 0 ? contentWithoutLegacyNav.slice(marketPulseEndIndex) : '';
 
   return (
     <>

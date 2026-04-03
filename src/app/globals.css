@@ -26,6 +26,6 @@ body {
   min-height: 100vh;
 }
 
-.landing-page-shell > nav {
+.landing-page-shell nav {
   display: none;
 }

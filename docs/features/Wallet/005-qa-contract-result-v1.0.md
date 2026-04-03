@@ -1,4 +1,4 @@
-# [Wallet APIs] - QA Contract Test Result (v1.1)
+# [Wallet APIs] - QA Contract Test Result (v1.3)
 
 ## 1) Environment + Test Data
 | Field | Value | Note |
@@ -52,7 +52,7 @@ Flow target: `create address -> deposit on-chain -> auto credit funding -> withd
 | Step | Status | Notes |
 |---|---|---|
 | Create deposit address | PASS | Da pass qua CT04 |
-| Deposit on-chain BSC testnet | BLOCKED | Chua co funded sender + transaction that tren testnet trong run nay |
+| Deposit on-chain BSC testnet | PARTIAL PASS | Re-run Stage 3 da co tuple evidence + real block number; tx transfer that van pending funding |
 | Auto credit funding sau confirmations | PASS (processor-level local proof) | Da co proof idempotent credit qua internal deposit monitor |
 | Withdraw + verify history | PASS (processor-level local proof) | Da co proof pending->completed + atomic debit |
 
@@ -65,11 +65,54 @@ Flow target: `create address -> deposit on-chain -> auto credit funding -> withd
 ## 7) Summary
 - Contract cases: `16/16 PASS`
 - Shape assertions: `3/3 PASS`
-- E2E testnet: `BLOCKED` o buoc transfer on-chain that.
+- E2E testnet: `PARTIAL PASS` (full processor flow PASS, con thieu tx on-chain that tu sender funded).
 
 ## 8) Recommendation
 - Recommendation: `CONDITIONAL GO`
 - Dieu kien de len `GO`:
-  1. QA thuc hien transfer on-chain that tren BSC testnet cho luong deposit.
+  1. Release/DevOps cap fund sender testnet (`BNB + USDT`) de tao transfer that.
   2. Attach evidence tx hash testnet + xac nhan credit/withdraw/history sau transfer that.
   3. Release Manager/Tech Lead sign-off monitoring/rollback checklist.
+
+## 9) Re-run Snapshot (2026-04-03, local env audit)
+- Trigger:
+  - QA re-run theo yeu cau "ra soat lai toan bo do smooth/stable theo plan".
+- Gates:
+  - `npm run build`: PASS
+  - `npm run db:verify`: PASS
+- Wallet matrix (`scripts/run-wallet-matrix.mjs`, base `http://127.0.0.1:4030`):
+  - Tong quan: `overall = FAIL`
+  - Assertions: `4 PASS / 12 FAIL`
+  - Shape checks: `1 PASS / 2 FAIL`
+- Root cause:
+  - Env key chua dat entry criteria:
+    - `WALLET_ENCRYPTION_KEY`: missing (len=0, invalid 64-hex)
+    - `WALLET_INTERNAL_API_KEY`: missing
+  - Cac route `POST /api/v1/wallet/deposit-address` va `POST /api/v1/wallet/withdraw` tra `500 WALLET_ENV_INVALID`, dan den fail contract matrix.
+- Classification:
+  - Trang thai run nay: `BLOCKED` (environment blocker), khong du dieu kien ket luan smooth/stable tren local env hien tai.
+- Recommendation cap nhat:
+  - `NO-GO` cho local run nay cho den khi set dung wallet env keys theo release checklist va re-run matrix.
+
+## 10) Stage 2 Re-run Snapshot (2026-04-03, 15:43 UTC / 22:43 ICT)
+- Trigger:
+  - Execute Stage 2 theo execution checklist: contract re-run sau khi Stage 1 unblock env.
+- Gates:
+  - `npm run build`: PASS
+  - `npm run db:verify`: PASS
+- Wallet matrix (`node --env-file=.env scripts/run-wallet-matrix.mjs`, base `http://127.0.0.1:4030`):
+  - Tong quan: `overall = PASS`
+  - Assertions: `16 PASS / 0 FAIL`
+  - Shape checks: `3 PASS / 0 FAIL`
+- Sample evidence:
+  - QA users:
+    - `qa.wallet.a.1775205781325@ryex.local`
+    - `qa.wallet.b.1775205781325@ryex.local`
+  - `WALLET-CT-12`: `200`, `status=pending`, numeric fields dang string.
+  - `WALLET-CT-13`: `409 WITHDRAW_DUPLICATE_REQUEST`.
+  - `WALLET-CT-16`: `200`, co `transactions[]` + `pagination`.
+- Classification:
+  - Stage 2 status: `PASS`.
+- Recommendation cap nhat:
+  - Release gate quay lai `CONDITIONAL GO`.
+  - Dieu kien de len `GO`: hoan tat Chặng 3 (E2E testnet full flow co tx hash that) + sign-off release checklist.
