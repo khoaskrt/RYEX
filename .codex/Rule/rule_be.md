@@ -1,9 +1,10 @@
 ---
 name: ryex-be-skill
 description: Backend engineering rules for RYEX. Keep API contracts stable, secure server-side integrations, and strict route->service->repository boundaries.
+version: 1.4
 ---
 
-# RYEX BE Rule (Simple + Optimized) — v1.1
+# RYEX BE Rule (Simple + Optimized) — v1.4
 
 ## 1) Auth Pattern Consistency (CRITICAL)
 **BEFORE implementing any protected API endpoint:**
@@ -50,10 +51,12 @@ description: Backend engineering rules for RYEX. Keep API contracts stable, secu
 - Khi yêu cầu chưa rõ, BE có quyền phản biện hoặc hỏi thêm để tham vấn với bạn.
 - Chỉ hỏi ở mức rõ scope, expected behavior, data/contract impact; tránh sa vào câu hỏi quá sâu kỹ thuật khi chưa cần thiết.
 
-2. Kỷ luật cây thư mục tài liệu:
-- Khi ghi chép hệ thống, BE bắt buộc tuân theo cây thư mục docs đã được dựng sẵn (phiên bản tối ưu hiện tại).
-- Chỉ được thêm file tài liệu vào đúng folder chức năng tương ứng.
-- Nếu phát sinh tài liệu nằm ngoài phạm vi folder hiện có: chỉ được đề xuất tạo folder mới và phải có chấp thuận của bạn trước khi tạo.
+2. Kỷ luật cây thư mục tài liệu (bắt buộc đọc trước khi tạo `.md` mới):
+- **`docs/DOCUMENTATION_SCOPE.md`** — bảng cho phép/cấm theo loại nội dung; **`docs/INDEX.md`** — mục lục.
+- **BE:** spec/QA/handoff dài → `docs/features/<Module>/`; thay đổi schema → `db/migrations` + `db/schema/*.md` + `db/README.md` + cập nhật `docs/domain/data-sot.md` khi ảnh hưởng lineage/RLS map.
+- **Không** đặt báo cáo sản phẩm / incident / retrospective trong `.codex/` (ngoại trừ Skill/Rule đúng vai trò).
+- **Không** nhân đôi nội dung dài dưới `src/features/` — chỉ `README.md` pointer nếu cần.
+- Nếu cần thư mục `docs/features` mới hoặc loại tài liệu chưa có trong bảng: đề xuất + chấp thuận PO/BA trước khi tạo.
 
 3. Nghĩa vụ cập nhật tài liệu sau mỗi task/feature/epic:
 - Sau khi hoàn thành task/feature/epic, BE bắt buộc cập nhật tài liệu.
@@ -81,8 +84,16 @@ description: Backend engineering rules for RYEX. Keep API contracts stable, secu
 - Added strict docs tree governance (only existing folders; new folder requires explicit user approval).
 - Added mandatory post-task documentation update rule (review existing docs first; prefer updating existing docs/version before creating new file).
 
-## Feature Sync Rule (Mandatory)
-- Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
-  - `/Users/mac/Desktop/RYEX/docs/features`
-  - `/Users/mac/Desktop/RYEX/src/features`
-- Khi nhận prompt hỏi về một tính năng cụ thể, bắt buộc review cả hai thư mục trên cho feature liên quan trước khi phân tích/kết luận để đảm bảo đủ bối cảnh và dữ liệu ra quyết định.
+### v1.3 - 2026-04-04
+- **Alignment with `docs/DOCUMENTATION_SCOPE.md`:** Section 9 expanded with canonical paths for BE; removed obsolete “sync docs/features + src/features” for long-form spec.
+- **Documentation placement** section replaces legacy Feature Sync Rule.
+
+### v1.4 - 2026-04-04
+- **Documentation placement:** pointer to `DOCUMENTATION_SCOPE.md` **§5** (re-verify markdown paths after directory moves).
+
+## Documentation placement (Mandatory)
+- **Canonical:** [`docs/DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) + [`docs/INDEX.md`](../../docs/INDEX.md).
+- **PR có thêm/sửa `.md`:** checklist §3 trong `DOCUMENTATION_SCOPE.md`.
+- Nguồn spec đúng: `docs/features/`; `src/features` chỉ code + `README.md` trỏ link — không đồng bộ hai bản spec dài.
+- **Đổi cấu trúc thư mục:** checklist **§5** trong [`DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) (rà link/path trong doc).
+- **Đánh số & version (tổng quan):** [`DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) **§2.1** — file **Rule** này: `version` trong YAML frontmatter **khớp** tiêu đề `v1.4`; đổi rule bắt buộc → bump + Changelog.

@@ -31,13 +31,12 @@
 - `trusted_devices`
 - `audit_events`
 
-## 2) SQL source for copy-paste
-- `db/migrations/006_profile_and_watchlist_supabase_auth.sql`
+## 2) SQL source / baseline hiện tại trong repo
 
-This migration creates:
-- `public.profiles`
-- `public.user_watchlist_items`
-- RLS enabled on both tables with `auth.uid() = user_id` policies for `SELECT/INSERT/UPDATE/DELETE`.
+> **Lưu ý:** File `006_profile_and_watchlist_supabase_auth.sql` **không tồn tại** trong `db/migrations/` tại thời điểm cấu trúc lại repo (2026-04). Đừng trỏ link tới file giả định.
+
+- Profile user công khai hiện dùng bảng **`public.users`** (baseline: [`db/migrations/001.1_users_current_truth_baseline.sql`](../../../../db/migrations/001.1_users_current_truth_baseline.sql)), không phải bảng `profiles` riêng trừ khi sau này thêm migration.
+- Watchlist / mở rộng schema: cần migration mới + cập nhật `db/README.md` và `docs/domain/data-sot.md` khi triển khai.
 
 ## 3) Supabase CRUD code source
 - `src/shared/lib/supabase/profileCrud.js`

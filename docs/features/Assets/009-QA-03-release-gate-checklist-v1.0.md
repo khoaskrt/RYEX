@@ -16,7 +16,7 @@
 
 ## 4) Rollback/Hotfix Readiness
 - [x] Contract freeze note available: `003-Assets-api-contract-freeze-v1.0.md`
-- [x] Data baseline migration documented: `003_create_user_assets_current_truth.sql`
+- [x] Data baseline migration documented: `003.1_create_user_assets_current_truth.sql`
 - [x] QA report has owner + ETA for blocked item
 
 ## 5) Final Release Decision Rule

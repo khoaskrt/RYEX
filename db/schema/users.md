@@ -34,5 +34,5 @@ Lưu hồ sơ người dùng trong `public.users`.
   - `WITH CHECK (auth.uid() = supa_id)`
 
 ## Source
-- `db/migrations/001_users_current_truth_baseline.sql`
-- `db/migrations/002_fix_auth_handle_new_user_trigger.sql` (update trigger function `public.handle_new_user` for auth signup compatibility)
+- `db/migrations/001.1_users_current_truth_baseline.sql`
+- `db/migrations/002.1_fix_auth_handle_new_user_trigger.sql` (update trigger function `public.handle_new_user` for auth signup compatibility)

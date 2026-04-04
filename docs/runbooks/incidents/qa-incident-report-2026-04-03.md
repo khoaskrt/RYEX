@@ -70,15 +70,15 @@ Response:
 
 **Root Cause:**
 - Database trigger `public.handle_new_user()` có thể đã không được migrate đúng hoặc bị lỗi runtime
-- Migration file `db/migrations/002_fix_auth_handle_new_user_trigger.sql` đã sửa column legacy `user_id` → `supa_id` + `users_id`
+- Migration file `db/migrations/002.1_fix_auth_handle_new_user_trigger.sql` đã sửa column legacy `user_id` → `supa_id` + `users_id`
 - Tuy nhiên không rõ trigger này đã được apply vào Supabase production DB chưa
 
 **Current State:**
-- Application code ([src/app/api/v1/auth/signup/route.js](src/app/api/v1/auth/signup/route.js)) sử dụng:
+- Application code ([`src/app/api/v1/auth/signup/route.js`](../../../src/app/api/v1/auth/signup/route.js)) sử dụng:
   - Supabase Auth API: `supabase.auth.signUp()` (tạo auth.users record)
   - Postgres transaction: `withTransaction()` gọi `upsertUser()` (insert vào public.users)
-  - Repository layer ([src/server/auth/repository.js](src/server/auth/repository.js)) insert với columns: `users_id`, `supa_id`, `email`, `display_name`
-- Database baseline ([db/migrations/001_users_current_truth_baseline.sql](db/migrations/001_users_current_truth_baseline.sql)):
+  - Repository layer ([`src/server/auth/repository.js`](../../../src/server/auth/repository.js)) insert với columns: `users_id`, `supa_id`, `email`, `display_name`
+- Database baseline ([`db/migrations/001.1_users_current_truth_baseline.sql`](../../../db/migrations/001.1_users_current_truth_baseline.sql)):
   - Primary Key: `supa_id`
   - Unique index: `users_id`
   - Foreign key: `users_user_id_fkey` references `auth.users(id)`
@@ -103,7 +103,7 @@ Response:
 1. **Auth Signup Error (AUTH-10)**: 
    - Risk: Cannot verify if DB trigger `public.handle_new_user()` is correctly applied
    - Blocker: No psql access to Supabase DB
-   - Mitigation: Need DBA/DevOps to run `db/migrations/002_fix_auth_handle_new_user_trigger.sql` manually
+   - Mitigation: Need DBA/DevOps to run `db/migrations/002.1_fix_auth_handle_new_user_trigger.sql` manually
    - Impact: New user signups will fail with `500 AUTH_INTERNAL_ERROR`
 
 2. **Dev Server Restart Required**:
@@ -141,7 +141,7 @@ Response:
    WHERE routine_name = 'handle_new_user';
    
    -- If missing or incorrect, apply:
-   -- db/migrations/002_fix_auth_handle_new_user_trigger.sql
+   -- db/migrations/002.1_fix_auth_handle_new_user_trigger.sql
    ```
 
 2. **Test Auth Signup End-to-End**
@@ -184,7 +184,7 @@ Response:
 - Dev environment stability improved (WEB-01 resolved) but not production-ready
 
 **Unblock Conditions**:
-1. DBA/DevOps apply `db/migrations/002_fix_auth_handle_new_user_trigger.sql`
+1. DBA/DevOps apply `db/migrations/002.1_fix_auth_handle_new_user_trigger.sql`
 2. Verify signup API returns `201` for valid payload
 3. Complete Auth Pack P0 test cases (AUTH-01 to AUTH-09)
 4. Re-run QA gate with full Auth + User packs

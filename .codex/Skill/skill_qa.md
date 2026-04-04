@@ -1,6 +1,7 @@
 ---
 name: ryex-qa-skill
 description: QA execution skill for RYEX. Run fast, risk-first checks for auth, market realtime, and core profile APIs with clear PASS/FAIL/BLOCKED evidence.
+version: 1.1
 ---
 
 ## 0) Mandatory Pre-Task Rule Read
@@ -9,9 +10,10 @@ description: QA execution skill for RYEX. Run fast, risk-first checks for auth, 
   - `.codex (legacy path)`: `.codex/Rules/rule_qa.md`
 - Nếu chưa đọc rule, không được bắt đầu run test/verify/report cho task QA.
 - Nếu task/bug liên quan Database, bắt buộc review log migration trong `/Users/mac/Desktop/RYEX/db/migrations` trước khi test và kết luận.
+- **Khi tạo/sửa file `.md`:** đọc [`docs/DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) + [`docs/INDEX.md`](../../docs/INDEX.md); tuân **Documentation placement** trong `rule_qa.md`.
 
 
-# RYEX QA Skill (Simple + Optimized) — v1
+# RYEX QA Skill (Simple + Optimized) — v1.1
 
 ## 1) Project Context (Must Keep in Mind)
 - Stack: Next.js App Router + Route Handlers (`src/app/api/v1/*`) + domain services (`src/server/*`) + feature modules (`src/features/*`).
@@ -114,8 +116,8 @@ When a bug/incident happens:
 2. Add 1 nearby negative case for the same area.
 3. Record date and changed files touched by fix.
 
-## Feature Sync Rule (Mandatory)
-- Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
-  - `/Users/mac/Desktop/RYEX/docs/features`
-  - `/Users/mac/Desktop/RYEX/src/features`
-- Khi nhận prompt hỏi về một tính năng cụ thể, bắt buộc review cả hai thư mục trên cho feature liên quan trước khi phân tích/kết luận để đảm bảo đủ bối cảnh và dữ liệu ra quyết định.
+## Documentation placement (Mandatory)
+- Matrix, kết quả contract, E2E, gate → [`docs/features/<Module>/`](../../docs/features/); incident/postmortem → [`docs/runbooks/incidents/`](../../docs/runbooks/incidents/).
+- Living matrix (case tái hiện bug) → `.codex/Rule/qa-living-matrix.md` (đúng vai trò rule).
+- **Không** đặt báo cáo QA dài trong `.codex/` ngoài rule matrix; **PR có `.md`:** checklist §3 `DOCUMENTATION_SCOPE.md`.
+- **Đánh số & version:** `DOCUMENTATION_SCOPE.md` **§2.1** — file kết quả contract dùng tên `NNN-...-vX.Y` trong `docs/features`, không lẫn số migration.

@@ -1,10 +1,10 @@
 ---
 name: ryex-uiux-rule
 description: UI/UX Designer rules for RYEX. Keep design system consistent, user flows testable, and handoff artifacts production-ready for FE implementation.
-version: 1.0
+version: 1.2
 ---
 
-# RYEX UI/UX Rule (Simple + Optimized) — v1.0
+# RYEX UI/UX Rule (Simple + Optimized) — v1.2
 
 ## 1) Design System Consistency (CRITICAL)
 **BEFORE designing any new screen or component:**
@@ -128,15 +128,12 @@ version: 1.0
   - Acceptance criteria (Given/When/Then).
 - Tránh sa vào câu hỏi quá sâu kỹ thuật BE/FE khi chưa cần thiết.
 
-### 2. Kỷ luật cây thư mục tài liệu
-- Khi ghi chép hệ thống, UI/UX bắt buộc tuân theo cây thư mục docs đã được dựng sẵn (phiên bản tối ưu hiện tại).
-- Chỉ được thêm file tài liệu vào đúng folder chức năng tương ứng:
-  - UX flows, wireframes: `docs/features/[Feature]/ux-*.md`
-  - Interaction specs: `docs/features/[Feature]/interaction-spec-*.md`
-  - Component mapping: `docs/features/[Feature]/component-map-*.md`
-- Nếu phát sinh tài liệu nằm ngoài phạm vi folder hiện có:
-  - Chỉ được đề xuất tạo folder mới.
-  - Phải có chấp thuận của bạn (Product Owner/Lead) trước khi tạo.
+### 2. Kỷ luật cây thư mục tài liệu (bắt buộc đọc trước khi tạo `.md` mới)
+- **`docs/DOCUMENTATION_SCOPE.md`** + **`docs/INDEX.md`** — bảng cho phép/cấm thay cho tự đoán.
+- **UI/UX:** flow, wireframe, interaction spec, component mapping, handoff → **`docs/features/<Module>/`** (đặt tên theo quy ước trong `DOCUMENTATION_SCOPE.md` §2).
+- Export HTML / Stitch / prototype tĩnh → **`docs/design/<tên>/`** (không đặt dưới `src/features/**/stitch-source/`).
+- **Không** nhét tài liệu design dài vào `.codex/` hay root.
+- Thư mục mới: đề xuất + chấp thuận PO/Lead; cập nhật `docs/INDEX.md` nếu cần.
 
 ### 3. Nghĩa vụ cập nhật tài liệu sau mỗi task/feature/epic
 - Sau khi hoàn thành task/feature/epic, UI/UX bắt buộc cập nhật tài liệu.
@@ -265,6 +262,12 @@ Trước khi handoff cho FE, UI/UX phải self-check:
 
 ## Changelog
 
+### v1.1 - 2026-04-04
+- Aligned sections 13–14 with `docs/DOCUMENTATION_SCOPE.md`; replaced legacy Feature Sync Rule with **Documentation placement**; clarified `docs/design/` for Stitch/HTML exports.
+
+### v1.2 - 2026-04-04
+- **Documentation placement:** pointer to `DOCUMENTATION_SCOPE.md` **§5** (re-verify markdown paths after directory moves).
+
 ### v1.0 - 2026-04-02
 - Initial release: RYEX UI/UX Designer rules established.
 - Aligned with existing BA/FE/BE/QA rule structure.
@@ -273,8 +276,9 @@ Trước khi handoff cho FE, UI/UX phải self-check:
 - Defined collaboration boundaries with other roles.
 - Established mandatory pre-task rule read requirement.
 
-## Feature Sync Rule (Mandatory)
-- Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
-  - `/Users/mac/Desktop/RYEX/docs/features`
-  - `/Users/mac/Desktop/RYEX/src/features`
-- Khi nhận prompt hỏi về một tính năng cụ thể, bắt buộc review cả hai thư mục trên cho feature liên quan trước khi phân tích/kết luận để đảm bảo đủ bối cảnh và dữ liệu ra quyết định.
+## Documentation placement (Mandatory)
+- **Canonical:** [`docs/DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) + [`docs/INDEX.md`](../../docs/INDEX.md).
+- **PR có thêm/sửa `.md`:** checklist §3 trong `DOCUMENTATION_SCOPE.md`.
+- **Đổi cấu trúc thư mục:** checklist **§5** trong [`DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) (rà link/path trong doc).
+- Deliverable design nằm trong `docs/features/` hoặc `docs/design/`; không đồng bộ hai bản spec dài sang `src/features`.
+- **Đánh số & version:** `DOCUMENTATION_SCOPE.md` **§2.1**; **Rule** này: YAML `version` khớp tiêu đề `v1.2`.

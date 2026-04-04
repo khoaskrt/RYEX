@@ -1,7 +1,7 @@
 ---
 name: ryex-ba-skill
 description: Business Analyst execution skill for RYEX. Use to write concise BRD-lite outputs, prioritized backlog, and handoff-ready acceptance criteria.
-version: 1.1
+version: 1.2
 ---
 
 ## 0) Mandatory Pre-Task Rule Read
@@ -10,9 +10,10 @@ version: 1.1
   - `.codex (legacy path)`: `.codex/Rules/rule_ba.md`
 - Nếu chưa đọc rule, không được bắt đầu phân tích/viết output cho task BA.
 - Nếu task/bug liên quan Database, bắt buộc review log migration trong `/Users/mac/Desktop/RYEX/db/migrations` trước khi phân tích và đề xuất.
+- **Khi tạo/sửa file `.md`:** đọc [`docs/DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) + [`docs/INDEX.md`](../../docs/INDEX.md); tuân **Documentation placement** trong `rule_ba.md`.
 
 
-# RYEX BA Skill (Simple + Optimized) — v1.1
+# RYEX BA Skill (Simple + Optimized) — v1.2
 
 ## 0) Rule vs Skill Scope (BA)
 - Rule: các ràng buộc bắt buộc (không được vi phạm).
@@ -123,8 +124,8 @@ Khi nhận 1 yêu cầu mới, BA luôn bàn giao theo 6 block ngắn:
 3. Mỗi lần update ghi version + changelog ngắn.
 4. Archive tài liệu cũ, luôn giữ 1 bản active source-of-truth cho từng domain.
 
-## Feature Sync Rule (Mandatory)
-- Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
-  - `/Users/mac/Desktop/RYEX/docs/features`
-  - `/Users/mac/Desktop/RYEX/src/features`
-- Khi nhận prompt hỏi về một tính năng cụ thể, bắt buộc review cả hai thư mục trên cho feature liên quan trước khi phân tích/kết luận để đảm bảo đủ bối cảnh và dữ liệu ra quyết định.
+## Documentation placement (Mandatory)
+- BRD-lite, AC, handoff, impact map → [`docs/features/<Module>/`](../../docs/features/) — quy ước tên trong `DOCUMENTATION_SCOPE.md` §2.
+- Domain SoT → `docs/domain/` khi cập nhật lineage; plan → `docs/plans/`.
+- **Không** nhân đôi spec sang `src/features` (chỉ README pointer); **PR có `.md`:** checklist §3 `DOCUMENTATION_SCOPE.md`.
+- **Đánh số & version tài liệu:** `DOCUMENTATION_SCOPE.md` **§2.1** (`NNN-...-vX.Y` cho feature doc; bump `vX.Y` khi đổi nội dung đáng kể).

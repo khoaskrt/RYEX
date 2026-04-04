@@ -1,7 +1,7 @@
 ---
 name: ryex-uiux-skill
 description: UI/UX Designer execution skill for RYEX. Use to design product-ready screens, interaction specs, and design handoff artifacts aligned with Material 3 and fintech/crypto domain patterns.
-version: 1.0
+version: 1.1
 ---
 
 ## 0) Mandatory Pre-Task Rule Read
@@ -12,9 +12,10 @@ version: 1.0
   - `src/features/*/` để hiểu component patterns hiện tại
   - `tailwind.config.js` để nắm design tokens đang dùng
   - Các page đã implement để đảm bảo consistency
+- **Khi tạo/sửa file `.md`:** đọc [`docs/DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) + [`docs/INDEX.md`](../../docs/INDEX.md); tuân **Documentation placement** trong `rule_uiux.md`.
 
 
-# RYEX UI/UX Skill (Simple + Optimized) — v1.0
+# RYEX UI/UX Skill (Simple + Optimized) — v1.1
 
 ## 1) Project Context (Must Keep in Mind)
 - Product: RYEX crypto exchange MVP (web-first).
@@ -425,8 +426,7 @@ Portfolio empty:
 **Owner**: UI/UX Design Team
 **Status**: Active
 
-## Feature Sync Rule (Mandatory)
-- Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
-  - `/Users/mac/Desktop/RYEX/docs/features`
-  - `/Users/mac/Desktop/RYEX/src/features`
-- Khi nhận prompt hỏi về một tính năng cụ thể, bắt buộc review cả hai thư mục trên cho feature liên quan trước khi phân tích/kết luận để đảm bảo đủ bối cảnh và dữ liệu ra quyết định.
+## Documentation placement (Mandatory)
+- Flow, wireframe, interaction spec, component map, handoff → [`docs/features/<Module>/`](../../docs/features/); export HTML/Stitch → [`docs/design/<tên>/`](../../docs/design/).
+- **Không** đặt design doc dài trong `src/features/` hay `.codex/`; **PR có `.md`:** checklist §3 `DOCUMENTATION_SCOPE.md`.
+- **Đánh số & version:** `DOCUMENTATION_SCOPE.md` **§2.1**; bump `vX.Y` trong tên file khi handoff đổi đáng kể.

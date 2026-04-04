@@ -57,7 +57,7 @@
 **Goal**: Build pixel-perfect UI with hardcoded data for visual review and UX testing.
 
 **Tasks**:
-1. Set up page structure ([/app/withdraw/page.js](file:///Users/mac/Desktop/RYEX/src/app/(webapp)/app/withdraw/page.js))
+1. Set up page structure ([`src/app/(webapp)/app/withdraw/page.js`](../../../src/app/%28webapp%29/app/withdraw/page.js))
 2. Build tab navigation (Withdraw + History tabs)
 3. Implement form components (Step 1-5) with hardcoded coin/network data
 4. Build modals (Account Selection, Success)

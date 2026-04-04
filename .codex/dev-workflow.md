@@ -115,7 +115,7 @@ npm run dev
 2. SSL config in `.env`: `POSTGRES_SSL_NO_VERIFY=true`
 3. Tables exist: `auth_identities`, `user_sessions`, `audit_events`
 
-**Fix**: See [.codex/fix-auth-signup-2026-04-03.md](.codex/fix-auth-signup-2026-04-03.md)
+**Fix**: See [docs/runbooks/incidents/fix-auth-signup-2026-04-03.md](../docs/runbooks/incidents/fix-auth-signup-2026-04-03.md)
 
 ### Issue 3: Next.js Cache Issues
 
@@ -163,8 +163,8 @@ npm run db:verify
 
 ## Reference
 
-- QA Report: [.codex/qa-incident-report-2026-04-03.md](.codex/qa-incident-report-2026-04-03.md)
-- Auth Fix: [.codex/fix-auth-signup-2026-04-03.md](.codex/fix-auth-signup-2026-04-03.md)
+- QA Report: [docs/runbooks/incidents/qa-incident-report-2026-04-03.md](../docs/runbooks/incidents/qa-incident-report-2026-04-03.md)
+- Auth Fix: [docs/runbooks/incidents/fix-auth-signup-2026-04-03.md](../docs/runbooks/incidents/fix-auth-signup-2026-04-03.md)
 - Database Migrations: `db/migrations/`
 
 ---

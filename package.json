@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "db:verify": "node scripts/db/check-user-assets.mjs",
+    "db:verify": "node scripts/db/verify-schema.mjs",
+    "db:verify:assets": "node scripts/db/check-user-assets.mjs",
     "db:seed:assets": "node scripts/db/seed-user-assets.mjs",
     "db:location": "node scripts/db/check-db-location.mjs"
   },

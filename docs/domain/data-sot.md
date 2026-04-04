@@ -1,127 +1,129 @@
 # RYEX Data Domain SoT (MVP v1)
 
 ## 1) Document Control
-- Version: `v1.1`
+- Version: `v1.3`
 - Owner: `BA` (co-own: `BE`, `DB/Infra`, `QA`)
-- Last updated: `2026-04-02`
+- Last updated: `2026-04-04`
 - Status: `Active`
 - Parent docs:
   - `docs/00-system-map.md`
   - `docs/01-architecture-decisions.md`
   - `docs/contracts/api-v1.md`
-  - `docs/features/Assets/003-Assets-api-contract-freeze-v1.0.md`
-- Source-of-truth note: Đây là tài liệu active duy nhất cho data layer (`schema + migration + RLS`) theo current-truth baseline đang áp dụng.
+  - `db/README.md` (thứ tự migration + hai track Supabase vs legacy)
+- Source-of-truth note: Tài liệu **nghiệp vụ + lineage API** tại đây; chi tiết cột/constraint từng bảng tại `db/schema/*.md` và SQL tại `db/migrations/`.
 
-## 2) Problem Framing
+## 2) Phối hợp role (RACI gọn)
+| Hoạt động | BA | BE | DB/Infra | QA |
+|---|---|---|---|---|
+| Giữ `data-sot.md` và traceability business ↔ schema | **A/R** | C | C | I |
+| Viết/apply migration, đồng bộ `db/schema/*.md` | I | **R** | **A/R** (prod apply) | I |
+| `npm run db:verify` trên env target trước release | I | C | C | **R** (gate) |
+| Chốt khi nào bật RLS/policy Supabase cho bảng “UNRESTRICTED” | C | **R** | **A** | C |
+
+*(A = accountable, R = responsible, C = consulted, I = informed)*
+
+## 3) Problem Framing
 - Business goal:
-  - Duy trì baseline dữ liệu nhất quán với runtime hiện tại để giảm schema drift.
-  - Hỗ trợ handoff FE/BE/QA rõ ràng cho flow Profile và Assets.
-- User/ops pain đang giải quyết:
-  - Mismatch giữa migration history trong docs và migration thật trong repo.
-  - Khó kết luận root-cause khi API lỗi nếu source-of-truth không đồng bộ.
-- KPI theo dõi:
-  - `Migration apply success rate`.
-  - `Schema drift incident count`.
-  - `Data incident MTTR`.
+  - Baseline dữ liệu khớp runtime (Supabase + BE) để giảm schema drift.
+  - Handoff FE/BE/QA rõ ràng cho Profile, Assets, Auth, Wallet.
+- KPI: migration apply success rate; schema drift incident count; data incident MTTR.
 
-## 3) Data Architecture Overview (Current Runtime)
+## 4) Data Architecture Overview (Current Runtime)
 - Primary data store: PostgreSQL (Supabase-hosted).
 - Data access paths:
-  - Supabase service role (`src/shared/lib/supabase/server.js`) cho server-side read/write.
-  - Supabase client (`src/shared/lib/supabase/client.js`) cho client-side auth/session.
+  - Supabase **service role** (`src/shared/lib/supabase/server.js`, `src/server/db/postgres.js`) cho hầu hết API.
+  - Supabase **anon / user JWT** cho client; RLS áp dụng khi query trực tiếp qua PostgREST.
 - Security model:
-  - RLS bật cho bảng tracked trong baseline.
-  - Backend service role bypass RLS theo thiết kế cho API server-side.
+  - RLS: một số bảng bật policy `auth.uid()`; bảng auth/audit có thể **chưa** bật RLS trên dashboard tới khi có policy Supabase chuẩn (không dùng claim `firebase_uid` từ file legacy `005`).
+  - Service role **bypass RLS** — vẫn phải kiểm soát quyền ở tầng API.
 
-## 4) Schema Map (Current Truth Baseline)
+## 5) Schema Map (Current Truth — public)
 | Table | Purpose | Keys/Constraints chính | Consumed by |
 |---|---|---|---|
-| `users` | Hồ sơ user nội bộ map theo Supabase user id | PK `supa_id`; FK `supa_id -> auth.users(id)`; unique `users_id` | Signup trigger sync, profile flow, user lookup |
-| `user_assets` | Số dư tài sản theo user/symbol/account_type | PK `(user_id,symbol,account_type)`; FK `user_id -> users.supa_id`; check `account_type` | `GET /api/v1/user/assets` |
+| `users` | Profile nội bộ | PK `supa_id` → `auth.users`; unique `users_id` | Trigger signup, profile API |
+| `user_assets` | Số dư theo symbol/account | PK `(user_id, symbol, account_type)` | Assets API |
+| `auth_identities` | Provider/password + verify | FK `user_id → users.users_id`; unique `(supa_id, provider)` | Auth repository |
+| `auth_verification_events` | Log verify/resend/challenge | Indexes theo user/type/time | Auth rate-limit / audit |
+| `auth_login_events` | Log login success/fail | Indexes theo user/result | Security audit |
+| `user_sessions` | Phiên đăng nhập | `session_ref` unique | Session lifecycle |
+| `audit_events` | Audit tổng quát | `actor_type` check | Ops / compliance nhẹ |
+| `trusted_devices` | Thiết bị tin cậy | Unique `(user_id, device_id)` | Login challenge (xem FK note trong `db/schema/trusted_devices.md`) |
+| `user_wallets` | Custodial wallet | Unique `(user_id, chain)` | Wallet deposit |
+| `wallet_transactions` | Lịch sử nap/rút | Status/type checks; idempotency indexes | Wallet APIs + processor |
+| `deposit_monitor_state` | Checkpoint scan | PK `wallet_id` | Deposit monitor job |
+| `withdraw_limits` | Hạn mức rut | PK `user_id` | Withdraw validation |
 
-## 5) Migration Map (Current Truth)
-| Order | File | Type | Summary | Affected objects |
-|---|---|---|---|---|
-| `001` | `db/migrations/001_users_current_truth_baseline.sql` | Baseline | Tạo/chuẩn hóa bảng `users` + PK/FK/index + RLS policies | `users` |
-| `002` | `db/migrations/002_fix_auth_handle_new_user_trigger.sql` | Patch | Sửa trigger `public.handle_new_user()` để insert/upsert đúng theo `supa_id` + `users_id` | `users`, trigger function |
-| `003` | `db/migrations/003_create_user_assets_current_truth.sql` | Additive | Tạo bảng `user_assets`, constraints, index, comments, RLS policies | `user_assets` |
-
-## 6) RLS Map (Current Baseline)
-### 6.1 RLS enabled tables
-- `users`
-- `user_assets`
-
-### 6.2 Policy matrix
-| Table | Own-data policy (authenticated context) | Service role behavior |
+## 6) Migration Map — Track Supabase (khuyến nghị)
+| Order | File | Summary |
 |---|---|---|
-| `users` | `profiles_select_own`, `profiles_insert_own`, `profiles_update_own` (`auth.uid() = supa_id`) | Service role bypass theo server-side design |
-| `user_assets` | `user_assets_select_own`, `user_assets_insert_own`, `user_assets_update_own`, `user_assets_delete_own` (`auth.uid() = user_id`) | Service role bypass theo server-side design |
+| 1 | `001.1_users_current_truth_baseline.sql` | `users` + RLS profile |
+| 2 | `002.1_fix_auth_handle_new_user_trigger.sql` | Trigger signup |
+| 3 | `003.1_create_user_assets_current_truth.sql` | `user_assets` |
+| 4 | `010_create_auth_identities_compat.sql` | Auth + session + audit (FK `users.users_id`) |
+| 5 | `006_create_user_wallets.sql` | Wallet |
+| 6 | `007_create_wallet_transactions.sql` | Tx history |
+| 7 | `008_create_deposit_monitor_state.sql` | Monitor state |
+| 8 | `009_create_withdraw_limits.sql` | Limits |
 
-## 7) API/Service -> Table Lineage (Current)
-| Runtime flow | Read/Write path | Tables chính |
+**Legacy / không mix:** `001.2_auth_identity_baseline.sql`, `005_enable_rls_policies.sql` (Firebase JWT), `003.2_auth_trusted_devices.sql` (FK `users(id)`) — xem `db/README.md` §2.
+
+## 7) RLS Map (tóm tắt)
+### 7.1 Đã định nghĩa trong migration repo (Supabase / wallet)
+| Table | RLS | Ghi chú |
 |---|---|---|
-| Auth new-user trigger sync | Supabase Auth trigger -> SQL function | `users` |
-| Profile GET/PATCH | Supabase service role | `users` |
-| Assets GET (`/api/v1/user/assets`) | Supabase service role + market enrich | `user_assets` |
+| `users` | Enabled | `profiles_*` / `auth.uid() = supa_id` |
+| `user_assets` | Enabled | own-row policies |
+| `user_wallets` | Enabled | `SELECT` own (`auth.uid() = user_id`) |
+| `wallet_transactions` | Enabled | `SELECT` own (`auth.uid() = user_id`) |
+| `deposit_monitor_state` | **Không** trong migration hiện tại | Chỉ server/jobs ghi |
+| `withdraw_limits` | **Không** trong migration hiện tại | Chỉ server ghi |
 
-## 8) FE/BE/QA Impact Map
-### FE impact
-- FE Profile và Assets phụ thuộc trực tiếp data shape từ `users` và `user_assets`.
-- Empty/error state cần bám contract hiện hành để tránh false error UX.
+### 7.2 Auth / audit (dashboard có thể UNRESTRICTED)
+- `auth_identities`, `auth_verification_events`, `auth_login_events`, `user_sessions`, `audit_events`, `trusted_devices`: có thể **chưa** bật RLS trên Supabase cho tới khi có policy dùng `auth.uid()` hoặc `service_role` đúng chuẩn Supabase.
+- File `005_enable_rls_policies.sql` là **mẫu Firebase-era** — không coi là baseline RLS cho Supabase mà không review.
 
-### BE impact
-- BE phải giữ migration-first discipline, tránh query tới bảng không nằm trong baseline.
-- Khi đổi schema `users`/`user_assets`, bắt buộc cập nhật migration + schema snapshot + SoT.
+### 7.3 Policy matrix (JWT context, khi RLS bật)
+| Table | Own-data pattern | Service role |
+|---|---|---|
+| `users` | `auth.uid() = supa_id` | Bypass (server) |
+| `user_assets` | `auth.uid() = user_id` | Bypass |
+| `user_wallets` / `wallet_transactions` | `auth.uid() = user_id` | Bypass |
 
-### QA impact
-- Regression data pack tối thiểu:
-  - `db:verify` pass cho `user_assets`.
-  - Assets API happy/unauthorized/empty/state shape.
-  - Profile API unauthorized/happy path.
+## 8) API/Service → Table Lineage (mở rộng)
+| Runtime flow | Path | Tables |
+|---|---|---|
+| Signup / verify | Auth API + trigger | `users`, `auth_identities`, `auth_verification_events` |
+| Login / session | Auth API | `auth_login_events`, `user_sessions`, `trusted_devices` |
+| Profile | API | `users` |
+| Assets | API | `user_assets` |
+| Wallet | API + processor | `user_wallets`, `wallet_transactions`, `deposit_monitor_state`, `withdraw_limits`, `user_assets` |
 
-## 9) Runtime Gap (Expected vs Current)
-| Gap ID | Expected | Current runtime | Direction |
-|---|---|---|---|
-| G-DATA-01 | Migration history trong docs khớp repo | Đã đồng bộ về `001->003`, nhưng cần duy trì kỷ luật update sau mỗi change | Enforce checklist update docs sau DB task |
-| G-DATA-02 | Error-path QA coverage đầy đủ cho Assets | Nhánh `500 ASSET_FETCH_FAILED` đang QA `BLOCKED` vì thiếu fault-injection sandbox | Bổ sung QA sandbox hoặc test hook non-prod |
+## 9) FE/BE/QA Impact
+- **FE:** phụ thuộc contract API; không giả định RLS cho phép client đọc trực tiếp mọi bảng.
+- **BE:** mọi thay đổi schema → migration + `db/schema/*.md` + cập nhật mục 5–7 trong file này.
+- **QA:** `npm run db:verify` phải PASS trên env test trước gate; bổ sung case khi bật RLS mới.
 
-## 10) Risks + Open Decisions
-| Risk | Type | Mô tả | Mitigation ngắn hạn |
-|---|---|---|---|
-| R-DATA-01 | Operational | Apply sai thứ tự migration gây lệch schema | Bắt buộc checklist apply order `001->002->003` |
-| R-DATA-02 | Security | Hiểu sai RLS khi backend dùng service role | Ghi rõ service-role bypass trong review checklist |
-| R-DATA-03 | QA | Thiếu test nhánh lỗi DB có kiểm soát | Chốt owner BE cho fault-injection path |
+## 10) Runtime Gap (Expected vs Current)
+| Gap ID | Expected | Direction |
+|---|---|---|
+| G-DATA-01 | Docs khớp repo | Đã đồng bộ `db/README.md` + schema map v1.2; duy trì sau mỗi DB change |
+| G-DATA-02 | RLS đồng nhất dashboard | Chốt migration policy Supabase cho bảng auth/ops hoặc ghi rõ “server-only” |
 
-Decisions cần PO/Tech Lead/BE chốt:
-- Chọn hướng xử lý `ASSET-CT-06` (`QA sandbox DB` hoặc `test hook non-prod`).
-- Mốc thời gian chuẩn hóa response envelope Assets sang `{ data, meta }`.
+## 11) Risks
+| Risk | Mitigation |
+|---|---|
+| Apply sai track (hai `001`) | Chỉ Track A trong `db/README.md` §2 |
+| Policy legacy `005` trên Supabase | Review trước khi apply; ưu tiên policy `auth.uid()` |
 
-## 11) Traceability Backbone (Data)
-Mọi data change phải map theo chuỗi:
-
-`Business goal -> User story -> AC -> Schema/Migration impact -> API impact -> QA data cases`
-
-Ví dụ:
-- Goal: đưa Assets API vào vận hành ổn định.
-- Story: user đăng nhập xem được tổng tài sản và danh sách coin.
-- AC: `200` happy/empty và `401` unauthorized đúng contract.
-- Data impact: thêm `user_assets` migration + schema snapshot.
-- QA: chạy matrix `ASSET-CT-01..06`.
-
-## 12) Change Control
-- Không đổi schema/constraint/policy đã chốt nếu chưa đánh giá impact FE/BE/QA.
-- Mọi thay đổi sau chốt phải thêm `Delta`:
-  - `Changed`
-  - `Reason`
-  - `Impact`
-- Versioning:
-  - Minor: `v1.0 -> v1.1`
-  - Major: `v1.x -> v2.0`
+## 12) Traceability + Change Control
+- Chuỗi: `Goal → Story → AC → Migration + schema snapshot → API → QA`
+- Đổi schema: Delta trong PR + bump minor SoT.
 
 ## 13) Delta
-- `v1.1` (2026-04-02):
-  - Synced migration map to current-truth files `001->003`.
-  - Updated schema/RLS/lineage to include `user_assets` baseline.
-  - Removed legacy migration references causing mismatch with runtime docs.
-- `v1.0` (2026-03-31):
-  - Created initial Data domain source-of-truth.
+- `v1.3` (2026-04-04):
+  - Đổi tên migration trùng số: `001.1`/`001.2` (users Supabase vs auth legacy), `002.1`/`002.2`, `003.1`/`003.2`; cập nhật mọi tham chiếu trong repo.
+- `v1.2` (2026-04-04):
+  - Mở rộng schema map, migration map (Track Supabase + legacy pointer), RLS map, lineage API, RACI role.
+  - Trỏ `db/README.md` và `db/schema/*` cho toàn bộ bảng public đang tài liệu hóa.
+- `v1.1` (2026-04-02): Baseline `users` + `user_assets` sync.
+- `v1.0` (2026-03-31): Khởi tạo SoT.

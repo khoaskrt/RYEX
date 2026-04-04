@@ -2,7 +2,7 @@
 /**
  * Apply Migration Script
  * Usage: node scripts/db/apply-migration.mjs <migration-file-name>
- * Example: node scripts/db/apply-migration.mjs 002_fix_auth_handle_new_user_trigger.sql
+ * Example: node scripts/db/apply-migration.mjs 002.1_fix_auth_handle_new_user_trigger.sql
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -25,7 +25,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 const migrationFile = process.argv[2];
 if (!migrationFile) {
   console.error('❌ Usage: node scripts/db/apply-migration.mjs <migration-file-name>');
-  console.error('   Example: node scripts/db/apply-migration.mjs 002_fix_auth_handle_new_user_trigger.sql');
+  console.error('   Example: node scripts/db/apply-migration.mjs 002.1_fix_auth_handle_new_user_trigger.sql');
   process.exit(1);
 }
 

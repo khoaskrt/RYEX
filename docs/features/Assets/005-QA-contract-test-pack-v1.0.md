@@ -6,7 +6,7 @@
 - Goal: Verify `status + response shape + error.code` theo contract freeze.
 
 ## 2) Preconditions
-- DB đã apply: `003_create_user_assets_current_truth.sql`
+- DB đã apply: `003.1_create_user_assets_current_truth.sql`
 - Có ít nhất 1 user hợp lệ (token hợp lệ).
 - Có thể chuẩn bị 2 loại user data:
   - User A: có records trong `user_assets`

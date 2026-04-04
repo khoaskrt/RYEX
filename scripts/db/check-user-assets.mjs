@@ -19,7 +19,7 @@ if (error) {
     console.log('❌ Table user_assets does NOT exist');
     console.log('   Error:', error.message);
     console.log('\n📋 Solution: Apply migration via Supabase Dashboard SQL Editor:');
-    console.log('   File: db/migrations/003_create_user_assets_current_truth.sql\n');
+    console.log('   File: db/migrations/003.1_create_user_assets_current_truth.sql\n');
   } else {
     console.log('❌ Query error:', error);
   }

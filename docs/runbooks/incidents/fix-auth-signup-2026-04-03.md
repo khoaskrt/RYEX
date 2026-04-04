@@ -33,7 +33,7 @@ POSTGRES_SSL_NO_VERIFY="true"
 NODE_TLS_REJECT_UNAUTHORIZED="0"
 ```
 
-And updated [src/server/db/postgres.js](src/server/db/postgres.js):
+And updated [src/server/db/postgres.js](../../../src/server/db/postgres.js):
 ```js
 ssl: resolveSslConfig(connectionString) || { rejectUnauthorized: false }
 ```
@@ -57,8 +57,8 @@ ssl: resolveSslConfig(connectionString) || { rejectUnauthorized: false }
 ## Schema Alignment
 
 ### Before (Broken)
-- Migration `001_auth_identity_baseline.sql`: used `firebase_uid` schema
-- `001_users_current_truth_baseline.sql`: used `supa_id` + `users_id` schema
+- Migration `001.2_auth_identity_baseline.sql`: used `firebase_uid` schema
+- `001.1_users_current_truth_baseline.sql`: used `supa_id` + `users_id` schema
 - **Conflict**: Cannot create `auth_identities` with FK to non-existent columns
 
 ### After (Fixed)
@@ -70,12 +70,12 @@ ssl: resolveSslConfig(connectionString) || { rejectUnauthorized: false }
 
 ## Files Changed
 
-1. [.env](.env): Added SSL bypass env vars (dev only)
-2. [src/server/db/postgres.js](src/server/db/postgres.js): Added fallback SSL config
-3. [db/migrations/010_create_auth_identities_compat.sql](db/migrations/010_create_auth_identities_compat.sql): Created compatible schema
-4. [scripts/db/create-auth-trigger.mjs](scripts/db/create-auth-trigger.mjs): Trigger creation script
-5. [scripts/db/verify-auth-trigger.mjs](scripts/db/verify-auth-trigger.mjs): Verification script
-6. [scripts/db/apply-single-migration.mjs](scripts/db/apply-single-migration.mjs): Migration runner
+1. [`.env`](../../../.env) (repo root): Added SSL bypass env vars (dev only)
+2. [`src/server/db/postgres.js`](../../../src/server/db/postgres.js): Added fallback SSL config
+3. [`db/migrations/010_create_auth_identities_compat.sql`](../../../db/migrations/010_create_auth_identities_compat.sql): Created compatible schema
+4. [`scripts/db/create-auth-trigger.mjs`](../../../scripts/db/create-auth-trigger.mjs): Trigger creation script
+5. [`scripts/db/verify-auth-trigger.mjs`](../../../scripts/db/verify-auth-trigger.mjs): Verification script
+6. [`scripts/db/apply-single-migration.mjs`](../../../scripts/db/apply-single-migration.mjs): Migration runner
 
 ---
 
@@ -156,9 +156,9 @@ curl -X POST http://localhost:3000/api/v1/auth/signup \
 ---
 
 ## Reference
-- QA Incident Report: [.codex/qa-incident-report-2026-04-03.md](.codex/qa-incident-report-2026-04-03.md)
-- Auth Baseline Migrations: `db/migrations/001_users_current_truth_baseline.sql`
-- Trigger Fix: `db/migrations/002_fix_auth_handle_new_user_trigger.sql`
+- QA Incident Report: [qa-incident-report-2026-04-03.md](./qa-incident-report-2026-04-03.md)
+- Auth Baseline Migrations: `db/migrations/001.1_users_current_truth_baseline.sql`
+- Trigger Fix: `db/migrations/002.1_fix_auth_handle_new_user_trigger.sql`
 - Schema Compat: `db/migrations/010_create_auth_identities_compat.sql`
 
 ---

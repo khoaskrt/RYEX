@@ -111,9 +111,9 @@ Ghi chú contract:
 | `audit_events` | Audit trail hành động hệ thống/người dùng |
 
 Migration liên quan:
-- `001_auth_identity_baseline.sql`
-- `002_auth_users_status_length_fix.sql`
-- `003_auth_trusted_devices.sql`
+- `001.2_auth_identity_baseline.sql`
+- `002.2_auth_users_status_length_fix.sql`
+- `003.2_auth_trusted_devices.sql`
 - `004_auth_verification_event_types.sql`
 - `005_enable_rls_policies.sql`
 

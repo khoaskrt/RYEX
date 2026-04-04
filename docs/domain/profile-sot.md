@@ -84,7 +84,7 @@ Ghi chú contract:
 | Supabase Auth user payload | Cung cấp trạng thái `emailVerified` khi đọc profile |
 
 Schema liên quan:
-- `db/migrations/001_users_current_truth_baseline.sql` (định nghĩa `public.users` current truth)
+- `db/migrations/001.1_users_current_truth_baseline.sql` (định nghĩa `public.users` current truth)
 - `db/migrations/005_enable_rls_policies.sql` (RLS policies)
 
 RLS note:

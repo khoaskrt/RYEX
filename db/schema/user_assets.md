@@ -38,4 +38,4 @@ Lưu số dư tài sản người dùng theo từng loại tài khoản trong `p
   - `USING (auth.uid() = user_id)`
 
 ## Source
-- `db/migrations/003_create_user_assets_current_truth.sql`
+- `db/migrations/003.1_create_user_assets_current_truth.sql`

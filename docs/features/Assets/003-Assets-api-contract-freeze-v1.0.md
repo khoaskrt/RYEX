@@ -101,4 +101,4 @@ Note: `404` đang là nhánh reserve trong route; hiện runtime chủ yếu tr�
 ## 6) Source of Freeze
 - Route: `src/app/api/v1/user/assets/route.js`
 - Domain payload builder: `src/server/user/assetsRepository.js`
-- Data baseline: `db/migrations/003_create_user_assets_current_truth.sql`
+- Data baseline: `db/migrations/003.1_create_user_assets_current_truth.sql`

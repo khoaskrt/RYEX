@@ -38,7 +38,7 @@ async function verifyAuthTrigger() {
 
     if (funcCheck.rows.length === 0) {
       console.error('❌ Function handle_new_user() NOT FOUND');
-      console.log('\n💡 Action required: Apply migration 002_fix_auth_handle_new_user_trigger.sql');
+      console.log('\n💡 Action required: Apply migration 002.1_fix_auth_handle_new_user_trigger.sql');
       process.exit(1);
     }
 
@@ -103,7 +103,7 @@ async function verifyAuthTrigger() {
 
     if (missingColumns.length > 0) {
       console.error('\n❌ Missing required columns:', missingColumns.join(', '));
-      console.log('💡 Run migration 001_users_current_truth_baseline.sql first');
+      console.log('💡 Run migration 001.1_users_current_truth_baseline.sql first');
       process.exit(1);
     }
 

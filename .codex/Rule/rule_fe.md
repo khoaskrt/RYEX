@@ -1,10 +1,10 @@
 ---
 name: ryex-fe-skill
 description: Frontend execution rules for RYEX. Use when editing UI in this repo to preserve design consistency, strict scope boundaries, and market-baseline header/footer and token icon standards.
-version: 1.1
+version: 1.4
 ---
 
-# RYEX FE Rule (Simple + Optimized) — v1.1
+# RYEX FE Rule (Simple + Optimized) — v1.4
 
 ## 1) Project Context (Must Keep in Mind)
 - Stack: Next.js App Router (`src/app`) + domain modules (`src/features/*`).
@@ -75,10 +75,10 @@ After editing:
 - Khi yêu cầu chưa rõ, FE có quyền phản biện hoặc hỏi thêm để tham vấn với bạn.
 - Chỉ hỏi ở mức rõ scope, mục tiêu UX, expected behavior, acceptance; tránh sa vào câu hỏi quá sâu kỹ thuật khi chưa cần thiết.
 
-2. Kỷ luật cây thư mục tài liệu:
-- Khi ghi chép hệ thống, FE bắt buộc tuân theo cây thư mục docs đã được dựng sẵn (phiên bản tối ưu hiện tại).
-- Chỉ được thêm file tài liệu vào đúng folder chức năng tương ứng.
-- Nếu phát sinh tài liệu nằm ngoài phạm vi folder hiện có: chỉ được đề xuất tạo folder mới và phải có chấp thuận của bạn trước khi tạo.
+2. Kỷ luật cây thư mục tài liệu (bắt buộc đọc trước khi tạo `.md` mới):
+- **`docs/DOCUMENTATION_SCOPE.md`** + **`docs/INDEX.md`**.
+- **FE:** ghi chú handoff UI, mapping component (nếu cần) → `docs/features/<Module>/`; **không** tạo spec/QA dài trong `src/features/` (chỉ `README.md` pointer).
+- Static asset: chỉ **`public/images/`** (URL `/images/...`); không thêm thư mục `images/` ở root repo.
 
 3. Nghĩa vụ cập nhật tài liệu sau mỗi task/feature/epic:
 - Sau khi hoàn thành task/feature/epic, FE bắt buộc cập nhật tài liệu.
@@ -102,8 +102,15 @@ After editing:
 - Added strict docs tree governance (only existing folders; new folder requires explicit user approval).
 - Added mandatory post-task documentation update rule (review existing docs first; prefer updating existing docs/version before creating new file).
 
-## Feature Sync Rule (Mandatory)
-- Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
-  - `/Users/mac/Desktop/RYEX/docs/features`
-  - `/Users/mac/Desktop/RYEX/src/features`
-- Khi nhận prompt hỏi về một tính năng cụ thể, bắt buộc review cả hai thư mục trên cho feature liên quan trước khi phân tích/kết luận để đảm bảo đủ bối cảnh và dữ liệu ra quyết định.
+### v1.3 - 2026-04-04
+- Aligned with `docs/DOCUMENTATION_SCOPE.md`; replaced legacy Feature Sync Rule with **Documentation placement**; clarified `public/images` only.
+
+### v1.4 - 2026-04-04
+- **Documentation placement:** pointer to `DOCUMENTATION_SCOPE.md` **§5** (re-verify markdown paths after directory moves).
+
+## Documentation placement (Mandatory)
+- **Canonical:** [`docs/DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) + [`docs/INDEX.md`](../../docs/INDEX.md).
+- **PR có thêm/sửa `.md`:** checklist §3 trong `DOCUMENTATION_SCOPE.md`.
+- **Đổi cấu trúc thư mục:** checklist **§5** trong [`DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) (rà link/path trong doc).
+- Đọc spec/handoff từ `docs/features/`; code nằm trong `src/features/` — không trùng vai trò.
+- **Đánh số & version:** `DOCUMENTATION_SCOPE.md` **§2.1**; **Rule** này: YAML `version` khớp tiêu đề `v1.4`.

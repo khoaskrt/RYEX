@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
- * Apply All Auth Migrations
- * Run all pending database migrations in order
+ * Legacy helper — danh sách file bên dưới KHÔNG khớp Track Supabase khuyến nghị
+ * (không apply đồng thời 001.1 + 001.2 trên cùng DB).
+ *
+ * Nguồn thật cho thứ tự bootstrap: db/README.md (§2 Track A).
+ * Script giữ lại để tham chiếu lịch sử; ưu tiên apply tay theo README trên project mới.
  */
 
 import { Pool } from 'pg';
@@ -22,10 +25,10 @@ if (!DATABASE_URL) {
 
 // Migrations to apply in order
 const MIGRATIONS = [
-  '001_users_current_truth_baseline.sql',
-  '001_auth_identity_baseline.sql',
-  '002_fix_auth_handle_new_user_trigger.sql',
-  '003_auth_trusted_devices.sql',
+  '001.1_users_current_truth_baseline.sql',
+  '001.2_auth_identity_baseline.sql',
+  '002.1_fix_auth_handle_new_user_trigger.sql',
+  '003.2_auth_trusted_devices.sql',
   '004_auth_verification_event_types.sql',
 ];
 

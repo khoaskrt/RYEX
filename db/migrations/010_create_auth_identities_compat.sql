@@ -1,6 +1,6 @@
 -- Create auth_identities compatible with current users schema
 -- Date: 2026-04-03
--- Context: Original 001_auth_identity_baseline.sql uses firebase_uid, but users table uses supa_id
+-- Context: Original 001.2_auth_identity_baseline.sql uses firebase_uid, but users table uses supa_id
 
 BEGIN;
 

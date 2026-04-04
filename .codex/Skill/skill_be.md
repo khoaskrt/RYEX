@@ -1,6 +1,7 @@
 ---
 name: ryex-be-skill
 description: Backend engineering execution rules for RYEX. Use when editing API routes, server domain logic, auth/session, database access, and third-party market/auth integrations.
+version: 1.1
 ---
 
 ## 0) Mandatory Pre-Task Rule Read
@@ -9,6 +10,7 @@ description: Backend engineering execution rules for RYEX. Use when editing API 
   - `.codex (legacy path)`: `.codex/Rules/rule_be.md`
 - Nếu chưa đọc rule, không được bắt đầu edit/code/test cho task BE.
 - Nếu task/bug liên quan Database, bắt buộc review log migration trong `/Users/mac/Desktop/RYEX/db/migrations` trước khi code/fix.
+- **Khi tạo/sửa file `.md`:** đọc [`docs/DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) + [`docs/INDEX.md`](../../docs/INDEX.md); tuân **Documentation placement** trong `rule_be.md`.
 
 
 # RYEX BE Skill (Simple + Optimized) — v1
@@ -114,8 +116,8 @@ After coding:
 - DB layer: `src/server/db/postgres.js`
 - Shared server env: `src/shared/lib/env.server.js`
 
-## Feature Sync Rule (Mandatory)
-- Khi có bổ sung thông tin/nội dung cho một file hoặc tính năng mới, bắt buộc cập nhật đồng bộ cả hai nơi:
-  - `/Users/mac/Desktop/RYEX/docs/features`
-  - `/Users/mac/Desktop/RYEX/src/features`
-- Khi nhận prompt hỏi về một tính năng cụ thể, bắt buộc review cả hai thư mục trên cho feature liên quan trước khi phân tích/kết luận để đảm bảo đủ bối cảnh và dữ liệu ra quyết định.
+## Documentation placement (Mandatory)
+- **Nguồn spec/QA/handoff dài:** chỉ [`docs/features/<Module>/`](../../docs/features/) (xem bảng trong `DOCUMENTATION_SCOPE.md`).
+- **`src/features/<module>/`:** code + tối đa `README.md` trỏ link — **không** nhân đôi spec dài.
+- **DB / SoT:** migration + `db/schema/*.md` + `docs/domain/data-sot.md` khi đổi lineage; **PR có `.md`:** checklist §3 `DOCUMENTATION_SCOPE.md`.
+- **Đánh số & version:** [`docs/DOCUMENTATION_SCOPE.md`](../../docs/DOCUMENTATION_SCOPE.md) **§2.1** — tách `NNN` doc feature vs `001.x` migration vs version **Rule/Skill**; không dùng cùng một quy tắc số cho cả ba.
