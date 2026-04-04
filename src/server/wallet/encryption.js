@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
 import { WalletError } from './errors.js';
+import { parseWalletEncryptionKey } from './config.js';
 
 const ALGORITHM = 'aes-256-gcm';
-const KEY_BYTES = 32;
 
 function getEncryptionKeyBuffer() {
   const raw = process.env.WALLET_ENCRYPTION_KEY || '';
@@ -11,13 +11,13 @@ function getEncryptionKeyBuffer() {
     throw new WalletError('WALLET_CREATION_FAILED', 'Wallet encryption key is missing', 500);
   }
 
-  if (!/^[a-fA-F0-9]{64}$/.test(raw)) {
-    throw new WalletError('WALLET_CREATION_FAILED', 'Wallet encryption key must be a 64-char hex string', 500);
-  }
-
-  const key = Buffer.from(raw, 'hex');
-  if (key.length !== KEY_BYTES) {
-    throw new WalletError('WALLET_CREATION_FAILED', 'Wallet encryption key must be 32 bytes', 500);
+  const key = parseWalletEncryptionKey(raw);
+  if (!key) {
+    throw new WalletError(
+      'WALLET_CREATION_FAILED',
+      'Wallet encryption key must be a 32-byte key in hex(64) or base64 format',
+      500
+    );
   }
 
   return key;
