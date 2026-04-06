@@ -1,15 +1,10 @@
 export const TRADING_PAIRS = [
   { symbol: 'BTCUSDT', base: 'BTC', quote: 'USDT', name: 'Bitcoin' },
-  { symbol: 'ETHUSDT', base: 'ETH', quote: 'USDT', name: 'Ethereum' },
-  { symbol: 'SOLUSDT', base: 'SOL', quote: 'USDT', name: 'Solana' },
-  { symbol: 'BNBUSDT', base: 'BNB', quote: 'USDT', name: 'BNB' },
-  { symbol: 'XRPUSDT', base: 'XRP', quote: 'USDT', name: 'Ripple' },
 ];
 
 export const ORDER_TYPES = {
   LIMIT: 'limit',
   MARKET: 'market',
-  STOP_LIMIT: 'stop-limit',
 };
 
 export const ORDER_SIDES = {
@@ -18,9 +13,7 @@ export const ORDER_SIDES = {
 };
 
 export const TIME_IN_FORCE = {
-  GTC: 'GTC', // Good Till Cancel
-  IOC: 'IOC', // Immediate or Cancel
-  FOK: 'FOK', // Fill or Kill
+  GTC: 'GTC',
 };
 
 export const CHART_INTERVALS = [
@@ -33,3 +26,5 @@ export const CHART_INTERVALS = [
   { label: '1D', value: '1d' },
   { label: '1W', value: '1w' },
 ];
+
+export const TRADING_POLLING_MS = 10000;

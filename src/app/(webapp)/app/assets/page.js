@@ -89,6 +89,10 @@ function mapAssetsErrorMessage(error) {
   return 'Không thể tải dữ liệu tài sản.';
 }
 
+function getMaskedValue(value) {
+  return value ? '••••••' : '--';
+}
+
 export default function AssetsPage() {
   const router = useRouter();
   const [isAuthResolved, setIsAuthResolved] = useState(false);
@@ -97,6 +101,7 @@ export default function AssetsPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [hideSmallBalances, setHideSmallBalances] = useState(false);
+  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
   // Assets data state
   const [assetsData, setAssetsData] = useState(null);
@@ -269,17 +274,26 @@ export default function AssetsPage() {
             <header className="mb-12">
               <div className="flex items-center gap-2 text-on-surface-variant mb-2">
                 <span className="text-sm font-semibold tracking-wide uppercase">Tổng số dư tài sản</span>
-                <button className="hover:text-primary transition-colors">
-                  <span className="material-symbols-outlined text-lg">visibility</span>
+                <button
+                  aria-label={isBalanceVisible ? 'Ẩn số dư' : 'Hiện số dư'}
+                  className="hover:text-primary transition-colors"
+                  onClick={() => setIsBalanceVisible((prev) => !prev)}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-lg">
+                    {isBalanceVisible ? 'visibility' : 'visibility_off'}
+                  </span>
                 </button>
               </div>
               <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-8">
                 <div>
                   <h1 className="text-4xl font-extrabold tracking-tight text-on-surface">
-                    {assetsData.totalBalanceBTC} <span className="text-xl font-medium text-on-surface-variant">BTC</span>
+                    {isBalanceVisible ? assetsData.totalBalanceBTC : getMaskedValue(assetsData.totalBalanceBTC)}{' '}
+                    <span className="text-xl font-medium text-on-surface-variant">BTC</span>
                   </h1>
                   <p className="text-xl text-on-surface-variant mt-1">
-                    ≈ {formatNumber(assetsData.totalBalanceUSDT)} <span className="text-sm font-medium">USDT</span>
+                    ≈ {isBalanceVisible ? formatNumber(assetsData.totalBalanceUSDT) : getMaskedValue(assetsData.totalBalanceUSDT)}{' '}
+                    <span className="text-sm font-medium">USDT</span>
                   </p>
                 </div>
                 <div className="flex gap-3 mb-1">
@@ -321,9 +335,12 @@ export default function AssetsPage() {
                 </div>
                 <div className="mb-6">
                   <p className="text-2xl font-extrabold">
-                    {assetsData.fundingAccount.balanceBTC} <span className="text-sm font-semibold text-on-surface-variant">BTC</span>
+                    {isBalanceVisible ? assetsData.fundingAccount.balanceBTC : getMaskedValue(assetsData.fundingAccount.balanceBTC)}{' '}
+                    <span className="text-sm font-semibold text-on-surface-variant">BTC</span>
                   </p>
-                  <p className="text-on-surface-variant font-medium">≈ {formatNumber(assetsData.fundingAccount.balanceUSDT)} USDT</p>
+                  <p className="text-on-surface-variant font-medium">
+                    ≈ {isBalanceVisible ? formatNumber(assetsData.fundingAccount.balanceUSDT) : getMaskedValue(assetsData.fundingAccount.balanceUSDT)} USDT
+                  </p>
                 </div>
                 <div className="pt-6 border-t border-outline-variant/10 flex justify-between">
                   <button className="text-primary text-sm font-bold hover:underline" onClick={handleGoToFunding} type="button">
@@ -346,9 +363,12 @@ export default function AssetsPage() {
                 </div>
                 <div className="mb-6">
                   <p className="text-2xl font-extrabold">
-                    {assetsData.tradingAccount.balanceBTC} <span className="text-sm font-semibold text-on-surface-variant">BTC</span>
+                    {isBalanceVisible ? assetsData.tradingAccount.balanceBTC : getMaskedValue(assetsData.tradingAccount.balanceBTC)}{' '}
+                    <span className="text-sm font-semibold text-on-surface-variant">BTC</span>
                   </p>
-                  <p className="text-on-surface-variant font-medium">≈ {formatNumber(assetsData.tradingAccount.balanceUSDT)} USDT</p>
+                  <p className="text-on-surface-variant font-medium">
+                    ≈ {isBalanceVisible ? formatNumber(assetsData.tradingAccount.balanceUSDT) : getMaskedValue(assetsData.tradingAccount.balanceUSDT)} USDT
+                  </p>
                 </div>
                 <div className="pt-6 border-t border-outline-variant/10 flex justify-between">
                   <button className="text-primary text-sm font-bold hover:underline" onClick={handleGoToTrading} type="button">
@@ -425,9 +445,11 @@ export default function AssetsPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-8 py-5 text-right font-semibold">{asset.balance}</td>
-                          <td className="px-8 py-5 text-right font-medium">{formatNumber(asset.price)}</td>
-                          <td className="px-8 py-5 text-right font-bold text-primary">{formatNumber(asset.valueUSDT)}</td>
+                          <td className="px-8 py-5 text-right font-semibold">{isBalanceVisible ? asset.balance : getMaskedValue(asset.balance)}</td>
+                          <td className="px-8 py-5 text-right font-medium">{isBalanceVisible ? formatNumber(asset.price) : getMaskedValue(asset.price)}</td>
+                          <td className="px-8 py-5 text-right font-bold text-primary">
+                            {isBalanceVisible ? formatNumber(asset.valueUSDT) : getMaskedValue(asset.valueUSDT)}
+                          </td>
                           <td className="px-8 py-5 text-right">
                             <div className="flex justify-end gap-4">
                               <button className="text-primary font-bold text-sm hover:underline" onClick={handleGoToTrading} type="button">
@@ -467,14 +489,6 @@ export default function AssetsPage() {
                   </tbody>
                 </table>
               </div>
-              {filteredAssets.length > 0 && (
-                <div className="px-8 py-6 bg-surface-container-low/20 flex justify-center">
-                  <button className="text-on-surface-variant font-bold text-sm hover:text-primary transition-colors flex items-center gap-2">
-                    Xem tất cả tài sản
-                    <span className="material-symbols-outlined text-sm">keyboard_arrow_down</span>
-                  </button>
-                </div>
-              )}
             </section>
 
             {/* Market Pulse Footer */}
@@ -485,9 +499,6 @@ export default function AssetsPage() {
                   <h4 className="text-sm font-bold text-on-surface-variant mb-1">Nâng cấp tài khoản Institutional</h4>
                   <p className="text-on-surface font-semibold">Nhận mức phí giao dịch 0.02% và đòn bẩy lên tới 100x</p>
                 </div>
-                <button className="bg-primary text-white px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90 relative z-10 transition-all active:scale-95">
-                  Nâng cấp ngay
-                </button>
               </div>
               <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-[0_12px_32px_-4px_rgba(0,0,0,0.04)] flex flex-col justify-center">
                 <div className="flex items-center justify-between mb-4">

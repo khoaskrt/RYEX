@@ -17,6 +17,8 @@ import MiniLineChart from './components/MiniLineChart';
 
 const TOKEN_ROWS_PER_PAGE = 10;
 const PAGINATION_WINDOW = 2;
+const HOT_ROWS_LIMIT = 20;
+const FAVORITES_STORAGE_KEY = 'ryex_market_favorite_symbols';
 
 const TOKEN_VISUAL_MAP = {
   BTCUSDT: { mark: '₿', color: '#f2a900', iconUrl: '/images/tokens/btc.png' },
@@ -94,6 +96,8 @@ export function MarketModulePage() {
   const [profileVisual, setProfileVisual] = useState(DEFAULT_PROFILE_VISUAL);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [favoriteSymbols, setFavoriteSymbols] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [marketRows, setMarketRows] = useState([]);
   const [marketMeta, setMarketMeta] = useState({
@@ -149,6 +153,33 @@ export function MarketModulePage() {
   }
 
   useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(FAVORITES_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+      const normalized = parsed
+        .map((value) => String(value || '').trim().toUpperCase())
+        .filter(Boolean);
+      setFavoriteSymbols(Array.from(new Set(normalized)));
+    } catch (_error) {
+      setFavoriteSymbols([]);
+    }
+  }, []);
+
+  function toggleFavoriteSymbol(symbol) {
+    const normalizedSymbol = String(symbol || '').trim().toUpperCase();
+    if (!normalizedSymbol) return;
+
+    setFavoriteSymbols((prev) => {
+      const hasSymbol = prev.includes(normalizedSymbol);
+      const next = hasSymbol ? prev.filter((item) => item !== normalizedSymbol) : [...prev, normalizedSymbol];
+      window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  useEffect(() => {
     if (!isAuthResolved) return;
 
     let isMounted = true;
@@ -187,8 +218,23 @@ export function MarketModulePage() {
     };
   }, [isAuthResolved]);
 
+  const favoriteSymbolSet = new Set(favoriteSymbols);
+  const rowsByFilter = (() => {
+    if (activeFilter === 'favorites') {
+      return marketRows.filter((row) => favoriteSymbolSet.has(String(row.symbol || '').toUpperCase()));
+    }
+
+    if (activeFilter === 'hot') {
+      return [...marketRows]
+        .sort((a, b) => toNumber(b.volume24h, 0) - toNumber(a.volume24h, 0))
+        .slice(0, HOT_ROWS_LIMIT);
+    }
+
+    return marketRows;
+  })();
+
   const normalizedSearchTerm = searchTerm.trim().toUpperCase();
-  const filteredRows = marketRows.filter((row) => {
+  const filteredRows = rowsByFilter.filter((row) => {
     if (!normalizedSearchTerm) return true;
     const symbol = (row.symbol || '').toUpperCase();
     const shortSymbol = symbol.replace(/USDT$/, '');
@@ -202,7 +248,7 @@ export function MarketModulePage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [normalizedSearchTerm]);
+  }, [normalizedSearchTerm, activeFilter]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -382,19 +428,43 @@ export function MarketModulePage() {
           <div className="mx-auto max-w-7xl">
             <div className="mb-8 flex flex-wrap items-center justify-between border-b border-[#bbcac1]/15 pb-4">
               <div className="flex items-center gap-8 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <button className="whitespace-nowrap border-b-2 border-[#01bc8d] pb-4 font-bold text-[#006c4f]">Tất cả</button>
-                <button className="flex items-center gap-1 whitespace-nowrap pb-4 font-medium text-on-surface-variant transition-colors hover:text-[#01bc8d]">
+                <button
+                  className={`whitespace-nowrap pb-4 transition-colors ${
+                    activeFilter === 'all'
+                      ? 'border-b-2 border-[#01bc8d] font-bold text-[#006c4f]'
+                      : 'font-medium text-on-surface-variant hover:text-[#01bc8d]'
+                  }`}
+                  onClick={() => setActiveFilter('all')}
+                  type="button"
+                >
+                  Tất cả
+                </button>
+                <button
+                  className={`flex items-center gap-1 whitespace-nowrap pb-4 transition-colors ${
+                    activeFilter === 'favorites'
+                      ? 'border-b-2 border-[#01bc8d] font-bold text-[#006c4f]'
+                      : 'font-medium text-on-surface-variant hover:text-[#01bc8d]'
+                  }`}
+                  onClick={() => setActiveFilter('favorites')}
+                  type="button"
+                >
                   <span className="material-symbols-outlined text-[18px]">star</span> Yêu thích
                 </button>
-                <button className="whitespace-nowrap pb-4 font-medium text-on-surface-variant transition-colors hover:text-[#01bc8d]">Hot</button>
-                <button className="whitespace-nowrap pb-4 font-medium text-on-surface-variant transition-colors hover:text-[#01bc8d]">New</button>
-                <button className="whitespace-nowrap pb-4 font-medium text-on-surface-variant transition-colors hover:text-[#01bc8d]">Layer 1</button>
-                <button className="whitespace-nowrap pb-4 font-medium text-on-surface-variant transition-colors hover:text-[#01bc8d]">DeFi</button>
+                <button
+                  className={`whitespace-nowrap pb-4 transition-colors ${
+                    activeFilter === 'hot'
+                      ? 'border-b-2 border-[#01bc8d] font-bold text-[#006c4f]'
+                      : 'font-medium text-on-surface-variant hover:text-[#01bc8d]'
+                  }`}
+                  onClick={() => setActiveFilter('hot')}
+                  type="button"
+                >
+                  Hot
+                </button>
               </div>
               <div className="flex items-center gap-4 py-2">
                 <div className="flex rounded-lg bg-surface-container-low p-1">
                   <button className="rounded-md bg-surface-container-lowest p-1 px-3 text-sm font-bold shadow-sm">Spot</button>
-                  <button className="p-1 px-3 text-sm font-medium text-on-surface-variant">Futures</button>
                 </div>
               </div>
             </div>
@@ -467,7 +537,24 @@ export function MarketModulePage() {
                               )}
                             </div>
                             <div>
-                              <div className="text-lg font-bold">{row.name}</div>
+                              <div className="flex items-center gap-2">
+                                <div className="text-lg font-bold">{row.name}</div>
+                                <button
+                                  aria-label={favoriteSymbolSet.has(symbol) ? 'Bỏ yêu thích' : 'Thêm yêu thích'}
+                                  className={`material-symbols-outlined text-[18px] transition-colors ${
+                                    favoriteSymbolSet.has(symbol)
+                                      ? 'text-[#f2a900]'
+                                      : 'text-on-surface-variant hover:text-[#f2a900]'
+                                  }`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    toggleFavoriteSymbol(symbol);
+                                  }}
+                                  type="button"
+                                >
+                                  {favoriteSymbolSet.has(symbol) ? 'star' : 'star_outline'}
+                                </button>
+                              </div>
                               <div className="text-sm text-on-surface-variant">{symbolShort}</div>
                             </div>
                           </div>

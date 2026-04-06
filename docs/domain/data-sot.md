@@ -1,9 +1,9 @@
 # RYEX Data Domain SoT (MVP v1)
 
 ## 1) Document Control
-- Version: `v1.3`
+- Version: `v1.4`
 - Owner: `BA` (co-own: `BE`, `DB/Infra`, `QA`)
-- Last updated: `2026-04-04`
+- Last updated: `2026-04-06`
 - Status: `Active`
 - Parent docs:
   - `docs/00-system-map.md`
@@ -52,6 +52,8 @@
 | `wallet_transactions` | Lịch sử nap/rút | Status/type checks; idempotency indexes | Wallet APIs + processor |
 | `deposit_monitor_state` | Checkpoint scan | PK `wallet_id` | Deposit monitor job |
 | `withdraw_limits` | Hạn mức rut | PK `user_id` | Withdraw validation |
+| `spot_orders` | Lệnh spot trading | status/type/side checks + TIF lock `GTC` | Trading API |
+| `spot_trades` | Bản ghi khớp lệnh spot | FK `order_id`, fee default `0` | Trading API + history |
 
 ## 6) Migration Map — Track Supabase (khuyến nghị)
 | Order | File | Summary |
@@ -64,6 +66,7 @@
 | 6 | `007_create_wallet_transactions.sql` | Tx history |
 | 7 | `008_create_deposit_monitor_state.sql` | Monitor state |
 | 8 | `009_create_withdraw_limits.sql` | Limits |
+| 9 | `011_create_spot_trading_orders.sql` | Spot orders/trades cho BTCUSDT MVP |
 
 **Legacy / không mix:** `001.2_auth_identity_baseline.sql`, `005_enable_rls_policies.sql` (Firebase JWT), `003.2_auth_trusted_devices.sql` (FK `users(id)`) — xem `db/README.md` §2.
 
@@ -75,6 +78,8 @@
 | `user_assets` | Enabled | own-row policies |
 | `user_wallets` | Enabled | `SELECT` own (`auth.uid() = user_id`) |
 | `wallet_transactions` | Enabled | `SELECT` own (`auth.uid() = user_id`) |
+| `spot_orders` | Enabled | `SELECT` own (`auth.uid() = user_id`) |
+| `spot_trades` | Enabled | `SELECT` own (`auth.uid() = user_id`) |
 | `deposit_monitor_state` | **Không** trong migration hiện tại | Chỉ server/jobs ghi |
 | `withdraw_limits` | **Không** trong migration hiện tại | Chỉ server ghi |
 
@@ -97,6 +102,7 @@
 | Profile | API | `users` |
 | Assets | API | `user_assets` |
 | Wallet | API + processor | `user_wallets`, `wallet_transactions`, `deposit_monitor_state`, `withdraw_limits`, `user_assets` |
+| Spot Trading | API + matching service | `spot_orders`, `spot_trades`, `user_assets` |
 
 ## 9) FE/BE/QA Impact
 - **FE:** phụ thuộc contract API; không giả định RLS cho phép client đọc trực tiếp mọi bảng.
@@ -120,6 +126,9 @@
 - Đổi schema: Delta trong PR + bump minor SoT.
 
 ## 13) Delta
+- `v1.4` (2026-04-06):
+  - Thêm Spot Trading MVP schema + lineage: `spot_orders`, `spot_trades`, migration `011_create_spot_trading_orders.sql`.
+  - Bổ sung RLS map và API lineage cho trading endpoints.
 - `v1.3` (2026-04-04):
   - Đổi tên migration trùng số: `001.1`/`001.2` (users Supabase vs auth legacy), `002.1`/`002.2`, `003.1`/`003.2`; cập nhật mọi tham chiếu trong repo.
 - `v1.2` (2026-04-04):

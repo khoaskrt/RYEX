@@ -25,6 +25,7 @@ Bảng `public.users` dùng `supa_id` + `users_id` (`001.1_users_current_truth_b
 | 6 | `007_create_wallet_transactions.sql` | Lịch sử nap/rút |
 | 7 | `008_create_deposit_monitor_state.sql` | Checkpoint scan deposit |
 | 8 | `009_create_withdraw_limits.sql` | Hạn mức rut |
+| 9 | `011_create_spot_trading_orders.sql` | Spot orders + spot trades (BTCUSDT MVP) |
 
 Sau bước 4 có thể cần **migration tay** cho `trusted_devices` nếu dùng bảng từ `003.2_auth_trusted_devices.sql`: file đó FK tới `users(id)` (legacy); runtime BE dùng `users.users_id` — xem `db/schema/trusted_devices.md`.
 
@@ -46,6 +47,8 @@ Sau bước 4 có thể cần **migration tay** cho `trusted_devices` nếu dùn
 | `wallet_transactions` | `schema/wallet_transactions.md` |
 | `deposit_monitor_state` | `schema/deposit_monitor_state.md` |
 | `withdraw_limits` | `schema/withdraw_limits.md` |
+| `spot_orders` | `schema/spot_orders.md` |
+| `spot_trades` | `schema/spot_trades.md` |
 | `auth_identities` | `schema/auth_identities.md` |
 | `auth_verification_events` | `schema/auth_verification_events.md` |
 | `auth_login_events` | `schema/auth_login_events.md` |

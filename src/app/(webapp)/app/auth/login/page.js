@@ -8,8 +8,9 @@ function sanitizePrefillEmail(email) {
   return email.trim().slice(0, 254);
 }
 
-export default function LoginPage({ searchParams }) {
-  const prefillEmail = sanitizePrefillEmail(searchParams?.email);
+export default async function LoginPage({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const prefillEmail = sanitizePrefillEmail(resolvedSearchParams?.email);
 
   return <StitchLoginPage prefillEmail={prefillEmail} />;
 }

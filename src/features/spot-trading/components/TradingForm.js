@@ -1,31 +1,123 @@
 'use client';
 
-import { useState } from 'react';
-import { ORDER_TYPES, ORDER_SIDES } from '../constants';
+import { useMemo, useState } from 'react';
+import { supabase } from '@/shared/lib/supabase/client';
+import { ORDER_TYPES, ORDER_SIDES, TIME_IN_FORCE } from '../constants';
+import { useUserBalances } from '../hooks/useUserBalances';
+import { parsePositive, validateOrderInput } from '../lib/orderValidation';
+import OrderNotification from './OrderNotification';
 
-export default function TradingForm({ side = ORDER_SIDES.BUY }) {
+async function getAccessToken() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token || '';
+}
+
+export default function TradingForm({ side = ORDER_SIDES.BUY, symbol = 'BTCUSDT', marketTicker = null }) {
   const [orderType, setOrderType] = useState(ORDER_TYPES.LIMIT);
   const [price, setPrice] = useState('');
   const [amount, setAmount] = useState('');
-  const [total, setTotal] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState({ type: 'success', message: '' });
+
+  const { balances } = useUserBalances();
 
   const isBuy = side === ORDER_SIDES.BUY;
-  const sideColor = isBuy ? 'text-[#01bc8d]' : 'text-[#ba1a1a]';
-  const sideBg = isBuy ? 'bg-[#01bc8d]' : 'bg-[#ba1a1a]';
+  const sideBg = isBuy ? 'bg-primary' : 'bg-error';
 
-  // Mock balances
-  const availableBalance = {
-    buy: '10,000.00 USDT',
-    sell: '0.5000 BTC',
-  };
+  const availableUsdt = balances.USDT?.trading || '0';
+  const availableBtc = balances.BTC?.trading || '0';
+
+  const marketPrice = useMemo(() => {
+    const raw = String(marketTicker?.priceDisplay || '').replace(/[$,\s]/g, '');
+    const parsed = Number.parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }, [marketTicker]);
+
+  const effectivePrice = orderType === ORDER_TYPES.MARKET ? marketPrice : parsePositive(price);
+  const parsedAmount = parsePositive(amount);
+  const total = effectivePrice > 0 && parsedAmount > 0 ? (effectivePrice * parsedAmount).toFixed(2) : '0.00';
 
   const handlePercentageClick = (percentage) => {
-    setAmount(((percentage / 100) * 0.5).toFixed(4));
+    if (isBuy) {
+      const usdt = parsePositive(availableUsdt);
+      if (usdt <= 0 || effectivePrice <= 0) return;
+      const maxBtc = usdt / effectivePrice;
+      setAmount(((percentage / 100) * maxBtc).toFixed(6));
+      return;
+    }
+
+    const btc = parsePositive(availableBtc);
+    if (btc <= 0) return;
+    setAmount(((percentage / 100) * btc).toFixed(6));
+  };
+
+  const clearForm = () => {
+    setAmount('');
+    if (orderType === ORDER_TYPES.LIMIT) {
+      setPrice('');
+    }
+  };
+
+  const submitOrder = async () => {
+    const validation = validateOrderInput({
+      orderType,
+      price: orderType === ORDER_TYPES.MARKET ? String(marketPrice || 0) : price,
+      amount,
+      availableUsdt,
+      availableBtc,
+      isBuy,
+    });
+
+    if (!validation.ok) {
+      setNotice({ type: 'error', message: validation.message });
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const token = await getAccessToken();
+      if (!token) {
+        setNotice({ type: 'error', message: 'Vui lòng đăng nhập để giao dịch' });
+        return;
+      }
+
+      const response = await fetch('/api/v1/trading/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          symbol,
+          side,
+          type: orderType,
+          amount,
+          price: orderType === ORDER_TYPES.LIMIT ? price : undefined,
+          timeInForce: TIME_IN_FORCE.GTC,
+        }),
+      });
+
+      const json = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setNotice({ type: 'error', message: json?.error?.message || 'Không thể đặt lệnh' });
+        return;
+      }
+
+      setNotice({ type: 'success', message: `Đặt lệnh thành công (#${json?.orderId || '--'})` });
+      clearForm();
+    } catch (_error) {
+      setNotice({ type: 'error', message: 'Không thể đặt lệnh, vui lòng thử lại' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="flex h-full flex-col bg-surface-container-lowest p-4">
-      {/* Order Type Tabs */}
+    <div className="relative flex h-full flex-col bg-surface-container-lowest p-4">
+      <OrderNotification message={notice.message} onClose={() => setNotice({ type: 'success', message: '' })} type={notice.type} />
+
       <div className="mb-4 flex gap-1 rounded-lg bg-surface-container p-1">
         <button
           className={`flex-1 rounded px-3 py-2 text-xs font-bold transition-colors ${
@@ -49,64 +141,45 @@ export default function TradingForm({ side = ORDER_SIDES.BUY }) {
         >
           Market
         </button>
-        <button
-          className={`flex-1 rounded px-3 py-2 text-xs font-bold transition-colors ${
-            orderType === ORDER_TYPES.STOP_LIMIT
-              ? 'bg-surface-container-lowest text-primary shadow-sm'
-              : 'text-on-surface-variant hover:text-on-surface'
-          }`}
-          onClick={() => setOrderType(ORDER_TYPES.STOP_LIMIT)}
-          type="button"
-        >
-          Stop-Limit
-        </button>
       </div>
 
-      {/* Available Balance */}
       <div className="mb-4 flex items-center justify-between text-xs">
         <span className="text-on-surface-variant">Khả dụng</span>
         <span className="font-bold text-on-surface">
-          {isBuy ? availableBalance.buy : availableBalance.sell}
+          {isBuy ? `${Number.parseFloat(availableUsdt || '0').toFixed(2)} USDT` : `${Number.parseFloat(availableBtc || '0').toFixed(6)} BTC`}
         </span>
       </div>
 
-      {/* Price Input */}
       {orderType !== ORDER_TYPES.MARKET && (
         <div className="mb-4">
-          <label className="mb-2 block text-xs font-medium text-on-surface-variant">
-            Giá
-          </label>
-          <div className="flex items-center gap-2 rounded-lg border border-[#bbcac1]/30 bg-surface-container px-3 py-2 focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container">
+          <label className="mb-2 block text-xs font-medium text-on-surface-variant">Giá</label>
+          <div className="flex items-center gap-2 rounded-lg border border-outline-variant/30 bg-surface-container px-3 py-2 focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container">
             <input
               className="flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant"
+              onChange={(e) => setPrice(e.target.value)}
               placeholder="0.00"
               type="text"
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
             />
             <span className="text-xs text-on-surface-variant">USDT</span>
           </div>
         </div>
       )}
 
-      {/* Amount Input */}
       <div className="mb-3">
-        <label className="mb-2 block text-xs font-medium text-on-surface-variant">
-          Số lượng
-        </label>
-        <div className="flex items-center gap-2 rounded-lg border border-[#bbcac1]/30 bg-surface-container px-3 py-2 focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container">
+        <label className="mb-2 block text-xs font-medium text-on-surface-variant">Số lượng</label>
+        <div className="flex items-center gap-2 rounded-lg border border-outline-variant/30 bg-surface-container px-3 py-2 focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container">
           <input
             className="flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant"
+            onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
             type="text"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
           />
           <span className="text-xs text-on-surface-variant">BTC</span>
         </div>
       </div>
 
-      {/* Percentage Buttons */}
       <div className="mb-4 grid grid-cols-4 gap-2">
         {[25, 50, 75, 100].map((percent) => (
           <button
@@ -120,43 +193,22 @@ export default function TradingForm({ side = ORDER_SIDES.BUY }) {
         ))}
       </div>
 
-      {/* Total */}
       <div className="mb-6">
-        <label className="mb-2 block text-xs font-medium text-on-surface-variant">
-          Tổng
-        </label>
-        <div className="flex items-center gap-2 rounded-lg border border-[#bbcac1]/30 bg-surface-container px-3 py-2">
-          <input
-            className="flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant"
-            placeholder="0.00"
-            type="text"
-            value={total}
-            onChange={(e) => setTotal(e.target.value)}
-          />
+        <label className="mb-2 block text-xs font-medium text-on-surface-variant">Tổng</label>
+        <div className="flex items-center gap-2 rounded-lg border border-outline-variant/30 bg-surface-container px-3 py-2">
+          <input className="flex-1 bg-transparent text-sm font-medium text-on-surface outline-none" readOnly type="text" value={total} />
           <span className="text-xs text-on-surface-variant">USDT</span>
         </div>
       </div>
 
-      {/* Submit Button */}
       <button
-        className={`${sideBg} w-full rounded-lg py-3 text-sm font-bold text-white transition-transform active:scale-95 hover:opacity-90`}
+        className={`${sideBg} w-full rounded-lg py-3 text-sm font-bold text-white transition-transform hover:opacity-90 active:scale-95 disabled:opacity-60`}
+        disabled={submitting}
+        onClick={submitOrder}
         type="button"
       >
-        {isBuy ? 'Mua' : 'Bán'} BTC
+        {submitting ? 'Đang xử lý...' : `${isBuy ? 'Mua' : 'Bán'} BTC`}
       </button>
-
-      {/* Login CTA for non-authenticated users */}
-      <div className="mt-4 rounded-lg bg-surface-container p-3 text-center">
-        <p className="mb-2 text-xs text-on-surface-variant">
-          Đăng nhập để bắt đầu giao dịch
-        </p>
-        <button
-          className="w-full rounded-lg bg-primary-container/20 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary-container/30"
-          type="button"
-        >
-          Đăng nhập / Đăng ký
-        </button>
-      </div>
     </div>
   );
 }

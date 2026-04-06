@@ -661,6 +661,8 @@ export async function getMarketPriceDetail(symbolInput = 'BTCUSDT') {
 }
 
 const marketKlineCache = new Map();
+const marketOrderBookCache = new Map();
+const marketRecentTradesCache = new Map();
 
 function buildKlineUrl(baseUrl, symbol, interval, limit) {
   const url = new URL('/api/v3/klines', baseUrl);
@@ -739,6 +741,161 @@ export async function getMarketKline(symbolInput = 'BTCUSDT', interval = '1h', l
       };
     }
     const wrappedError = new Error(error.message || 'Failed to fetch kline data');
+    wrappedError.statusCode = 503;
+    throw wrappedError;
+  }
+}
+
+function buildOrderBookUrl(baseUrl, symbol, depth) {
+  const url = new URL('/api/v3/depth', baseUrl);
+  url.searchParams.set('symbol', symbol);
+  url.searchParams.set('limit', String(depth));
+  return url.toString();
+}
+
+function buildTradesUrl(baseUrl, symbol, limit) {
+  const url = new URL('/api/v3/trades', baseUrl);
+  url.searchParams.set('symbol', symbol);
+  url.searchParams.set('limit', String(limit));
+  return url.toString();
+}
+
+async function fetchMarketOrderBook(symbolInput = 'BTCUSDT', depth = 20) {
+  const symbol = normalizeMarketPairSymbol(symbolInput);
+  const baseUrl = process.env.BINANCE_MARKET_BASE_URL || DEFAULT_BASE_URL;
+  const fetchedAtIso = new Date().toISOString();
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(buildOrderBookUrl(baseUrl, symbol, depth), {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const error = new Error(`Binance orderbook API returned ${response.status}`);
+      error.statusCode = response.status;
+      throw error;
+    }
+
+    const json = await response.json();
+    const bids = Array.isArray(json?.bids)
+      ? json.bids.map((row) => [Number.parseFloat(row[0]), Number.parseFloat(row[1])])
+      : [];
+    const asks = Array.isArray(json?.asks)
+      ? json.asks.map((row) => [Number.parseFloat(row[0]), Number.parseFloat(row[1])])
+      : [];
+
+    return {
+      symbol,
+      depth,
+      bids,
+      asks,
+      fetchedAt: fetchedAtIso,
+      stale: false,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchMarketRecentTrades(symbolInput = 'BTCUSDT', limit = 50) {
+  const symbol = normalizeMarketPairSymbol(symbolInput);
+  const baseUrl = process.env.BINANCE_MARKET_BASE_URL || DEFAULT_BASE_URL;
+  const fetchedAtIso = new Date().toISOString();
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(buildTradesUrl(baseUrl, symbol, limit), {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const error = new Error(`Binance trades API returned ${response.status}`);
+      error.statusCode = response.status;
+      throw error;
+    }
+
+    const json = await response.json();
+    const trades = Array.isArray(json)
+      ? json.map((item) => ({
+        id: String(item.id || ''),
+        price: String(item.price || '0'),
+        amount: String(item.qty || '0'),
+        time: item.time ? new Date(item.time).toISOString() : fetchedAtIso,
+        isBuyerMaker: Boolean(item.isBuyerMaker),
+      }))
+      : [];
+
+    return {
+      symbol,
+      trades,
+      fetchedAt: fetchedAtIso,
+      stale: false,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function getOrderBookDepth(symbolInput = 'BTCUSDT', depth = 20) {
+  const symbol = normalizeMarketPairSymbol(symbolInput);
+  const safeDepth = Math.max(5, Math.min(100, Number.parseInt(String(depth || 20), 10) || 20));
+  const cacheKey = `${symbol}_${safeDepth}`;
+  const cacheEntry = marketOrderBookCache.get(cacheKey);
+  const now = Date.now();
+
+  if (cacheEntry && now - cacheEntry.cachedAt < DEFAULT_CACHE_TTL_MS) {
+    return cacheEntry.payload;
+  }
+
+  try {
+    const payload = await fetchMarketOrderBook(symbol, safeDepth);
+    marketOrderBookCache.set(cacheKey, { payload, cachedAt: now });
+    return payload;
+  } catch (error) {
+    if (cacheEntry?.payload) {
+      return {
+        ...cacheEntry.payload,
+        stale: true,
+      };
+    }
+    const wrappedError = new Error(error.message || 'Failed to fetch orderbook');
+    wrappedError.statusCode = 503;
+    throw wrappedError;
+  }
+}
+
+export async function getRecentTrades(symbolInput = 'BTCUSDT', limit = 50) {
+  const symbol = normalizeMarketPairSymbol(symbolInput);
+  const safeLimit = Math.max(1, Math.min(100, Number.parseInt(String(limit || 50), 10) || 50));
+  const cacheKey = `${symbol}_${safeLimit}`;
+  const cacheEntry = marketRecentTradesCache.get(cacheKey);
+  const now = Date.now();
+
+  if (cacheEntry && now - cacheEntry.cachedAt < DEFAULT_CACHE_TTL_MS) {
+    return cacheEntry.payload;
+  }
+
+  try {
+    const payload = await fetchMarketRecentTrades(symbol, safeLimit);
+    marketRecentTradesCache.set(cacheKey, { payload, cachedAt: now });
+    return payload;
+  } catch (error) {
+    if (cacheEntry?.payload) {
+      return {
+        ...cacheEntry.payload,
+        stale: true,
+      };
+    }
+    const wrappedError = new Error(error.message || 'Failed to fetch recent trades');
     wrappedError.statusCode = 503;
     throw wrappedError;
   }

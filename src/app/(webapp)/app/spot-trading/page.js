@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function SpotTradingPage() {
-  return <SpotTradingModulePage />;
+  return <SpotTradingModulePage initialPair="BTCUSDT" />;
 }

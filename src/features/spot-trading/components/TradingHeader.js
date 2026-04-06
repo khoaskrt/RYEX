@@ -2,27 +2,18 @@
 
 import { useState } from 'react';
 
-export default function TradingHeader({ currentPair = 'BTCUSDT' }) {
+export default function TradingHeader({ currentPair = 'BTCUSDT', pairName = 'Bitcoin', ticker = null }) {
   const [isFavorite, setIsFavorite] = useState(false);
-
-  // Mock data - sẽ được thay thế bằng real-time data sau
-  const mockData = {
-    price: '70,863.45',
-    change24h: '+0.59%',
-    high24h: '71,420.00',
-    low24h: '69,850.00',
-    volume24h: '2.4B',
-    isUp: true,
-  };
+  const isUp = Number.parseFloat(String(ticker?.change24hPercent || '0')) >= 0;
 
   return (
-    <div className="border-b border-[#bbcac1]/15 bg-surface-container-lowest px-6 py-4">
+    <div className="border-b border-outline-variant/15 bg-surface-container-lowest px-4 py-4 md:px-6">
       <div className="flex items-center justify-between">
-        {/* Left: Pair Info */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
             <button
-              className={`transition-colors ${isFavorite ? 'text-yellow-500' : 'text-outline hover:text-yellow-500'}`}
+              aria-label={isFavorite ? 'Bỏ đánh dấu yêu thích' : 'Đánh dấu yêu thích'}
+              className={`transition-colors ${isFavorite ? 'text-primary' : 'text-outline hover:text-primary'}`}
               onClick={() => setIsFavorite(!isFavorite)}
               type="button"
             >
@@ -34,33 +25,32 @@ export default function TradingHeader({ currentPair = 'BTCUSDT' }) {
               <h1 className="text-xl font-bold text-on-surface">
                 {currentPair.replace('USDT', '')} / USDT
               </h1>
-              <p className="text-xs text-on-surface-variant">Bitcoin</p>
+              <p className="text-xs text-on-surface-variant">{pairName}</p>
             </div>
           </div>
 
           <div className="ml-4 flex items-baseline gap-3">
-            <span className={`text-3xl font-bold ${mockData.isUp ? 'text-[#01bc8d]' : 'text-[#ba1a1a]'}`}>
-              ${mockData.price}
+            <span className={`text-3xl font-bold ${isUp ? 'text-primary' : 'text-error'}`}>
+              {ticker?.priceDisplay || '--'}
             </span>
-            <span className={`text-sm font-bold ${mockData.isUp ? 'text-[#01bc8d]' : 'text-[#ba1a1a]'}`}>
-              {mockData.change24h}
+            <span className={`text-sm font-bold ${isUp ? 'text-primary' : 'text-error'}`}>
+              {ticker?.change24hDisplay || '--'}
             </span>
           </div>
         </div>
 
-        {/* Right: 24h Stats */}
-        <div className="flex items-center gap-8">
+        <div className="hidden items-center gap-8 md:flex">
           <div>
             <p className="text-xs text-on-surface-variant">24h High</p>
-            <p className="text-sm font-bold text-on-surface">${mockData.high24h}</p>
+            <p className="text-sm font-bold text-on-surface">{ticker?.high24hDisplay || '--'}</p>
           </div>
           <div>
             <p className="text-xs text-on-surface-variant">24h Low</p>
-            <p className="text-sm font-bold text-on-surface">${mockData.low24h}</p>
+            <p className="text-sm font-bold text-on-surface">{ticker?.low24hDisplay || '--'}</p>
           </div>
           <div>
             <p className="text-xs text-on-surface-variant">24h Volume (USDT)</p>
-            <p className="text-sm font-bold text-on-surface">${mockData.volume24h}</p>
+            <p className="text-sm font-bold text-on-surface">{ticker?.volumeUsdDisplay || '--'}</p>
           </div>
         </div>
       </div>
